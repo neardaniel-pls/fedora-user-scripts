@@ -57,7 +57,6 @@ else
 fi
 
 # ===== SearxNG Update =====
-#TODO: add echo NOT WORKIINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 if [ -f "$HOME/user-scripts/scripts/update-searxng.sh" ]; then
   echo -e "${bold}🔍 Updating SearxNG...${reset}"
   bash "$HOME/user-scripts/scripts/update-searxng.sh"
@@ -73,7 +72,7 @@ echo -e "${bold}What would you like to do now?${reset}"
 echo "1) 🔄 Restart the system"
 echo "2) ⚡ Shut down the system"
 echo "3) 🚪 Exit"
-read -r -p "Choose (1-3): " opt
+read -r -t 30 -p "Choose (1-3): " opt || opt=3
 case "$opt" in
   1) echo "Restarting...";   sudo reboot   ;;
   2) echo "Shutting down...";    sudo poweroff ;;

@@ -1,6 +1,10 @@
 # User Scripts
 
-A collection of personal utility scripts.
+A collection of personal utility scripts **optimized for Fedora Linux systems**.
+
+## Overview
+
+This repository contains shell scripts designed specifically for Fedora environments, with a focus on system maintenance, security, and file management utilities.
 
 ## Scripts
 
@@ -14,12 +18,20 @@ A collection of personal utility scripts.
 
 - **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning.
 - **Usage:** `scripts/fedora-update.sh`
+- **Note:** This script is specific to Fedora and uses DNF package manager operations.
 
 ### secure-delete.sh
 
 - **Purpose:** Securely deletes files and directories by overwriting them with random data.
 - **Usage:** `scripts/secure-delete.sh [file|directory]`
 - **Dependencies:** `shred`
+
+### security-sweep.sh
+
+- **Purpose:** Performs a comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations.
+- **Usage:** `sudo scripts/security-sweep.sh`
+- **Dependencies:** `chkrootkit`, `clamav`, `lynis`
+- **Note:** Fedora-specific security audit script for systems hardening.
 
 ### run-searxng.sh
 
@@ -35,7 +47,14 @@ A collection of personal utility scripts.
 
 ## How-to
 
-- [SearXNG Guide](how-to/searxng-guide.md)
+- [SearXNG Guide](https://how-to/searxng-guide.md)
+- [Security Sweep Script Guide](https://how-to/security-sweep-guide.md)
+
+---
+
+## System Requirements
+
+These scripts are designed for **Fedora Linux** distributions. While some scripts may work on other RPM-based systems, they are specifically tested and optimized for Fedora 42.
 
 ---
 

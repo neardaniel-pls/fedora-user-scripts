@@ -41,46 +41,47 @@ cleanmetadata() {
   echo "✅ Operation completed."
 }
 
-
 cleanmetadata_file() {
   local f="$1"
   local base="${f%.*}"
   local ext="${f##*.}"
-  local tmp_cleaned="${base}_cleaned.${ext}"
-  local tmp_optimized="${base}_opt_tmp.${ext}"
+  local tmp_cleaned="${base}_cleaned_${$}_${RANDOM}.${ext}"
+  local tmp_optimized="${base}_opt_tmp_${$}_${RANDOM}.${ext}"
   local final="${base}_cleaned_opt.${ext}"
 
   echo "────────────────────────────────────────────"
-  echo "📋 Metadata before: $f"
-  exiftool "$f"
+  echo "📋 Processing: $f"
+  
+  # Show only essential metadata (not file system info)
+  exiftool -G1 "$f" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (no significant metadata found)"
 
   echo "🧹 Cleaning all metadata..."
-  exiftool -all= -P -o "$tmp_cleaned" "$f" >/dev/null 2>&1
+  exiftool -all= -P -o "$tmp_cleaned" "$f" 2>/dev/null || {
+    echo "❌ Error: Failed to clean metadata. Aborting."
+    return 1
+  }
 
   if [ ! -f "$tmp_cleaned" ]; then
     echo "❌ Error: The cleaned file $tmp_cleaned was not created. Aborting."
     return 1
   fi
 
-  echo "📋 Metadata after cleaning: $tmp_cleaned"
-  exiftool "$tmp_cleaned"
-
   local tamanho_limpo=$(stat -c%s "$tmp_cleaned")
 
   case "${ext,,}" in
     pdf)
-      echo "📰 Optimizing PDF: $tmp_cleaned → $tmp_optimized"
+      echo "📰 Optimizing PDF..."
       gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook \
          -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
-         -sOutputFile="$tmp_optimized" "$tmp_cleaned"
+         -sOutputFile="$tmp_optimized" "$tmp_cleaned" 2>/dev/null
       ;;
     png)
-      echo "🌆 Optimizing PNG: $tmp_cleaned → $tmp_optimized"
-      pngquant --quality=65-80 --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned"
+      echo "🌆 Optimizing PNG..."
+      pngquant --quality=65-80 --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned" 2>/dev/null
       ;;
     jpg|jpeg)
-      echo "📸 Optimizing JPEG: $tmp_cleaned → $tmp_optimized"
-      jpegoptim --max=80 --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized"
+      echo "📸 Optimizing JPEG..."
+      jpegoptim --max=80 --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized" 2>/dev/null
       ;;
     *)
       echo "🔸 Format not supported for optimization: $f"
@@ -91,7 +92,7 @@ cleanmetadata_file() {
   local tamanho_opt=$(stat -c%s "$tmp_optimized" 2>/dev/null || echo 0)
 
   if [ "$tamanho_opt" -gt "$tamanho_limpo" ]; then
-    echo "⚠️ Optimized file is larger than the cleaned file, optimization will be skipped."
+    echo "⚠️ Optimized file is larger than cleaned file, skipping optimization."
     mv "$tmp_cleaned" "$final"
     rm -f "$tmp_optimized"
   else
@@ -99,8 +100,9 @@ cleanmetadata_file() {
     rm -f "$tmp_cleaned"
   fi
 
-  echo "📋 Final metadata: $final"
-  exiftool "$final"
+  # Show only essential metadata (not file system info)
+  echo "✓ Metadata removed:"
+  exiftool -G1 "$final" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (clean)"
 
   local antes=$(stat -c%s "$f")
   local depois=$(stat -c%s "$final")
@@ -117,7 +119,5 @@ cleanmetadata_file() {
   echo "────────────────────────────────────────────"
 }
 
-
 # Call the main function with all arguments
 cleanmetadata "$@"
-

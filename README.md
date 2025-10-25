@@ -1,4 +1,4 @@
-# User Scripts
+# User Scripts (Fedora-Only)
 
 A collection of personal utility scripts **optimized for Fedora Linux systems**.
 
@@ -31,7 +31,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Purpose:** Performs a comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations.
 - **Usage:** `sudo scripts/security-sweep.sh`
 - **Dependencies:** `chkrootkit`, `clamav`, `lynis`
-- **Note:** Fedora-specific security audit script for systems hardening.
+- **Note:** Fedora-specific security audit script for systems hardening. It will take a long time to run the complete check.
 
 ### run-searxng.sh
 
@@ -42,13 +42,15 @@ This repository contains shell scripts designed specifically for Fedora environm
 
 - **Purpose:** Updates the SearXNG instance by pulling the latest changes from the git repository.
 - **Usage:** `scripts/update-searxng.sh`
+- **Note:** This script is included in `sripts/fedora-update.sh`
 
 ---
 
 ## How-to
 
-- [SearXNG Guide](https://how-to/searxng-guide.md)
-- [Security Sweep Script Guide](https://how-to/security-sweep-guide.md)
+- [SearXNG Guide](how-to/searxng-guide.md)
+- [Security Sweep Script Guide](how-to/security-sweep-guide.md)
+- [Clean Metadata Guide](how-to/clean-metadata-guide.md)
 
 ---
 

@@ -94,23 +94,7 @@ cd ~/Documentos/searxng/searxng
 git pull "https://github.com/searxng/searxng"
 ```
 
-## 6. Production Deployment (Optional)
-
-For production use beyond development and testing, consider using a proper WSGI application server. You can configure SearXNG with uWSGI (already installed as a dependency):
-
-```bash
-cd ~/Documentos/searxng/searxng
-uwsgi --http :8888 \
-      --wsgi-file searx/webapp.py \
-      --callable app \
-      --processes 2 \
-      --threads 2 \
-      --env SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml
-```
-
-For even better performance and reliability, use a reverse proxy like Nginx in front of uWSGI.
-
-## 7. Troubleshooting
+## 6. Troubleshooting
 
 ### Port Already in Use
 If you see "Address already in use" error, another process is running on port 8888. Check what's using the port:
@@ -120,19 +104,6 @@ lsof -i :8888
 ```
 
 Kill the process or use a different port with `SEARXNG_PORT=9000 ./run-searxng.sh`.
-
-### Virtual Environment Issues
-If the scripts report virtual environment errors:
-
-```bash
-cd ~/Documentos/searxng
-rm -rf searxng-venv
-python3 -m venv searxng-venv
-source searxng-venv/bin/activate
-cd searxng
-pip install -U pip setuptools wheel
-pip install --use-pep517 --no-build-isolation -e .
-```
 
 ### Settings File Not Found
 Ensure the settings file exists and is readable:
@@ -157,7 +128,7 @@ git status
 
 Stash or commit any uncommitted changes before updating.
 
-## 8. Security Considerations
+## 7. Security Considerations
 
 - Store your `/etc/searxng/settings.yml` securely and restrict access
 - Regularly update SearXNG using the update script to get security patches
@@ -165,7 +136,7 @@ Stash or commit any uncommitted changes before updating.
 - Consider running SearXNG in a restricted user account rather than your main user
 - Keep your Fedora system updated: `sudo dnf update -y`
 
-## 9. Additional Resources
+## 8. Additional Resources
 
 - [SearXNG Official Documentation](https://docs.searxng.org/)
 - [SearXNG GitHub Repository](https://github.com/searxng/searxng)

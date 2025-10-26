@@ -51,6 +51,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - [SearXNG Guide](how-to/searxng-guide.md)
 - [Security Sweep Script Guide](how-to/security-sweep-guide.md)
 - [Clean Metadata Guide](how-to/clean-metadata-guide.md)
+- [Fedora Update Guide](how-to/fedora-update-guide.md)
 
 ---
 

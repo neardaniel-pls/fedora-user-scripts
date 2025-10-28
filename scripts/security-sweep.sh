@@ -283,11 +283,11 @@ main() {
 print_summary() {
     echo
     echo -e "${bold}==================== Scan Summary ====================${reset}"
-    printf "%-35s: %s\n" "System File Integrity" "$integrity_status"
-    printf "%-35s: %s\n" "Rootkit Scan (chkrootkit)" "$rootkit_status"
-    printf "%-35s: %s\n" "Malware Scan (ClamAV)" "$malware_status"
-    printf "%-35s: %s\n" "Security Audit (Lynis)" "$audit_status"
-    printf "%-35s: %s\n" "Package & Dependency Verification" "$package_status"
+    echo -e "$(printf "%-35s" "System File Integrity"): $integrity_status"
+    echo -e "$(printf "%-35s" "Rootkit Scan (chkrootkit)"): $rootkit_status"
+    echo -e "$(printf "%-35s" "Malware Scan (ClamAV)"): $malware_status"
+    echo -e "$(printf "%-35s" "Security Audit (Lynis)"): $audit_status"
+    echo -e "$(printf "%-35s" "Package & Dependency Verification"): $package_status"
     echo -e "${bold}====================================================${reset}"
     echo
     success "Security sweep completed!"

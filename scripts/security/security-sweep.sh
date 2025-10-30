@@ -11,7 +11,12 @@
 # 5. Package & Dependency Verification (dnf check)
 #
 
-set -euo pipefail
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Treat unset variables as an error when substituting.
+set -u
+# Pipes return the exit status of the last command to exit with a non-zero status.
+set -o pipefail
 
 # ===== Appearance (colors) =====
 bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; red="\033[31m"; reset="\033[0m"

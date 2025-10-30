@@ -1,7 +1,12 @@
 #!/bin/bash
 # Script to run the searxng web application
 
-set -euo pipefail
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Treat unset variables as an error when substituting.
+set -u
+# Pipes return the exit status of the last command to exit with a non-zero status.
+set -o pipefail
 
 # ===== Configuration =====
 SEARXNG_BASE="$HOME/Documentos/searxng"

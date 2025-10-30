@@ -46,6 +46,12 @@ This repository contains shell scripts designed specifically for Fedora environm
 
 ---
 
+## Initial Setup
+
+For new users, a comprehensive guide for the initial setup of a Fedora system is available:
+
+- [Fedora Initial Setup Guide](FEDORA_INITAL_SETUP.md)
+
 ## How-to
 
 - [SearXNG Guide](scripts/how-to/searxng-guide.md)

@@ -1,10 +1,15 @@
 #!/bin/bash
 
-# Weekly Fedora maintenance: package updates (dnf/dnf5) and Flatpak,
+# Fedora maintenance: package updates (dnf/dnf5) and Flatpak,
 # removal of unnecessary dependencies, and cache cleaning.
 # Compatible with Fedora 42 (dnf5) and classic dnf (fallback).
 
-set -euo pipefail
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Treat unset variables as an error when substituting.
+set -u
+# Pipes return the exit status of the last command to exit with a non-zero status.
+set -o pipefail
 
 # ===== Configuration =====
 SEARXNG_UPDATE_SCRIPT="${HOME}/user-scripts/scripts/update-searxng.sh"
@@ -12,7 +17,7 @@ SEARXNG_UPDATE_SCRIPT="${HOME}/user-scripts/scripts/update-searxng.sh"
 # ===== Appearance (colors) =====
 bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; reset="\033[0m"
 
-echo -e "${bold}${blue}🚀 Weekly Fedora maintenance (updates and cleaning)...${reset}"
+echo -e "${bold}${blue}🚀 Fedora maintenance (updates and cleaning)...${reset}"
 
 # ===== Helper Functions =====
 confirm_and_execute_destructive() {
@@ -134,7 +139,7 @@ fi
 # ===== Completion and user options =====
 echo
 echo "================================================================="
-echo -e "${bold}${green}✅ Weekly maintenance completed!${reset}"
+echo -e "${bold}${green}✅ Maintenance completed!${reset}"
 echo "================================================================="
 echo
 

@@ -9,7 +9,7 @@ set -u
 set -o pipefail
 
 # ===== Configuration =====
-SEARXNG_BASE="$HOME/Documentos/searxng"
+SEARXNG_BASE="$HOME/Documents/code/searxng"
 SEARXNG_VENV="$SEARXNG_BASE/searxng-venv"
 SEARXNG_APP="$SEARXNG_BASE/searxng"
 WEBAPP_SCRIPT="$SEARXNG_APP/searx/webapp.py"

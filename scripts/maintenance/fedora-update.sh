@@ -12,7 +12,7 @@ set -u
 set -o pipefail
 
 # ===== Configuration =====
-SEARXNG_UPDATE_SCRIPT="${HOME}/user-scripts/scripts/update-searxng.sh"
+SEARXNG_UPDATE_SCRIPT="${HOME}/Documents/code/user-scripts/scripts/searxng/update-searxng.sh"
 
 # ===== Appearance (colors) =====
 bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; reset="\033[0m"

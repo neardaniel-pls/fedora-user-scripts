@@ -131,10 +131,9 @@ Install these extensions via Extension Manager or the GNOME Extensions website:
 
 ## System Customization
 
-### Open GNOME Settings
+### Open Settings
 
 Access the Settings application to customize your system:
-- Click "Activities" in the top-left corner
 - Search for "Settings"
 - Customize the following sections:
 

@@ -14,7 +14,7 @@ bold="\033[1m"; blue="\033[34m"; green="\033[32m"; red="\033[31m"; reset="\033[0
 echo -e "${bold}${blue}🚀 Updating searxng...${reset}"
 
 # Navigate to the searxng directory
-SEARXNG_DIR="$HOME/Documentos/searxng/searxng"
+SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
 
 if [ ! -d "$SEARXNG_DIR" ]; then
   echo -e "${bold}${red}Error: Directory $SEARXNG_DIR not found.${reset}"

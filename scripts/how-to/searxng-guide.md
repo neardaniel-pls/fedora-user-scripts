@@ -13,8 +13,8 @@ sudo dnf install -y python3-pip python3-devel python3-babel python3-virtualenv u
 Next, clone the SearXNG repository and set up the Python virtual environment.
 
 ```bash
-mkdir -p ~/Documentos/searxng
-cd ~/Documentos/searxng
+mkdir -p ~/Documents/code/searxng
+cd ~/Documents/code/searxng
 git clone "https://github.com/searxng/searxng"
 python3 -m venv searxng-venv
 source searxng-venv/bin/activate
@@ -29,7 +29,7 @@ Now, configure your SearXNG instance. This involves creating a settings file and
 
 ```bash
 sudo mkdir -p /etc/searxng
-cd ~/Documentos/searxng/searxng
+cd ~/Documents/code/searxng/searxng
 sudo cp searx/settings.yml /etc/searxng/settings.yml
 sudo sed -i "s|ultrasecretkey|$(openssl rand -hex 32)|g" /etc/searxng/settings.yml
 export SEARXNG_SETTINGS_PATH="/etc/searxng/settings.yml"
@@ -51,7 +51,7 @@ This script will validate your environment, detect port conflicts, and provide h
 Alternatively, you can run the application manually:
 
 ```bash
-cd ~/Documentos/searxng
+cd ~/Documents/code/searxng
 source searxng-venv/bin/activate
 cd searxng
 python3 searx/webapp.py
@@ -81,7 +81,7 @@ To save your preferences, you need to allow cookies for your local instance in y
 To update your SearXNG instance to the latest version, use the provided `update-searxng.sh` script:
 
 ```bash
-cd ~/Documentos/searxng/searxng
+cd ~/Documents/code/searxng/searxng
 ./update-searxng.sh
 ```
 
@@ -90,7 +90,7 @@ This script will verify the repository, check for uncommitted changes, and safel
 Alternatively, you can update manually:
 
 ```bash
-cd ~/Documentos/searxng/searxng
+cd ~/Documents/code/searxng/searxng
 git pull "https://github.com/searxng/searxng"
 ```
 
@@ -115,14 +115,14 @@ ls -l /etc/searxng/settings.yml
 If missing, recreate it:
 
 ```bash
-sudo cp ~/Documentos/searxng/searxng/searx/settings.yml /etc/searxng/settings.yml
+sudo cp ~/Documents/code/searxng/searxng/searx/settings.yml /etc/searxng/settings.yml
 ```
 
 ### Git Pull Failures
 If updates fail with git errors, check your uncommitted changes:
 
 ```bash
-cd ~/Documentos/searxng/searxng
+cd ~/Documents/code/searxng/searxng
 git status
 ```
 

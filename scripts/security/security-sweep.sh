@@ -56,15 +56,15 @@
 #   - All scan outputs are logged for forensic analysis
 #
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 # Exit immediately if a command exits with a non-zero status.
 set -e
 # Treat unset variables as an error when substituting.
 set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
-
-# ===== Appearance (colors) =====
-bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; red="\033[31m"; reset="\033[0m"
 
 # ===== Log file =====
 LOG_FILE="/var/log/security-sweep-$(date +%Y%m%d-%H%M%S).log"
@@ -95,63 +95,24 @@ log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ${level}: ${message}" >> "$LOG_FILE"
 }
 
-#
-# info - Display informational message and log it
-#
-# DESCRIPTION:
-#   Shows an informational message to user and logs it for record-keeping.
-#   Uses blue color with info icon for visual distinction.
-#
-# PARAMETERS:
-#   $1 - Message to display and log
-#
+# Override the colors library functions to add logging
 info() {
-    echo -e "${bold}${blue}ℹ️  $1${reset}"
+    echo -e "${BOLD}${BLUE}${INFO_ICON}  $1${RESET}"
     log_message "INFO" "$1"
 }
 
-#
-# success - Display success message and log it
-#
-# DESCRIPTION:
-#   Shows a success message to user and logs it for record-keeping.
-#   Uses green color with checkmark icon for positive feedback.
-#
-# PARAMETERS:
-#   $1 - Message to display and log
-#
 success() {
-    echo -e "${bold}${green}✅ $1${reset}"
+    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} $1${RESET}"
     log_message "SUCCESS" "$1"
 }
 
-#
-# warning - Display warning message and log it
-#
-# DESCRIPTION:
-#   Shows a warning message to user and logs it for record-keeping.
-#   Uses yellow color with warning icon for attention without being critical.
-#
-# PARAMETERS:
-#   $1 - Message to display and log
-#
 warning() {
-    echo -e "${bold}${yellow}⚠️  $1${reset}"
+    echo -e "${BOLD}${YELLOW}${WARNING_ICON} $1${RESET}"
     log_message "WARNING" "$1"
 }
 
-#
-# error - Display error message and log it
-#
-# DESCRIPTION:
-#   Shows an error message to user and logs it for record-keeping.
-#   Uses red color with X icon and outputs to stderr for proper error handling.
-#
-# PARAMETERS:
-#   $1 - Message to display and log
-#
 error() {
-    echo -e "${bold}${red}❌ $1${reset}" >&2
+    echo -e "${BOLD}${RED}${ERROR_ICON} $1${RESET}" >&2
     log_message "ERROR" "$1"
 }
 
@@ -206,20 +167,20 @@ run_integrity_check() {
         if [ -z "$output" ]; then
             # No output means all files passed verification
             success "System file integrity check passed. No issues found."
-            integrity_status="${green}Passed${reset}"
+            integrity_status="${GREEN}Passed${RESET}"
         else
             # Output indicates some files have issues
             warning "System file integrity check completed with findings. See log for details."
             echo "$output"
             log_message "FINDINGS" "rpm -Va found issues:\n---\n$output\n---"
-            integrity_status="${yellow}Findings${reset}"
+            integrity_status="${YELLOW}Findings${RESET}"
         fi
     else
         # Command failed to execute
         error "System file integrity check failed to run."
         echo "$output"
         log_message "ERROR" "rpm -Va failed:\n---\n$output\n---"
-        integrity_status="${red}Error${reset}"
+        integrity_status="${RED}Error${RESET}"
     fi
     echo
 }
@@ -243,10 +204,10 @@ run_rootkit_scan() {
         # Check if any infections were reported
         if echo "$output" | grep -q "INFECTED"; then
             warning "chkrootkit found potential issues. See log for details."
-            rootkit_status="${yellow}Findings${reset}"
+            rootkit_status="${YELLOW}Findings${RESET}"
         else
             success "chkrootkit scan completed. No rootkits found."
-            rootkit_status="${green}Passed${reset}"
+            rootkit_status="${GREEN}Passed${RESET}"
         fi
         echo "$output"
         log_message "SCAN_OUTPUT" "chkrootkit output:\n---\n$output\n---"
@@ -255,7 +216,7 @@ run_rootkit_scan() {
         error "chkrootkit failed to run."
         echo "$output"
         log_message "ERROR" "chkrootkit failed:\n---\n$output\n---"
-        rootkit_status="${red}Error${reset}"
+        rootkit_status="${RED}Error${RESET}"
     fi
     echo
 }
@@ -297,10 +258,10 @@ run_malware_scan() {
         # Check if any infected files were found
         if echo "$output" | grep -q "Infected files: 0"; then
             success "ClamAV scan completed. No malware found."
-            malware_status="${green}Passed${reset}"
+            malware_status="${GREEN}Passed${RESET}"
         else
             warning "ClamAV found potential malware. See log for details."
-            malware_status="${yellow}Findings${reset}"
+            malware_status="${YELLOW}Findings${RESET}"
         fi
         echo "$output"
         log_message "SCAN_OUTPUT" "ClamAV output:\n---\n$output\n---"
@@ -309,7 +270,7 @@ run_malware_scan() {
         error "ClamAV scan failed to run."
         echo "$output"
         log_message "ERROR" "ClamAV failed:\n---\n$output\n---"
-        malware_status="${red}Error${reset}"
+        malware_status="${RED}Error${RESET}"
     fi
     echo
 }
@@ -332,7 +293,7 @@ run_security_audit() {
     # Run Lynis audit system
     if output=$(sudo lynis audit system --quiet 2>&1); then
         success "Lynis security audit completed."
-        audit_status="${green}Completed${reset}"
+        audit_status="${GREEN}Completed${RESET}"
         # Lynis provides a summary, which is good to have in our log
         echo "$output"
         log_message "SCAN_OUTPUT" "Lynis output:\n---\n$output\n---"
@@ -341,7 +302,7 @@ run_security_audit() {
         error "Lynis security audit failed to run."
         echo "$output"
         log_message "ERROR" "Lynis failed:\n---\n$output\n---"
-        audit_status="${red}Error${reset}"
+        audit_status="${RED}Error${RESET}"
     fi
     echo
 }
@@ -379,19 +340,19 @@ run_package_check() {
     # Interpret the exit code
     if [ $exit_code -eq 0 ]; then
         success "Package dependency check passed. No issues found."
-        package_status="${green}Passed${reset}"
+        package_status="${GREEN}Passed${RESET}"
     elif [ $exit_code -eq 100 ]; then
         # DNF found issues but command executed successfully
         warning "Package dependency check found issues. See log for details."
         echo "$output"
         log_message "FINDINGS" "DNF Check found issues:\n---\n$output\n---"
-        package_status="${yellow}Findings${reset}"
+        package_status="${YELLOW}Findings${RESET}"
     else
         # Command failed to execute
         error "Package dependency check failed to run (Exit code: $exit_code)."
         echo "$output"
         log_message "ERROR" "DNF Check failed:\n---\n$output\n---"
-        package_status="${red}Error${reset}"
+        package_status="${RED}Error${RESET}"
     fi
     echo
 }
@@ -447,7 +408,7 @@ main() {
     fi
 
     clear
-    echo -e "${bold}${blue}🚀 Starting Fedora Security Sweep...${reset}"
+    echo -e "${BOLD}${BLUE}${INFO_ICON} Starting Fedora Security Sweep...${RESET}"
 
     # --- Log File Setup ---
     if [ ! -w "/var/log" ]; then
@@ -457,13 +418,14 @@ main() {
     # Create and secure the log file
     touch "$LOG_FILE"
     chmod 600 "$LOG_FILE"
-    echo -e "Full log will be saved to: ${bold}${LOG_FILE}${reset}\n"
+    echo -e "Full log will be saved to: ${BOLD}${LOG_FILE}${RESET}\n"
     rotate_logs
 
 
-    echo -e "${bold}================== Initializing Scans ==================${reset}"
+    print_header "Initializing Scans"
     check_dependencies
-    echo -e "${bold}====================================================${reset}\n"
+    print_separator
+    echo
 
     [ "$run_integrity" -eq 1 ] && run_integrity_check
     [ "$run_rootkit" -eq 1 ] && run_rootkit_scan
@@ -476,13 +438,13 @@ main() {
 
 print_summary() {
     echo
-    echo -e "${bold}==================== Scan Summary ====================${reset}"
+    print_header "Scan Summary"
     echo -e "$(printf "%-35s" "System File Integrity"): $integrity_status"
     echo -e "$(printf "%-35s" "Rootkit Scan (chkrootkit)"): $rootkit_status"
     echo -e "$(printf "%-35s" "Malware Scan (ClamAV)"): $malware_status"
     echo -e "$(printf "%-35s" "Security Audit (Lynis)"): $audit_status"
     echo -e "$(printf "%-35s" "Package & Dependency Verification"): $package_status"
-    echo -e "${bold}====================================================${reset}"
+    print_separator
     echo
     success "Security sweep completed!"
     info "Review the log file for detailed results: ${LOG_FILE}"

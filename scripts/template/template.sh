@@ -21,6 +21,9 @@
 #   - stderr: Logs, errors, and verbose messages.
 # ==============================================================================
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 # --- Unofficial Bash Strict Mode ---
 #
 # -e: Exit immediately if a command exits with a non-zero status.
@@ -176,7 +179,7 @@ function main() {
 
   # --- Main Logic ---
   # Orchestrate calls to other functions from here.
-  log "Script execution started."
+  info "Script execution started."
   debug_log "Verbose mode is enabled."
   debug_log "File path provided: $file_path"
 
@@ -184,7 +187,7 @@ function main() {
   local current_user="${LOGNAME:-${USER:-unknown}}"
   debug_log "Script is being run by user: $current_user"
 
-  log "Script execution finished successfully."
+  success "Script execution finished successfully."
 }
 
 # --- Script Entry Point ---

@@ -50,16 +50,15 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 # ===== Configuration =====
 # Path to the optional SearxNG update script
 SEARXNG_UPDATE_SCRIPT="${HOME}/Documents/code/user-scripts/scripts/searxng/update-searxng.sh"
 
-# ===== Appearance (colors) =====
-# ANSI color codes for formatted output
-bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; reset="\033[0m"
-
 # Display script introduction with formatting
-echo -e "${bold}${blue}🚀 Fedora maintenance (updates and cleaning)...${reset}"
+echo -e "${BOLD}${BLUE}${INFO_ICON} Fedora maintenance (updates and cleaning)...${RESET}"
 
 # ===== Helper Functions =====
 #
@@ -88,12 +87,12 @@ confirm_and_execute_destructive() {
     # For dynamic commands, refactor to use array-based argument passing.
     
     # Display warning and request explicit confirmation
-    echo -e "${yellow}⚠️ About to $action the system.${reset}"
+    warning "About to $action the system."
     read -r -t 10 -p "Type 'yes' to confirm: " confirmation
     
     if [ "$confirmation" = "yes" ]; then
         # Provide countdown before execution to allow cancellation
-        echo "$action in 5 seconds..."
+        info "$action in 5 seconds..."
         sleep 5
         
         # Invalidate sudo credentials before executing system command
@@ -102,15 +101,15 @@ confirm_and_execute_destructive() {
         $command
     else
         # User cancelled the operation
-        echo "$action cancelled. Exiting..."
+        warning "$action cancelled. Exiting..."
         exit 0
     fi
 }
 
 # ===== Verify sudo privileges upfront =====
 # Early verification to fail fast if sudo is unavailable
-echo "Verifying sudo privileges..."
-sudo -v || { echo "Error: sudo authentication failed. Exiting."; exit 1; }
+info "Verifying sudo privileges..."
+sudo -v || { error "sudo authentication failed. Exiting."; exit 1; }
 
 # ===== Detect dnf5 vs classic dnf =====
 # Fedora 42+ uses dnf5 by default, but we need to support older versions
@@ -125,70 +124,70 @@ PKG="sudo ${DNF}"
 
 # ===== Update repository cache =====
 # Refresh the repository metadata to ensure we have the latest package information
-echo -e "${bold}📦 Updating repository cache...${reset}"
+info "Updating repository cache..."
 if $PKG -y makecache --refresh; then
-    echo -e "${green}✓ Repository cache updated${reset}"
+    success "Repository cache updated"
 else
     # Non-fatal error - continue with potentially stale cache
-    echo -e "${yellow}⚠️ Repository cache update encountered issues (status: $?)${reset}"
+    warning "Repository cache update encountered issues (status: $?)"
 fi
 
 # ===== Update packages =====
 # Upgrade all installed packages to their latest versions
-echo -e "${bold}⬆️ Updating packages (upgrade)...${reset}"
+info "Updating packages (upgrade)..."
 if $PKG -y upgrade; then
-    echo -e "${green}✓ Package upgrade completed${reset}"
+    success "Package upgrade completed"
 else
     # Non-fatal error - report but continue with other maintenance tasks
-    echo -e "${yellow}⚠️ Package upgrade encountered issues (status: $?)${reset}"
+    warning "Package upgrade encountered issues (status: $?)"
 fi
 
 # ===== Remove unnecessary packages =====
 # Remove packages that were installed as dependencies but are no longer needed
-echo -e "${bold}🧹 Removing unnecessary packages (autoremove)...${reset}"
+info "Removing unnecessary packages (autoremove)..."
 if $PKG -y autoremove; then
-    echo -e "${green}✓ Unnecessary packages removed${reset}"
+    success "Unnecessary packages removed"
 else
     # Non-fatal error - report but continue
-    echo -e "${yellow}⚠️ Autoremove encountered issues (status: $?)${reset}"
+    warning "Autoremove encountered issues (status: $?)"
 fi
 
 # ===== Clean cache =====
 # Remove all cached package files to free up disk space
-echo -e "${bold}🧽 Cleaning package cache (clean all)...${reset}"
+info "Cleaning package cache (clean all)..."
 if $PKG -y clean all; then
-    echo -e "${green}✓ Package cache cleaned${reset}"
+    success "Package cache cleaned"
 else
     # Non-fatal error - report but continue
-    echo -e "${yellow}⚠️ Cache cleaning encountered issues (status: $?)${reset}"
+    warning "Cache cleaning encountered issues (status: $?)"
 fi
 
 # ===== Flatpak Update =====
 # Update Flatpak applications and runtimes if Flatpak is installed
-echo -e "${bold}📱 Updating Flatpaks...${reset}"
+info "Updating Flatpaks..."
 if command -v flatpak >/dev/null 2>&1; then
     # Update AppStream metadata first (required for proper operation)
     if flatpak update --appstream; then
-        echo -e "${green}✓ AppStream metadata updated${reset}"
+        success "AppStream metadata updated"
     else
         # Non-fatal error - continue with other Flatpak operations
-        echo -e "${yellow}⚠️ AppStream update failed, continuing...${reset}"
+        warning "AppStream update failed, continuing..."
     fi
 
     # Update all installed Flatpak applications and runtimes
     if flatpak -y update; then
-        echo -e "${green}✓ Flatpak apps/runtimes updated${reset}"
+        success "Flatpak apps/runtimes updated"
     else
         # Non-fatal error - continue with cleanup
-        echo -e "${yellow}⚠️ Flatpak update encountered issues, continuing...${reset}"
+        warning "Flatpak update encountered issues, continuing..."
     fi
 
     # Remove unused Flatpak runtimes and applications to free space
     if flatpak -y uninstall --unused; then
-        echo -e "${green}✓ Unused Flatpaks removed${reset}"
+        success "Unused Flatpaks removed"
     else
         # Non-fatal error - report but continue
-        echo -e "${yellow}⚠️ Flatpak cleanup failed, continuing...${reset}"
+        warning "Flatpak cleanup failed, continuing..."
     fi
 else
     # Flatpak is not installed on this system
@@ -198,7 +197,7 @@ fi
 # ===== SearxNG Update =====
 # Conditionally update SearxNG if the update script exists and meets security criteria
 if [ -f "$SEARXNG_UPDATE_SCRIPT" ] && [ -O "$SEARXNG_UPDATE_SCRIPT" ]; then
-    echo -e "${bold}🔍 Updating SearxNG...${reset}"
+    info "Updating SearxNG..."
     
     # Verify file is executable and has safe permissions (user-only: 700)
     if [ -x "$SEARXNG_UPDATE_SCRIPT" ]; then
@@ -210,18 +209,18 @@ if [ -f "$SEARXNG_UPDATE_SCRIPT" ] && [ -O "$SEARXNG_UPDATE_SCRIPT" ]; then
         if [[ "$file_perms" =~ ^7[0-5][0-5]$ ]]; then
             # Execute the SearxNG update script
             if bash "$SEARXNG_UPDATE_SCRIPT"; then
-                echo -e "${green}✓ SearxNG updated${reset}"
+                success "SearxNG updated"
             else
                 # Non-fatal error - report but continue
-                echo -e "${yellow}⚠️ SearxNG update encountered issues (status: $?)${reset}"
+                warning "SearxNG update encountered issues (status: $?)"
             fi
         else
             # Security warning - file permissions are too permissive
-            echo -e "${yellow}⚠️ Warning: $SEARXNG_UPDATE_SCRIPT has insecure permissions ($file_perms). Run: chmod 700 \"$SEARXNG_UPDATE_SCRIPT\"${reset}"
+            warning "Warning: $SEARXNG_UPDATE_SCRIPT has insecure permissions ($file_perms). Run: chmod 700 \"$SEARXNG_UPDATE_SCRIPT\""
         fi
     else
         # File exists but is not executable
-        echo -e "${yellow}⚠️ Warning: $SEARXNG_UPDATE_SCRIPT is not executable. Skipping.${reset}"
+        warning "Warning: $SEARXNG_UPDATE_SCRIPT is not executable. Skipping."
     fi
 elif [ -f "$SEARXNG_UPDATE_SCRIPT" ]; then
     # File exists but is not owned by the current user (security risk)
@@ -230,15 +229,15 @@ fi
 
 # ===== Completion and user options =====
 echo
-echo "================================================================="
-echo -e "${bold}${green}✅ Maintenance completed!${reset}"
-echo "================================================================="
+print_separator
+echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Maintenance completed!${RESET}"
+print_separator
 echo
 
 # Interactive menu for post-maintenance actions
 # Loop until valid input received or timeout occurs
 while true; do
-    echo -e "${bold}What would you like to do now?${reset}"
+    print_subheader "What would you like to do now?"
     echo "1) 🔄 Restart the system"
     echo "2) ⚡ Shut down the system"
     echo "3) 🚪 Exit"
@@ -258,18 +257,18 @@ while true; do
                 ;;
             3)
                 # Exit without system changes
-                echo "Exiting..."
+                info "Exiting..."
                 exit 0
                 ;;
             *)
                 # Invalid input - prompt again
-                echo -e "${yellow}Invalid option. Please choose 1, 2, or 3.${reset}"
+                warning "Invalid option. Please choose 1, 2, or 3."
                 continue
                 ;;
         esac
     else
         # Timeout occurred - exit safely
-        echo -e "\n⏱️ No input received (timeout). Exiting..."
+        warning "No input received (timeout). Exiting..."
         exit 0
     fi
 done

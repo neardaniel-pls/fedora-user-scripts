@@ -28,10 +28,6 @@ sudo dnf install python3 python3-pip python3-virtualenv docker
 ```bash
 # Make all scripts executable
 chmod +x scripts/**/*.sh
-
-# Or make specific scripts executable
-chmod +x scripts/maintenance/clean-metadata.sh
-chmod +x scripts/security/security-sweep.sh
 ```
 
 ### Step 4: Test Installation (1 minute)
@@ -92,12 +88,6 @@ alias fedora-update='bash ~/fedora-user-scripts/scripts/maintenance/fedora-updat
 
 # Reload shell
 source ~/.bashrc
-```
-
-### Create Config Directory (30 seconds)
-```bash
-# Optional: Create config for custom settings
-mkdir -p ~/.config/fedora-user-scripts
 ```
 
 ## 📚 Next Steps

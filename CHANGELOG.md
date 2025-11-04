@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Fedora User Scripts Collection will be documented in this file.
+All notable changes to Fedora User Scripts Collection will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,28 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Project management files (LICENSE, CONTRIBUTING.md, CHANGELOG.md)
-- Comprehensive improvement plan documentation
-- Folder structure analysis and recommendations
-- Documentation consolidation with new docs/ structure
-- Quick start guide for 5-minute setup
-- Comprehensive FAQ section
-- Development workflow guide
+- Simplified GitHub templates (PR, feature request, bug report) for better usability
+- Streamlined documentation structure with significant size reductions:
+  - Clean Metadata Guide: 584 → 78 lines (87% reduction)
+  - Fedora Update Guide: 223 → 73 lines (67% reduction)
+  - SearXNG Guide: 143 → 73 lines (49% reduction)
+  - Security Sweep Guide: 216 → 103 lines (52% reduction)
+  - FAQ: 179 → 118 lines (34% reduction)
+  - Quick Start Guide: 146 → 96 lines (34% reduction)
+  - Documentation README: 81 → 69 lines (15% reduction)
+- Eliminated redundant installation instructions across guides
+- Consolidated troubleshooting information in centralized locations
+- Maintained security considerations throughout all documentation
 
 ### Changed
-- N/A
-
-### Deprecated
-- N/A
-
-### Removed
-- N/A
-
-### Fixed
-- N/A
-
-### Security
-- N/A
+- Improved template focus on essential information only
+- Reduced documentation verbosity while preserving critical content
+- Enhanced user experience with more concise guides
 
 ## [1.0.0] - 2025-11-04
 
@@ -53,40 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Secure temporary file handling
 - Privacy-focused metadata removal
 
-## Version History
-
-### Version 1.0.0
-- **Release Date**: 2025-11-04
-- **Status**: Initial Release
-- **Fedora Compatibility**: Tested on Fedora 42 and 43 (other versions untested)
-- **Key Features**:
-  - System maintenance automation
-  - Security scanning and auditing
-  - Privacy-focused file processing
-  - Service management utilities
-
-### Future Versions
-- **v1.1.0**: Planned improvements based on user feedback
-- **v1.2.0**: Enhanced testing infrastructure
-- **v2.0.0**: Major restructuring and new features
-
-## Release Notes
-
-### v1.0.0 Release Notes
-- This is the initial release of the user scripts collection
-- All scripts have been tested on Fedora 42
-- Documentation is comprehensive and includes troubleshooting guides
-- Scripts follow security best practices
-- MIT license applied for maximum compatibility
-
-## Upgrade Guide
-
-### From v1.0.0 to v1.1.0 (Future)
-- Backup existing configurations
-- Review breaking changes in release notes
-- Update script paths if reorganization occurred
-- Test critical scripts after upgrade
-
 ## Compatibility Matrix
 
 | Version | Fedora 40 | Fedora 41 | Fedora 42 | Fedora 43 |
@@ -96,14 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Legend:
 - ✅ Tested and confirmed working
 - ? Not tested (may work, but unverified)
-
-## Security Updates
-
-Security updates will be documented here with:
-- CVE numbers (if applicable)
-- Description of vulnerability
-- Affected versions
-- Recommended actions
 
 ## Contributing to Changelog
 
@@ -117,4 +70,3 @@ When contributing to this project:
 
 - [Semantic Versioning](https://semver.org/)
 - [Keep a Changelog](https://keepachangelog.com/)
-- [How to Write Good Changelogs](https://github.com/olivierlacan/keep-a-changelog/blob/master/CHANGELOG.md)

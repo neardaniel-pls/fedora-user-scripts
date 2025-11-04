@@ -34,17 +34,9 @@
 **Q: Can I recover metadata after cleaning?**
 **A:** No, metadata removal is permanent. Always backup important files before cleaning.
 
-**Q: Why does optimization sometimes make files larger?**
-**A:** Some files are already optimally compressed. The script detects this and uses the smaller version.
-
 ### security-sweep.sh
 **Q: Why does it take so long to run?**
-**A:** The comprehensive scan checks:
-- File integrity (rpm -Va)
-- Rootkits (chkrootkit)
-- Malware (clamav)
-- Security audit (lynis)
-Run individual scans with `-i`, `-r`, `-m`, `-a` flags for faster execution.
+**A:** The comprehensive scan checks multiple security aspects. Run individual scans with `-i`, `-r`, `-m`, `-a` flags for faster execution.
 
 **Q: Can I exclude home directories?**
 **A:** Yes, use the `-e` flag to exclude home directories for privacy.
@@ -122,33 +114,6 @@ source ~/.bashrc
 - Exclude unnecessary directories
 - Use SSD storage for better I/O
 - Ensure sufficient RAM
-
-### Q: Can I run multiple scripts simultaneously?
-**A:** Generally yes, but avoid:
-- Running multiple security scans
-- Multiple metadata operations on same files
-- System updates during other operations
-
-## Customization
-
-### Q: How do I change default settings?
-**A:** Most scripts support environment variables:
-```bash
-# Change JPEG quality
-export JPEG_QUALITY=90
-
-# Change PDF settings
-export PDF_SETTINGS=/prepress
-
-# Run with custom settings
-JPEG_QUALITY=90 ./scripts/maintenance/clean-metadata.sh file.jpg
-```
-
-### Q: Can I modify the scripts?
-**A:** Yes! They're open source under MIT license. Please:
-- Understand what you're changing
-- Test modifications thoroughly
-- Consider contributing improvements back
 
 ## Contributing
 

@@ -24,14 +24,13 @@ Real-world usage examples and configurations:
 
 ### New to the Collection?
 1. Read the [main README](../README.md) for project overview
-2. Follow the [Fedora Initial Setup Guide](../FEDORA_INITAL_SETUP.md) for system preparation
+2. Follow the [Quick Start Guide](QUICK_START.md) for 5-minute setup
 3. Check individual script guides for specific usage instructions
 
 ### Looking for Something Specific?
 - **Script Usage**: Check the relevant guide in [Guides](guides/)
-- **Troubleshooting**: Each guide includes troubleshooting section
+- **Troubleshooting**: Check the [FAQ](FAQ.md)
 - **Contributing**: See [Contributing Guide](../CONTRIBUTING.md)
-- **Development**: See [Development Workflow](../DEVELOPMENT_WORKFLOW.md)
 
 ## 📖 Navigation Tips
 
@@ -48,7 +47,7 @@ Real-world usage examples and configurations:
 ## 🔍 Finding Information
 
 ### Need Help?
-- **Quick Answers**: Check the FAQ section in each guide
+- **Quick Answers**: Check the [FAQ](FAQ.md)
 - **Common Issues**: Each guide has troubleshooting section
 - **Latest Updates**: See [CHANGELOG](../CHANGELOG.md) for recent changes
 - **Community**: Open an [issue](https://github.com/neardaniel-pls/fedora-user-scripts/issues)

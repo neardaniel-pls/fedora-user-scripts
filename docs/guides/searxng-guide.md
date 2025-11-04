@@ -2,15 +2,15 @@
 
 This guide provides step-by-step instructions to install, configure, and run a self-hosted SearXNG instance on a Fedora system.
 
-## 1. Installation
+## Installation
 
-First, install the required dependencies using `dnf`.
+Install required dependencies:
 
 ```bash
 sudo dnf install -y python3-pip python3-devel python3-babel python3-virtualenv uwsgi uwsgi-plugin-python3 git gcc make libxslt-devel zlib-devel libffi-devel openssl-devel
 ```
 
-Next, clone the SearXNG repository and set up the Python virtual environment.
+Clone and set up SearXNG:
 
 ```bash
 mkdir -p ~/Documents/code/searxng
@@ -23,9 +23,9 @@ cd searxng
 pip install --use-pep517 --no-build-isolation -e .
 ```
 
-## 2. Configuration
+## Configuration
 
-Now, configure your SearXNG instance. This involves creating a settings file and generating a secret key.
+Create and configure settings:
 
 ```bash
 sudo mkdir -p /etc/searxng
@@ -36,19 +36,15 @@ export SEARXNG_SETTINGS_PATH="/etc/searxng/settings.yml"
 deactivate
 ```
 
-Your machine is now configured to run the SearXNG software.
+## Running SearXNG
 
-## 3. Running the Application
-
-To run the SearXNG web application, use the provided `run-searxng.sh` script:
+Use the provided script:
 
 ```bash
 ./run-searxng.sh
 ```
 
-This script will validate your environment, detect port conflicts, and provide helpful error messages if something goes wrong. It also handles graceful shutdown with Ctrl+C.
-
-Alternatively, you can run the application manually:
+Or run manually:
 
 ```bash
 cd ~/Documents/code/searxng
@@ -57,87 +53,54 @@ cd searxng
 python3 searx/webapp.py
 ```
 
-The software is now running. You can access your instance by navigating to `http://127.0.0.1:8888` in your web browser. The service will continue to run as long as the terminal window is open.
+Access your instance at `http://127.0.0.1:8888`.
 
-## 4. Customization and Preferences
+## Customization
 
-From your SearXNG instance, click the "Preferences" link to customize your search experience. You can:
-- Disable auto-complete and SafeSearch
+Click "Preferences" in your SearXNG instance to:
 - Switch between light and dark themes
-- Open results in new tabs
 - Enable preferred search engines
-- Modify how URLs are presented to remove trackers
+- Modify URL presentation to remove trackers
+- Configure SafeSearch and auto-complete
 
-To save your preferences, you need to allow cookies for your local instance in your browser settings.
+To save preferences, allow cookies for `http://127.0.0.1:8888` in your browser.
 
-### For Firefox:
-1. Navigate to Firefox's **Settings** menu and click **Privacy & Security**.
-2. Click **Manage Exceptions…** next to "Delete cookies and site data when Firefox is closed".
-3. Enter the URL of your SearXNG instance (`http://127.0.0.1:8888`) and click **Allow**.
-4. Click **Save Changes**.
+## Updating
 
-## 5. Updating SearXNG
-
-To update your SearXNG instance to the latest version, use the provided `update-searxng.sh` script:
+Use the update script:
 
 ```bash
 cd ~/Documents/code/searxng/searxng
 ./update-searxng.sh
 ```
 
-This script will verify the repository, check for uncommitted changes, and safely pull the latest updates from the official repository. It handles both `main` and `master` branches automatically.
-
-Alternatively, you can update manually:
+Or update manually:
 
 ```bash
 cd ~/Documents/code/searxng/searxng
 git pull "https://github.com/searxng/searxng"
 ```
 
-## 6. Troubleshooting
+## Troubleshooting
 
-### Port Already in Use
-If you see "Address already in use" error, another process is running on port 8888. Check what's using the port:
+### Common Issues
 
-```bash
-lsof -i :8888
-```
+- **Port already in use**: Check with `lsof -i :8888` or use different port with `SEARXNG_PORT=9000 ./run-searxng.sh`
+- **Settings file not found**: Verify `/etc/searxng/settings.yml` exists and is readable
+- **Git pull failures**: Check for uncommitted changes with `git status`
 
-Kill the process or use a different port with `SEARXNG_PORT=9000 ./run-searxng.sh`.
+### Error Messages
 
-### Settings File Not Found
-Ensure the settings file exists and is readable:
+- `Address already in use`: Another process is using port 8888
+- `Permission denied`: Check file permissions for settings and scripts
 
-```bash
-ls -l /etc/searxng/settings.yml
-```
+## Security Considerations
 
-If missing, recreate it:
-
-```bash
-sudo cp ~/Documents/code/searxng/searxng/searx/settings.yml /etc/searxng/settings.yml
-```
-
-### Git Pull Failures
-If updates fail with git errors, check your uncommitted changes:
-
-```bash
-cd ~/Documents/code/searxng/searxng
-git status
-```
-
-Stash or commit any uncommitted changes before updating.
-
-## 7. Security Considerations
-
-- Store your `/etc/searxng/settings.yml` securely and restrict access
-- Regularly update SearXNG using the update script to get security patches
-- For internet-facing instances, use a reverse proxy with TLS/HTTPS encryption
-- Consider running SearXNG in a restricted user account rather than your main user
+- Store `/etc/searxng/settings.yml` securely with restricted access
+- Regularly update SearXNG for security patches
+- For internet-facing instances, use a reverse proxy with TLS/HTTPS
 - Keep your Fedora system updated: `sudo dnf update -y`
 
-## 8. Additional Resources
+---
 
-- [SearXNG Official Documentation](https://docs.searxng.org/)
-- [SearXNG GitHub Repository](https://github.com/searxng/searxng)
-- [Python Virtual Environments Guide](https://docs.python.org/3/tutorial/venv.html)
+**Last Updated**: October 2025

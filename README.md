@@ -1,6 +1,9 @@
-# User Scripts (Fedora-Only)
+# Fedora User Scripts Collection
 
 A collection of personal utility scripts **optimized for Fedora Linux systems**.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Fedora Version](https://img.shields.io/badge/Fedora-42%2B-blue.svg)](https://getfedora.org/)
 
 ## Overview
 
@@ -63,10 +66,66 @@ For new users, a comprehensive guide for the initial setup of a Fedora system is
 
 ## System Requirements
 
-These scripts are designed for **Fedora Linux** distributions. While some scripts may work on other RPM-based systems, they are specifically tested and optimized for Fedora 42.
+These scripts are designed for **Fedora Linux** distributions. While some scripts may work on other RPM-based systems, they are specifically tested and optimized for:
+
+- ✅ Fedora 42
+- ✅ Fedora 43
+- ❓ Other versions (untested)
+
+## Installation
+
+### Quick Start
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/neardaniel-pls/fedora-user-scripts.git
+   cd fedora-user-scripts
+   ```
+
+2. Make scripts executable:
+   ```bash
+   chmod +x scripts/**/*.sh
+   ```
+
+3. Install dependencies (see individual script documentation)
+
+### Dependencies
+
+Each script has its own dependencies. Check the individual script documentation or run:
+```bash
+# Check for common dependencies
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
+```
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+### Quick Contribution Guide
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+For detailed guidelines, see our [Contributing Guide](CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
+## Support
+
+- 🐛 [Report Bugs](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=bug_report.md)
+- 💡 [Request Features](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=feature_request.md)
+- 📖 [Documentation](https://github.com/neardaniel-pls/fedora-user-scripts/wiki)
+
+## Acknowledgments
+
+Thanks to the Fedora community and all contributors who help improve this project.

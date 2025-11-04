@@ -46,6 +46,9 @@
 #   - The script does not overwrite free space or handle filesystem journaling artifacts
 #   - Consider physical destruction of storage media for maximum security requirements
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 # Exit immediately if a command exits with a non-zero status.
 set -e
 # Treat unset variables as an error when substituting.
@@ -56,14 +59,14 @@ set -o pipefail
 # ===== Dependency Check =====
 # Verify that the required 'shred' command is available on the system
 if ! command -v shred &> /dev/null; then
-    echo "Error: The 'shred' command is not installed. Please install it to use this script." >&2
+    error "The 'shred' command is not installed. Please install it to use this script."
     exit 1
 fi
 
 # ===== Usage Validation =====
 # Ensure at least one target file or directory was provided
 if [ $# -eq 0 ]; then
-    echo "Usage: secure-delete.sh <file|directory> [...]"
+    error "Usage: secure-delete.sh <file|directory> [...]"
     exit 1
 fi
 
@@ -72,13 +75,13 @@ fi
 for target in "$@"; do
     # Check if the target exists (file, directory, or other)
     if [ ! -e "$target" ]; then
-        echo "Warning: '$target' not found. Skipping."
+        warning "'$target' not found. Skipping."
         continue
     fi
 
     # Handle directory targets
     if [ -d "$target" ]; then
-        echo "Processing directory: $target"
+        info "Processing directory: $target"
         # Find all files in the directory and shred them recursively
         # shred options:
         #   -n 3: Perform 3 overwrite passes with random data
@@ -87,17 +90,17 @@ for target in "$@"; do
         find "$target" -type f -exec shred -n 3 -z -v {} \;
         # Remove the now-empty directory structure
         rm -rf "$target"
-        echo "Directory '$target' securely deleted."
+        success "Directory '$target' securely deleted."
     # Handle regular file targets
     elif [ -f "$target" ]; then
-        echo "Processing file: $target"
+        info "Processing file: $target"
         # Shred the file with the same security parameters
         shred -n 3 -z -v "$target"
         # Remove the shredded file
         rm "$target"
-        echo "File '$target' securely deleted."
+        success "File '$target' securely deleted."
     fi
 done
 
 # ===== Completion Message =====
-echo "Secure delete operation completed."
+success "Secure delete operation completed."

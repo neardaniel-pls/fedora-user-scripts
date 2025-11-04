@@ -6,27 +6,10 @@
 # This script provides a structured and safe way to run BleachBit with a predefined set of cleaners.
 #
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 set -euo pipefail
-
-# ===== Appearance (colors) =====
-bold="\033[1m"; blue="\033[34m"; green="\033[32m"; yellow="\033[33m"; red="\033[31m"; reset="\033[0m"
-
-# ===== Helper Functions =====
-info() {
-    echo -e "${bold}${blue}ℹ️  $1${reset}"
-}
-
-success() {
-    echo -e "${bold}${green}✅ $1${reset}"
-}
-
-warning() {
-    echo -e "${bold}${yellow}⚠️  $1${reset}"
-}
-
-error() {
-    echo -e "${bold}${red}❌ $1${reset}" >&2
-}
 
 # ===== Core Functions =====
 
@@ -229,11 +212,12 @@ main() {
     trap cleanup SIGINT SIGTERM
 
     clear
-    echo -e "${bold}${blue}🚀 Starting BleachBit Automation...${reset}"
+    echo -e "${BOLD}${BLUE}${INFO_ICON} Starting BleachBit Automation...${RESET}"
 
-    echo -e "${bold}================== Initializing Cleaner ==================${reset}"
+    print_header "Initializing Cleaner"
     check_dependencies
-    echo -e "${bold}====================================================${reset}\n"
+    print_separator
+    echo
 
     run_bleachbit_clean
 

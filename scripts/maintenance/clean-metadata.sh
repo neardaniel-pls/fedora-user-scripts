@@ -54,6 +54,9 @@
 #
 # For more detailed information, see clean-metadata-guide.md
 
+# Source shared colors library
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+
 # Exit immediately if a command exits with a non-zero status.
 set -e
 # Treat unset variables as an error when substituting.
@@ -163,32 +166,32 @@ EOF
     # Skip if target is not a regular file or directory, or is a symlink
     # This prevents processing of special files and potential security issues
     if [ ! -f "$target" ] && [ ! -d "$target" ] || [ -L "$target" ]; then
-        echo "⚠️  Skipping invalid or non-regular file/directory: $target" >&2
+        warning "Skipping invalid or non-regular file/directory: $target"
         continue
     fi
 
     if [ -d "$target" ]; then
-      echo "📂 Processing directory: $target"
+      info "Processing directory: $target"
       # Use process substitution to preserve parent scope for error_count
       # Find command with -print0 handles filenames with spaces/newlines safely
       # The regex pattern excludes already processed files to prevent duplication
       while IFS= read -r -d '' file; do
         if ! cleanmetadata_file "$file" "$replace_original" "$verbose"; then
           error_count=$((error_count + 1))
-          echo "❌ An error occurred while processing $file" >&2
+          error "An error occurred while processing $file"
         fi
       done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' -print0)
     elif [ -f "$target" ]; then
       # Check if file has already been processed by examining its name
       case "$target" in
         *cleaned*|*cleaned_opt*)
-          echo "⚠️ Ignoring already processed file: $target" >&2
+          warning "Ignoring already processed file: $target"
           ;;
         *)
           # Process the file and track any errors
           if ! cleanmetadata_file "$target" "$replace_original" "$verbose"; then
             error_count=$((error_count + 1))
-            echo "❌ An error occurred while processing $target" >&2
+            error "An error occurred while processing $target"
           fi
           ;;
       esac
@@ -197,10 +200,10 @@ EOF
 
   # Report final status based on error count
   if [ "$error_count" -gt 0 ]; then
-      echo "❌ Operation completed with $error_count errors." >&2
+      error "Operation completed with $error_count errors."
       return 1
   else
-      echo "✅ Operation completed successfully."
+      success "Operation completed successfully."
   fi
 }
 
@@ -229,20 +232,20 @@ cleanmetadata_file() {
   # Explicitly check for symlink FIRST to avoid TOCTOU (Time-of-Check-Time-of-Use) race condition
   # This prevents following symlinks which could lead to processing unintended files
   if [ -L "$f" ]; then
-      echo "⚠️  Symbolic links are not supported: $f" >&2
+      warning "Symbolic links are not supported: $f"
       return 1
   fi
   
   # Verify the target is a regular file (not a directory, device file, etc.)
   if [ ! -f "$f" ]; then
-      echo "⚠️  Not a regular file: $f" >&2
+      warning "Not a regular file: $f"
       return 1
   fi
   
   # Get canonical path (resolves .., ., symbolic links, etc.) to prevent path traversal attacks
   # This ensures we're working with the actual file location, not a relative path
   resolved=$(readlink -e "$f") || {
-      echo "❌ Error: Cannot resolve path: $f" >&2
+      error "Cannot resolve path: $f"
       return 1
   }
   
@@ -263,7 +266,7 @@ cleanmetadata_file() {
       base="${basename_f%.*}"   # Everything before the last dot
   else
       # No extension found - cannot determine file type
-      echo "⚠️  File has no extension: $f" >&2
+      warning "File has no extension: $f"
       return 1
   fi
   
@@ -274,7 +277,7 @@ cleanmetadata_file() {
           # Valid extension, continue processing
           ;;
       *)
-          echo "⚠️  Unsupported file type: $f (extension: $ext)" >&2
+          warning "Unsupported file type: $f (extension: $ext)"
           return 1
           ;;
   esac
@@ -304,15 +307,15 @@ cleanmetadata_file() {
   final_canonical=$(readlink -f "$final_canonical")
   
   if [[ "$final_canonical" != "$final_dir" ]]; then
-      echo "❌ Error: Refusing to write outside source directory." >&2
-      echo "    Expected: $final_dir" >&2
-      echo "    Got: $final_canonical" >&2
+      error "Refusing to write outside source directory."
+      error "    Expected: $final_dir"
+      error "    Got: $final_canonical"
       return 1
   fi
 
   # Display processing header for user feedback
-  echo "────────────────────────────────────────────"
-  echo "📋 Processing: $f"
+  print_separator
+  print_subheader "Processing: $f"
 
   # Show essential metadata if verbose mode is enabled
   if [[ "$verbose" == "1" ]]; then
@@ -322,15 +325,15 @@ cleanmetadata_file() {
   fi
 
   # Step 1: Remove all metadata using exiftool
-  echo "🧹 Cleaning all metadata..."
+  info "Cleaning all metadata..."
   if ! exiftool -all= -P -o "$tmp_cleaned" "$f"; then
-    echo "❌ Error: Failed to clean metadata. Aborting." >&2
+    error "Failed to clean metadata. Aborting."
     return 1
   fi
 
   # Verify the cleaned file was created and is not empty
   if [ ! -s "$tmp_cleaned" ]; then
-    echo "❌ Error: The cleaned file is empty or was not created. Aborting." >&2
+    error "The cleaned file is empty or was not created. Aborting."
     return 1
   fi
 
@@ -341,48 +344,48 @@ cleanmetadata_file() {
   # Step 2: Apply format-specific optimization
   case "${ext,,}" in
     pdf)
-      echo "📰 Optimizing PDF..."
+      info "Optimizing PDF..."
       # Ghostscript optimization with ebook settings for size reduction
       # Redirect stderr to /dev/null to suppress all non-error Ghostscript logs
       if ! gs -sDEVICE="$GS_DEVICE" -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
          -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
          -sOutputFile="$tmp_optimized" "$tmp_cleaned" 2>/dev/null; then
-         echo "⚠️ PDF optimization failed. Using cleaned file instead." >&2
-         cp "$tmp_cleaned" "$tmp_optimized"
+         warning "PDF optimization failed. Using cleaned file instead."
+          cp "$tmp_cleaned" "$tmp_optimized"
       else
         # Validate the optimized PDF is readable by attempting to parse it
         if ! gs -dNODISPLAY -dQUIET -dBATCH "$tmp_optimized" 2>/dev/null; then
-            echo "⚠️ Optimized PDF appears corrupted. Using cleaned file instead." >&2
+            warning "Optimized PDF appears corrupted. Using cleaned file instead."
             cp "$tmp_cleaned" "$tmp_optimized"
         fi
       fi
       ;;
     png)
-      echo "🌆 Optimizing PNG..."
+      info "Optimizing PNG..."
       # PNG optimization using pngquant with quality range
       if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned"; then
-        echo "⚠️ PNG optimization failed. Using cleaned file instead." >&2
+        warning "PNG optimization failed. Using cleaned file instead."
         cp "$tmp_cleaned" "$tmp_optimized"
       fi
       ;;
     jpg|jpeg)
-      echo "📸 Optimizing JPEG..."
+      info "Optimizing JPEG..."
       # JPEG optimization using jpegoptim with quality limit
       if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized"; then
-        echo "⚠️ JPEG optimization failed. Using cleaned file instead." >&2
+        warning "JPEG optimization failed. Using cleaned file instead."
         cp "$tmp_cleaned" "$tmp_optimized"
       fi
       ;;
     *)
       # This should never be reached due to earlier validation, but included for safety
-      echo "🔸 Format not supported for optimization: $f"
+      info "Format not supported for optimization: $f"
       cp "$tmp_cleaned" "$tmp_optimized"
       ;;
   esac
 
   # Verify the optimized file was created and is not empty
   if [ ! -s "$tmp_optimized" ]; then
-      echo "❌ Error: Optimized file is empty. Using cleaned file instead." >&2
+      error "Optimized file is empty. Using cleaned file instead."
       cp "$tmp_cleaned" "$tmp_optimized"
   fi
 
@@ -394,7 +397,7 @@ cleanmetadata_file() {
   # Use the optimized version only if it's smaller than the cleaned version
   local source_file_for_final
   if [ "$tamanho_opt" -ge "$tamanho_limpo" ]; then
-    echo "⚠️ Optimized file is not smaller, using cleaned file."
+    warning "Optimized file is not smaller, using cleaned file."
     source_file_for_final="$tmp_cleaned"
   else
     source_file_for_final="$tmp_optimized"
@@ -402,10 +405,10 @@ cleanmetadata_file() {
 
   # Step 3: Handle file output based on replace flag
   if [[ "$replace_original" == "1" ]]; then
-    echo "🔄 Replacing original file..."
+    info "Replacing original file..."
     # Use -n to avoid overwriting other files if the original name is reused
     if ! mv -n "$source_file_for_final" "$f"; then
-        echo "❌ Error replacing original file. A file with the original name may already exist." >&2
+        error "Error replacing original file. A file with the original name may already exist."
         return 1
     fi
     # Securely delete the original file if shred is available
@@ -417,13 +420,13 @@ cleanmetadata_file() {
   else
     # Create a new file with the _cleaned_opt suffix
     if ! mv -n "$source_file_for_final" "$final"; then
-        echo "⚠️  Output file already exists or could not be moved: $final" >&2
+        warning "Output file already exists or could not be moved: $final"
         return 1
     fi
   fi
 
   # Verify metadata was successfully removed
-  echo "✓ Metadata removed:"
+  info "Metadata removed:"
   exiftool -G1 "$final" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (clean)"
 
   # Calculate and display file size change
@@ -445,7 +448,7 @@ cleanmetadata_file() {
   # Display size comparison
   printf "📊 Size: Before: %8s → After: %8s | Δ %s%s\n" \
          "$antes_h" "$depois_h" "$sinal" "$(numfmt --to=iec --suffix=B $diff_abs)"
-  echo "────────────────────────────────────────────"
+  print_separator
 }
 
 # --- Script Entrypoint ---

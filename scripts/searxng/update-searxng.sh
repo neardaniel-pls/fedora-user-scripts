@@ -42,28 +42,32 @@
 #   - Uncommitted changes are detected and reported to prevent data loss
 #   - The script refuses to run on non-git repositories or unexpected remotes
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-# Treat unset variables as an error when substituting.
-set -u
-# Pipes return the exit status of the last command to exit with a non-zero status.
-set -o pipefail
+# Source shared libraries
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/logging.sh"
 
-# ===== Appearance (colors) =====
-# ANSI color codes for formatted output
-bold="\033[1m"; blue="\033[34m"; green="\033[32m"; red="\033[31m"; reset="\033[0m"
+# Initialize script with version
+init_script "1.0.0"
+
+# Initialize logging
+init_logging
 
 # Display script introduction with formatting
-echo -e "${bold}${blue}🚀 Updating searxng...${reset}"
+print_header "Updating SearxNG"
 
 # ===== Configuration =====
 # Path to the local SearxNG repository
 SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
 
+# ===== Dependency Check =====
+# Verify required tools are available
+check_dependencies git
+
 # ===== Directory Validation =====
 # Verify the SearxNG directory exists
 if [ ! -d "$SEARXNG_DIR" ]; then
-  echo -e "${bold}${red}Error: Directory $SEARXNG_DIR not found.${reset}"
+  error "Directory $SEARXNG_DIR not found."
   echo "Please ensure SearxNG is installed in the expected location."
   exit 1
 fi
@@ -74,16 +78,16 @@ cd "$SEARXNG_DIR" || exit 1
 # ===== Repository Validation =====
 # Verify the directory is a git repository
 if [ ! -d ".git" ]; then
-  echo -e "${bold}${red}Error: Not a git repository.${reset}"
+  error "Not a git repository."
   echo "The specified directory is not a valid git repository."
   exit 1
 fi
 
 # Verify the remote origin matches the official SearxNG repository
-echo -e "${bold}Verifying repository...${reset}"
+info "Verifying repository..."
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
 if [[ ! "$REMOTE_URL" =~ github\.com[:/]searxng/searxng ]]; then
-  echo -e "${bold}${red}Error: Unexpected git remote origin: $REMOTE_URL${reset}"
+  error "Unexpected git remote origin: $REMOTE_URL"
   echo "For security reasons, this script only works with the official SearxNG repository."
   exit 1
 fi
@@ -91,26 +95,26 @@ fi
 # ===== Working Directory Validation =====
 # Check for uncommitted changes that could be lost during update
 if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-  echo -e "${bold}${red}Warning: You have uncommitted changes. Please commit or stash them first.${reset}"
+  error "You have uncommitted changes. Please commit or stash them first."
   echo "Use 'git commit' to save changes or 'git stash' to temporarily save them."
   exit 1
 fi
 
 # ===== Repository Update =====
 # Pull the latest changes from the official repository
-echo -e "${bold}Checking for updates...${reset}"
+info "Checking for updates..."
 
 # Try to update from main branch first, then fall back to master
 # Use --ff-only to ensure only fast-forward updates are applied
 if git pull origin main --ff-only 2>/dev/null || git pull origin master --ff-only 2>/dev/null; then
   # Check if any actual changes were downloaded
   if git diff --quiet HEAD@{1} HEAD 2>/dev/null; then
-    echo -e "${bold}${green}✅ SearxNG is already up to date.${reset}"
+    success "SearxNG is already up to date."
   else
-    echo -e "${bold}${green}✅ SearxNG updated successfully!${reset}"
+    success "SearxNG updated successfully!"
   fi
 else
-  echo -e "${bold}${red}❌ Failed to update. Please check for conflicts or network issues.${reset}"
+  error "Failed to update. Please check for conflicts or network issues."
   echo "You may need to resolve conflicts or check your internet connection."
   exit 1
 fi

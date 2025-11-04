@@ -1,5 +1,51 @@
 #!/bin/bash
-# Script to run the searxng web application
+#
+# run-searxng.sh - SearxNG privacy-respecting search engine launcher
+#
+# DESCRIPTION:
+#   This script launches the SearxNG web application, a privacy-respecting search
+#   engine that aggregates results from various search engines while protecting
+#   user privacy. It handles virtual environment activation, port validation,
+#   and graceful shutdown procedures. The script includes comprehensive error
+#   checking and provides colored output for better user experience.
+#
+# USAGE:
+#   ./run-searxng.sh
+#
+# OPTIONS:
+#   SEARXNG_PORT - Optional environment variable to specify the port (default: 8888)
+#                 Example: SEARXNG_PORT=8080 ./run-searxng.sh
+#
+# EXAMPLES:
+#   # Run SearxNG on default port (8888)
+#   ./run-searxng.sh
+#
+#   # Run SearxNG on custom port
+#   SEARXNG_PORT=8080 ./run-searxng.sh
+#
+#   # Stop any existing SearxNG instance and restart
+#   lsof -ti :8888 | xargs kill -9 2>/dev/null || true
+#   ./run-searxng.sh
+#
+# DEPENDENCIES:
+#   - python3: Python interpreter for running the web application
+#   - virtual environment: Pre-configured Python environment with SearxNG dependencies
+#   - lsof or ss: For port conflict detection (standard Unix utilities)
+#   - SearxNG installation: Expected at $HOME/Documents/code/searxng/
+#
+# OPERATIONAL NOTES:
+#   - The script expects SearxNG to be installed in $HOME/Documents/code/searxng/
+#   - A virtual environment named 'searxng-venv' should exist in the SearxNG base directory
+#   - The default port is 8888 but can be overridden via the SEARXNG_PORT environment variable
+#   - The script includes signal handlers for graceful shutdown (SIGINT, SIGTERM)
+#   - Port conflicts are detected and reported before attempting to start the service
+#   - Exit codes: 0 for success, 1 for configuration errors or port conflicts
+#
+# SECURITY CONSIDERATIONS:
+#   - The script runs SearxNG within an isolated virtual environment
+#   - Port conflicts are checked to prevent unexpected service binding
+#   - The virtual environment is properly deactivated on exit to prevent contamination
+#   - The script changes to the SearxNG application directory before execution
 
 # Exit immediately if a command exits with a non-zero status.
 set -e
@@ -9,88 +55,115 @@ set -u
 set -o pipefail
 
 # ===== Configuration =====
+# Base directory for SearxNG installation
 SEARXNG_BASE="$HOME/Documents/code/searxng"
+# Virtual environment directory for Python dependencies
 SEARXNG_VENV="$SEARXNG_BASE/searxng-venv"
+# SearxNG application directory
 SEARXNG_APP="$SEARXNG_BASE/searxng"
+# Path to the main web application script
 WEBAPP_SCRIPT="$SEARXNG_APP/searx/webapp.py"
-SEARXNG_PORT="${SEARXNG_PORT:-8888}"  # Default port, can be overridden
+# Port for the web service (default: 8888, can be overridden via environment variable)
+SEARXNG_PORT="${SEARXNG_PORT:-8888}"
 
-# ===== Appearance =====
+# ===== Appearance (colors) =====
+# ANSI color codes for formatted output
 bold="\033[1m"; blue="\033[34m"; green="\033[32m"; red="\033[31m"; yellow="\033[33m"; reset="\033[0m"
 
+# Display script introduction with formatting
 echo -e "${bold}${blue}🚀 Starting SearxNG...${reset}"
 
-# ===== Validation =====
+# ===== Environment Validation =====
+# Verify all required directories and files exist before proceeding
 
-# Check if base directory exists
+# Check if base SearxNG directory exists
 if [ ! -d "$SEARXNG_BASE" ]; then
   echo -e "${bold}${red}Error: SearxNG directory not found: $SEARXNG_BASE${reset}"
+  echo "Please ensure SearxNG is installed in the expected location."
   exit 1
 fi
 
-# Check if virtual environment exists
+# Check if virtual environment directory exists
 if [ ! -d "$SEARXNG_VENV" ]; then
   echo -e "${bold}${red}Error: Virtual environment not found: $SEARXNG_VENV${reset}"
+  echo "Please create a virtual environment for SearxNG dependencies."
   exit 1
 fi
 
-# Check if activation script exists
+# Check if virtual environment activation script exists
 if [ ! -f "$SEARXNG_VENV/bin/activate" ]; then
   echo -e "${bold}${red}Error: Virtual environment activation script not found${reset}"
+  echo "The virtual environment appears to be corrupted or incomplete."
   exit 1
 fi
 
-# Check if webapp.py exists
+# Check if the main web application script exists
 if [ ! -f "$WEBAPP_SCRIPT" ]; then
   echo -e "${bold}${red}Error: webapp.py not found: $WEBAPP_SCRIPT${reset}"
+  echo "Please ensure SearxNG is properly installed."
   exit 1
 fi
 
-# Check if SearxNG is already running on the port
+# ===== Port Conflict Detection =====
+# Check if the specified port is already in use to prevent conflicts
+
+# Try using lsof first (more detailed information)
 if command -v lsof &> /dev/null; then
   if lsof -Pi :$SEARXNG_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo -e "${bold}${yellow}⚠️  Warning: Port $SEARXNG_PORT is already in use.${reset}"
-    echo -e "SearxNG may already be running. Use 'lsof -ti :$SEARXNG_PORT | xargs kill' to stop it."
+    echo "SearxNG may already be running. Use 'lsof -ti :$SEARXNG_PORT | xargs kill' to stop it."
     exit 1
   fi
+# Fallback to ss if lsof is not available
 elif command -v ss &> /dev/null; then
   if ss -ltn "sport = :$SEARXNG_PORT" | grep -q ":$SEARXNG_PORT"; then
     echo -e "${bold}${yellow}⚠️  Warning: Port $SEARXNG_PORT is already in use.${reset}"
-    echo -e "SearxNG may already be running."
+    echo "SearxNG may already be running."
     exit 1
   fi
 fi
 
-# ===== Activation =====
+# ===== Virtual Environment Activation =====
+# Activate the Python virtual environment to access SearxNG dependencies
 
 echo -e "${bold}Activating virtual environment...${reset}"
+# Source the activation script (shellcheck disabled as this is a standard pattern)
 # shellcheck disable=SC1091
 source "$SEARXNG_VENV/bin/activate"
 
-# Verify activation worked
+# Verify that the virtual environment was successfully activated
 if [ -z "${VIRTUAL_ENV:-}" ]; then
   echo -e "${bold}${red}Error: Failed to activate virtual environment${reset}"
+  echo "The virtual environment may be corrupted."
   exit 1
 fi
 
 echo -e "${bold}${green}✅ Virtual environment activated${reset}"
 
-# ===== Cleanup handler =====
+# ===== Cleanup Handler =====
+# Define a function to handle graceful shutdown when signals are received
 cleanup() {
   echo -e "\n${bold}${yellow}🛑 Shutting down SearxNG...${reset}"
+  # Deactivate the virtual environment (ignore errors if already deactivated)
   deactivate 2>/dev/null || true
   exit 0
 }
 
+# Register the cleanup function to handle SIGINT (Ctrl+C) and SIGTERM signals
 trap cleanup SIGINT SIGTERM
 
-# ===== Run SearxNG =====
+# ===== Launch SearxNG Application =====
+# Change to the application directory and start the web server
 
 echo -e "${bold}${green}✅ Starting SearxNG web application...${reset}"
 echo -e "${bold}Access SearxNG at: http://localhost:$SEARXNG_PORT${reset}\n"
 
+# Change to the SearxNG application directory (exit if this fails)
 cd "$SEARXNG_APP" || exit 1
+
+# Start the SearxNG web application
+# This will run until interrupted or terminated
 python3 searx/webapp.py
 
-# Deactivate on normal exit
+# Deactivate the virtual environment on normal exit
 deactivate

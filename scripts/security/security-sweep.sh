@@ -1,14 +1,59 @@
 #!/bin/bash
 #
-# security-sweep.sh
+# security-sweep.sh - Comprehensive security scanning and auditing utility for Fedora systems
 #
-# A comprehensive security sweep script for Fedora systems.
-# This script performs the following checks:
-# 1. System File Integrity Check (rpm -Va)
-# 2. Rootkit Scan (chkrootkit)
-# 3. Malware Scan (ClamAV)
-# 4. Security Audit (Lynis)
-# 5. Package & Dependency Verification (dnf check)
+# DESCRIPTION:
+#   This script performs a thorough security assessment of Fedora Linux systems
+#   using multiple specialized tools. It conducts file integrity checks, rootkit
+#   detection, malware scanning, security auditing, and package verification.
+#   The script generates detailed logs and provides a color-coded summary of results.
+#   It's designed to be run regularly as part of a security maintenance routine.
+#
+# USAGE:
+#   sudo ./security-sweep.sh [OPTIONS]
+#
+# OPTIONS:
+#   -i: Run Integrity check (rpm -Va) only
+#   -r: Run Rootkit scan (chkrootkit) only
+#   -m: Run Malware scan (ClamAV) only
+#   -a: Run Security Audit (Lynis) only
+#   -p: Run Package check (dnf check) only
+#   -e: Exclude home directories from scans (Privacy option)
+#   -h: Display this help message
+#
+# EXAMPLES:
+#   # Run all security scans (default behavior)
+#   sudo ./security-sweep.sh
+#
+#   # Run only malware and rootkit scans
+#   sudo ./security-sweep.sh -m -r
+#
+#   # Run all scans but exclude home directories for privacy
+#   sudo ./security-sweep.sh -e
+#
+#   # Run only the integrity check
+#   sudo ./security-sweep.sh -i
+#
+# DEPENDENCIES:
+#   - rpm: For package integrity verification
+#   - dnf or dnf5: For package management and dependency checking
+#   - chkrootkit: For rootkit detection
+#   - clamscan/freshclam: For malware scanning and definition updates
+#   - lynis: For comprehensive security auditing
+#
+# OPERATIONAL NOTES:
+#   - This script MUST be run with root privileges for comprehensive scanning
+#   - Logs are created in /var/log/ with timestamp and restricted permissions (600)
+#   - The script automatically rotates logs, keeping only the 7 most recent
+#   - Scans may take considerable time, especially the malware scan
+#   - The script handles tool failures gracefully and continues with other scans
+#   - Exit codes: 0 for success, 1 for errors or interruption
+#
+# SECURITY CONSIDERATIONS:
+#   - The script requires root access to scan system files and processes
+#   - Log files are created with 600 permissions for security
+#   - The -e option allows excluding home directories for privacy compliance
+#   - All scan outputs are logged for forensic analysis
 #
 
 # Exit immediately if a command exits with a non-zero status.
@@ -33,38 +78,100 @@ package_status="Not Run"
 exclude_home=0
 
 # ===== Helper Functions =====
+#
+# log_message - Write timestamped messages to log file without color codes
+#
+# DESCRIPTION:
+#   Centralized logging function that writes messages with timestamps to log file.
+#   Strips color codes to ensure clean log files suitable for forensic analysis.
+#
+# PARAMETERS:
+#   $1 - Log level (INFO, SUCCESS, WARNING, ERROR, FINDINGS, SCAN_OUTPUT)
+#   $2 - Message to log
+#
 log_message() {
-    # Logs to file without color codes
-    local level="$1"
-    local message="$2"
+    local level="$1"    # Log level for categorization
+    local message="$2"   # Message content
     echo "$(date '+%Y-%m-%d %H:%M:%S') - ${level}: ${message}" >> "$LOG_FILE"
 }
 
+#
+# info - Display informational message and log it
+#
+# DESCRIPTION:
+#   Shows an informational message to user and logs it for record-keeping.
+#   Uses blue color with info icon for visual distinction.
+#
+# PARAMETERS:
+#   $1 - Message to display and log
+#
 info() {
     echo -e "${bold}${blue}ℹ️  $1${reset}"
     log_message "INFO" "$1"
 }
 
+#
+# success - Display success message and log it
+#
+# DESCRIPTION:
+#   Shows a success message to user and logs it for record-keeping.
+#   Uses green color with checkmark icon for positive feedback.
+#
+# PARAMETERS:
+#   $1 - Message to display and log
+#
 success() {
     echo -e "${bold}${green}✅ $1${reset}"
     log_message "SUCCESS" "$1"
 }
 
+#
+# warning - Display warning message and log it
+#
+# DESCRIPTION:
+#   Shows a warning message to user and logs it for record-keeping.
+#   Uses yellow color with warning icon for attention without being critical.
+#
+# PARAMETERS:
+#   $1 - Message to display and log
+#
 warning() {
     echo -e "${bold}${yellow}⚠️  $1${reset}"
     log_message "WARNING" "$1"
 }
 
+#
+# error - Display error message and log it
+#
+# DESCRIPTION:
+#   Shows an error message to user and logs it for record-keeping.
+#   Uses red color with X icon and outputs to stderr for proper error handling.
+#
+# PARAMETERS:
+#   $1 - Message to display and log
+#
 error() {
     echo -e "${bold}${red}❌ $1${reset}" >&2
     log_message "ERROR" "$1"
 }
 
 # ===== Scan Functions =====
-
+#
+# check_dependencies - Verify all required security tools are installed
+#
+# DESCRIPTION:
+#   Checks for the presence of all required security tools before starting scans.
+#   This prevents partial scans due to missing dependencies and provides clear
+#   feedback about what needs to be installed.
+#
+# RETURNS:
+#   Exits with status 1 if any dependencies are missing
+#
 check_dependencies() {
     info "Checking for required tools..."
-    local missing_deps=0
+    local missing_deps=0  # Flag to track if any dependencies are missing
+    
+    # Check for each required tool
     for cmd in rpm dnf chkrootkit clamscan lynis; do
         if ! command -v "$cmd" &> /dev/null; then
             error "Dependency '$cmd' is not installed."
@@ -72,6 +179,7 @@ check_dependencies() {
         fi
     done
 
+    # Exit if any dependencies are missing
     if [ "$missing_deps" -eq 1 ]; then
         error "Please install the missing dependencies and try again."
         exit 1
@@ -79,19 +187,35 @@ check_dependencies() {
     success "All dependencies are installed."
 }
 
+#
+# run_integrity_check - Verify system file integrity using RPM
+#
+# DESCRIPTION:
+#   Runs 'rpm -Va' to verify all installed packages against their original
+#   checksums. This detects unauthorized modifications to system files.
+#   The output is analyzed to determine if any issues were found.
+#
+# RETURNS:
+#   Sets integrity_status variable based on scan results
+#
 run_integrity_check() {
     info "Starting System File Integrity Check (rpm -Va)..."
+    
+    # Run RPM verification and capture output
     if output=$(sudo rpm -Va 2>&1); then
         if [ -z "$output" ]; then
+            # No output means all files passed verification
             success "System file integrity check passed. No issues found."
             integrity_status="${green}Passed${reset}"
         else
+            # Output indicates some files have issues
             warning "System file integrity check completed with findings. See log for details."
             echo "$output"
             log_message "FINDINGS" "rpm -Va found issues:\n---\n$output\n---"
             integrity_status="${yellow}Findings${reset}"
         fi
     else
+        # Command failed to execute
         error "System file integrity check failed to run."
         echo "$output"
         log_message "ERROR" "rpm -Va failed:\n---\n$output\n---"
@@ -100,9 +224,23 @@ run_integrity_check() {
     echo
 }
 
+#
+# run_rootkit_scan - Scan for rootkits using chkrootkit
+#
+# DESCRIPTION:
+#   Runs chkrootkit to detect known rootkits and signs of system compromise.
+#   The output is analyzed for the "INFECTED" keyword to determine if any
+#   potential threats were found.
+#
+# RETURNS:
+#   Sets rootkit_status variable based on scan results
+#
 run_rootkit_scan() {
     info "Starting Rootkit Scan (chkrootkit)..."
+    
+    # Run chkrootkit and capture output
     if output=$(sudo chkrootkit 2>&1); then
+        # Check if any infections were reported
         if echo "$output" | grep -q "INFECTED"; then
             warning "chkrootkit found potential issues. See log for details."
             rootkit_status="${yellow}Findings${reset}"
@@ -113,6 +251,7 @@ run_rootkit_scan() {
         echo "$output"
         log_message "SCAN_OUTPUT" "chkrootkit output:\n---\n$output\n---"
     else
+        # Command failed to execute
         error "chkrootkit failed to run."
         echo "$output"
         log_message "ERROR" "chkrootkit failed:\n---\n$output\n---"
@@ -121,8 +260,21 @@ run_rootkit_scan() {
     echo
 }
 
+#
+# run_malware_scan - Scan for malware using ClamAV
+#
+# DESCRIPTION:
+#   Updates ClamAV virus definitions and performs a comprehensive system scan.
+#   Excludes system directories that would generate false positives or cause issues.
+#   Optionally excludes home directories based on the exclude_home flag.
+#
+# RETURNS:
+#   Sets malware_status variable based on scan results
+#
 run_malware_scan() {
     info "Starting Malware Scan (ClamAV)..."
+    
+    # Update virus definitions for maximum protection
     info "Updating ClamAV virus definitions (freshclam)..."
     if sudo freshclam; then
         success "ClamAV definitions updated."
@@ -130,14 +282,19 @@ run_malware_scan() {
         warning "Could not update ClamAV definitions. Scanning with existing database."
     fi
 
+    # Configure scan options
     info "Running ClamAV scan... (This may take a long time)"
     local clam_opts=(-r -i --exclude-dir="^/sys" --exclude-dir="^/proc" --exclude-dir="^/dev")
+    
+    # Add home directory exclusion if requested
     if [ "$exclude_home" -eq 1 ]; then
         info "Excluding home directories from malware scan."
         clam_opts+=(--exclude-dir="^/home")
     fi
 
+    # Run the malware scan
     if output=$(sudo clamscan "${clam_opts[@]}" / 2>&1); then
+        # Check if any infected files were found
         if echo "$output" | grep -q "Infected files: 0"; then
             success "ClamAV scan completed. No malware found."
             malware_status="${green}Passed${reset}"
@@ -148,6 +305,7 @@ run_malware_scan() {
         echo "$output"
         log_message "SCAN_OUTPUT" "ClamAV output:\n---\n$output\n---"
     else
+        # Command failed to execute
         error "ClamAV scan failed to run."
         echo "$output"
         log_message "ERROR" "ClamAV failed:\n---\n$output\n---"
@@ -156,16 +314,30 @@ run_malware_scan() {
     echo
 }
 
+#
+# run_security_audit - Perform comprehensive security audit using Lynis
+#
+# DESCRIPTION:
+#   Runs Lynis to perform a comprehensive security audit of the system.
+#   Lynis checks hundreds of security settings and provides recommendations.
+#   The full report is saved to /var/log/lynis.log for detailed analysis.
+#
+# RETURNS:
+#   Sets audit_status variable based on scan results
+#
 run_security_audit() {
     info "Starting Security Audit (Lynis)..."
     info "Note: The full Lynis report can be found in /var/log/lynis.log"
+    
+    # Run Lynis audit system
     if output=$(sudo lynis audit system --quiet 2>&1); then
         success "Lynis security audit completed."
         audit_status="${green}Completed${reset}"
-        # Lynis provides a summary, which is good to have in our log.
+        # Lynis provides a summary, which is good to have in our log
         echo "$output"
         log_message "SCAN_OUTPUT" "Lynis output:\n---\n$output\n---"
     else
+        # Command failed to execute
         error "Lynis security audit failed to run."
         echo "$output"
         log_message "ERROR" "Lynis failed:\n---\n$output\n---"
@@ -174,8 +346,21 @@ run_security_audit() {
     echo
 }
 
+#
+# run_package_check - Verify package dependencies and consistency
+#
+# DESCRIPTION:
+#   Uses dnf/dnf5 to check for package dependency issues and inconsistencies.
+#   Automatically detects whether the system uses dnf5 or classic dnf.
+#   Handles dnf's special exit code 100 which indicates issues found (not an error).
+#
+# RETURNS:
+#   Sets package_status variable based on check results
+#
 run_package_check() {
     info "Starting Package & Dependency Verification..."
+    
+    # Detect which package manager is available
     local DNF
     if command -v dnf5 >/dev/null 2>&1; then
       DNF="dnf5"
@@ -185,20 +370,24 @@ run_package_check() {
     info "Using ${DNF} for package check."
 
     # Temporarily disable exit on error to handle dnf's exit code 100
+    # DNF returns 100 when issues are found, which is not a command failure
     set +e
     output=$(sudo "${DNF}" check 2>&1)
     exit_code=$?
     set -e
 
+    # Interpret the exit code
     if [ $exit_code -eq 0 ]; then
         success "Package dependency check passed. No issues found."
         package_status="${green}Passed${reset}"
     elif [ $exit_code -eq 100 ]; then
+        # DNF found issues but command executed successfully
         warning "Package dependency check found issues. See log for details."
         echo "$output"
         log_message "FINDINGS" "DNF Check found issues:\n---\n$output\n---"
         package_status="${yellow}Findings${reset}"
     else
+        # Command failed to execute
         error "Package dependency check failed to run (Exit code: $exit_code)."
         echo "$output"
         log_message "ERROR" "DNF Check failed:\n---\n$output\n---"

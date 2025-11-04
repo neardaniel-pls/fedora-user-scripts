@@ -55,12 +55,26 @@ For new users, a comprehensive guide for the initial setup of a Fedora system is
 
 - [Fedora Initial Setup Guide](FEDORA_INITAL_SETUP.md)
 
-## How-to
+## Documentation
 
-- [SearXNG Guide](scripts/how-to/searxng-guide.md)
-- [Security Sweep Script Guide](scripts/how-to/security-sweep-guide.md)
-- [Clean Metadata Guide](scripts/how-to/clean-metadata-guide.md)
-- [Fedora Update Guide](scripts/how-to/fedora-update-guide.md)
+### 📚 [Documentation Hub](docs/README.md)
+Comprehensive documentation with guides, API reference, and examples
+
+### 🚀 [Quick Start Guide](docs/QUICK_START.md)
+Get up and running in 5 minutes!
+
+### 📖 [Guides](docs/guides/)
+Detailed documentation for each script:
+- [Clean Metadata Guide](docs/guides/clean-metadata-guide.md)
+- [Fedora Update Guide](docs/guides/fedora-update-guide.md)
+- [SearXNG Guide](docs/guides/searxng-guide.md)
+- [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
+
+### ❓ [FAQ](docs/FAQ.md)
+Frequently asked questions and troubleshooting
+
+### 📋 [Development Workflow](DEVELOPMENT_WORKFLOW.md)
+Guide for contributing to the project
 
 ---
 
@@ -109,8 +123,6 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
-
-For detailed guidelines, see our [Contributing Guide](CONTRIBUTING.md).
 
 ## License
 

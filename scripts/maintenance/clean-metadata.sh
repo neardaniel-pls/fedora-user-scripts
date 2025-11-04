@@ -42,6 +42,11 @@
 #   - numfmt: For human-readable number formatting
 #   - shred: Optional, for secure file deletion when using --replace
 #
+# LIBRARY DEPENDENCIES:
+#   - lib/colors.sh: For standardized color output and formatting
+#   - lib/common.sh: For standardized script initialization, dependency checking,
+#                    temporary file management, and argument parsing
+#
 # OPERATIONAL NOTES:
 #   - Files with "cleaned" or "cleaned_opt" in their names are automatically skipped
 #   - Symbolic links are not processed for security reasons
@@ -54,15 +59,45 @@
 #
 # For more detailed information, see clean-metadata-guide.md
 
-# Source shared colors library
+# Source shared libraries
 source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
-# Treat unset variables as an error when substituting.
-set -u
-# Pipes return the exit status of the last command to exit with a non-zero status.
-set -o pipefail
+# Check for help and version arguments before dependency checks
+for arg in "$@"; do
+    case "$arg" in
+        --help|-h)
+            cat << 'EOF'
+Usage: cleanmetadata [OPTIONS] <file|directory> [...]
+
+Remove metadata and optimize PDF, PNG, and JPEG files.
+
+Options:
+  --help, -h     Show this help message
+  --version      Display version information and exit
+  --replace      Replace original files instead of creating copies (use with caution)
+  --verbose      Show metadata before cleaning
+
+Examples:
+  cleanmetadata document.pdf
+  cleanmetadata ~/Documents/
+  cleanmetadata --replace sensitive.pdf
+
+For more information, see clean-metadata-guide.md
+EOF
+            exit 0
+            ;;
+        --version)
+            # Initialize script minimally for version display
+            init_script "1.0.0"
+            show_version
+            exit 0
+            ;;
+    esac
+done
+
+# Initialize script with common settings
+init_script "1.0.0"
 
 # --- Configuration ---
 # Set quality and optimization parameters with environment variable overrides
@@ -71,22 +106,6 @@ readonly PNG_QUALITY="${PNG_QUALITY:-65-80}"    # PNG quality range (min-max)
 readonly JPEG_QUALITY="${JPEG_QUALITY:-80}"     # JPEG quality percentage
 readonly PDF_SETTINGS="${PDF_SETTINGS:-/ebook}" # Ghostscript PDF preset for size optimization
 readonly GS_DEVICE="${GS_DEVICE:-pdfwrite}"     # Ghostscript device for PDF output
-
-# --- Dependency Check ---
-# Verify all required tools are available before proceeding
-for cmd in exiftool gs pngquant jpegoptim numfmt; do
-  if ! command -v "$cmd" &> /dev/null; then
-    echo "Error: Dependency '$cmd' is not installed." >&2
-    exit 1
-  fi
-done
-
-# --- Temporary Directory ---
-# Create a secure temporary directory and ensure it's cleaned up on exit
-# Using mktemp -d creates a directory with restricted permissions (700)
-TMP_DIR=$(mktemp -d)
-# Set up cleanup trap to remove temporary directory on script exit (normal or error)
-trap 'rm -rf "$TMP_DIR"' EXIT
 
 # --- Main Function ---
 #
@@ -112,26 +131,6 @@ cleanmetadata() {
   # Process command-line arguments using a while loop and case statement
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --help|-h)
-        cat << 'EOF'
-Usage: cleanmetadata [OPTIONS] <file|directory> [...]
-
-Remove metadata and optimize PDF, PNG, and JPEG files.
-
-Options:
-  --help, -h     Show this help message
-  --replace      Replace original files instead of creating copies (use with caution)
-  --verbose      Show metadata before cleaning
-
-Examples:
-  cleanmetadata document.pdf
-  cleanmetadata ~/Documents/
-  cleanmetadata --replace sensitive.pdf
-
-For more information, see clean-metadata-guide.md
-EOF
-        return 0
-        ;;
       --replace)
         replace_original=1
         shift
@@ -147,6 +146,9 @@ EOF
         ;;
     esac
   done
+  
+  # Parse common arguments for verbose mode support
+  parse_common_args "${paths[@]}"
 
   # Restore positional parameters with just the file/directory paths
   set -- "${paths[@]}"
@@ -157,6 +159,15 @@ EOF
     echo "Try 'cleanmetadata --help' for more information." >&2
     return 1
   fi
+  
+  # --- Dependency Check ---
+  # Verify all required tools are available before proceeding
+  check_dependencies exiftool gs pngquant jpegoptim numfmt
+  
+  # --- Temporary Directory ---
+  # Create a secure temporary directory with automatic cleanup
+  create_temp_dir "cleanmetadata"
+  TMP_DIR="$TEMP_DIR"
 
   # Initialize error counter for batch operations
   local error_count=0

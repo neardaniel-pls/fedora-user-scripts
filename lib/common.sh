@@ -137,25 +137,24 @@ parse_common_args() {
 #
 create_temp_dir() {
     local prefix="${1:-script}"
-    local temp_dir
     
     # Create temporary directory with restricted permissions
-    temp_dir=$(mktemp -d -t "${prefix}.XXXXXX") || {
+    TEMP_DIR=$(mktemp -d -t "${prefix}.XXXXXX") || {
         error "Failed to create temporary directory."
         exit 1
     }
     
     # Set secure permissions
-    chmod 700 "$temp_dir" || {
+    chmod 700 "$TEMP_DIR" || {
         error "Failed to set permissions on temporary directory."
         exit 1
     }
     
     # Set up cleanup trap
-    trap 'rm -rf "$temp_dir" 2>/dev/null || true' EXIT
+    trap 'rm -rf "$TEMP_DIR" 2>/dev/null || true' EXIT
     
     # Export for use in calling script
-    export TEMP_DIR="$temp_dir"
+    export TEMP_DIR
     
     return 0
 }

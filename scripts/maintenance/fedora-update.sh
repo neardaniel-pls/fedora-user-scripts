@@ -108,8 +108,14 @@ confirm_and_execute_destructive() {
 
 # ===== Verify sudo privileges upfront =====
 # Early verification to fail fast if sudo is unavailable
-info "Verifying sudo privileges..."
-sudo -v || { error "sudo authentication failed. Exiting."; exit 1; }
+if command -v sudo >/dev/null 2>&1; then
+    info "Verifying sudo privileges..."
+    sudo -v || { error "sudo authentication failed. Exiting."; exit 1; }
+    SUDO_AVAILABLE=true
+else
+    warning "sudo is not available. Some operations may be skipped."
+    SUDO_AVAILABLE=false
+fi
 
 # ===== Detect dnf5 vs classic dnf =====
 # Fedora 42+ uses dnf5 by default, but we need to support older versions
@@ -119,8 +125,13 @@ else
     DNF="dnf"   # Fallback for systems still using classic dnf
 fi
 
-# Construct the package manager command with sudo prefix
-PKG="sudo ${DNF}"
+# Construct the package manager command with sudo prefix (if available)
+if [ "$SUDO_AVAILABLE" = true ]; then
+    PKG="sudo ${DNF}"
+else
+    PKG="${DNF}"
+    warning "Running package manager without sudo. This may have limited functionality."
+fi
 
 # ===== Update repository cache =====
 # Refresh the repository metadata to ensure we have the latest package information
@@ -247,12 +258,20 @@ while true; do
         case "$opt" in
             1)
                 # System restart option
-                confirm_and_execute_destructive "RESTART" "sudo reboot"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "RESTART" "sudo reboot"
+                else
+                    warning "Cannot restart: sudo is not available."
+                fi
                 break
                 ;;
             2)
                 # System shutdown option
-                confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                else
+                    warning "Cannot shut down: sudo is not available."
+                fi
                 break
                 ;;
             3)

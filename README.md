@@ -12,48 +12,36 @@ This repository contains shell scripts designed specifically for Fedora environm
 ## Scripts
 
 ### clean-metadata.sh
-
-- **Purpose:** Cleans metadata from PDF, PNG, and JPEG files and optimizes them.
+- **Purpose:** Cleans metadata from PDF, PNG, and JPEG files and optimizes them
 - **Usage:** `scripts/maintenance/clean-metadata.sh [file|directory]`
 - **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`
 
 ### fedora-update.sh
-
-- **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning.
+- **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning
 - **Usage:** `scripts/maintenance/fedora-update.sh`
-- **Note:** This script is specific to Fedora and uses DNF package manager operations.
+- **Note:** This script is specific to Fedora and uses DNF package manager operations
 
 ### secure-delete.sh
-
-- **Purpose:** Securely deletes files and directories by overwriting them with random data.
+- **Purpose:** Securely deletes files and directories by overwriting them with random data
 - **Usage:** `scripts/security/secure-delete.sh [file|directory]`
 - **Dependencies:** `shred`
 
 ### security-sweep.sh
-
-- **Purpose:** Performs a comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations.
+- **Purpose:** Performs comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations
 - **Usage:** `sudo scripts/security/security-sweep.sh`
 - **Dependencies:** `chkrootkit`, `clamav`, `lynis`
-- **Note:** Fedora-specific security audit script for systems hardening. It will take a long time to run the complete check.
+- **Note:** Fedora-specific security audit script for systems hardening
 
 ### run-searxng.sh
-
-- **Purpose:** Runs the SearXNG instance in a Docker container.
+- **Purpose:** Runs SearXNG instance using Python virtual environment
 - **Usage:** `scripts/searxng/run-searxng.sh`
+- **Dependencies:** python3, virtual environment, SearXNG installation at $HOME/Documents/code/searxng/
 
 ### update-searxng.sh
-
-- **Purpose:** Updates the SearXNG instance by pulling the latest changes from the git repository.
+- **Purpose:** Updates SearXNG instance by pulling latest changes from git repository
 - **Usage:** `scripts/searxng/update-searxng.sh`
+- **Dependencies:** `git`
 - **Note:** This script is included in `scripts/maintenance/fedora-update.sh`
-
----
-
-## Initial Setup
-
-For new users, a comprehensive guide for the initial setup of a Fedora system is available:
-
-- [Fedora Initial Setup Guide](FEDORA_INITAL_SETUP.md)
 
 ## Documentation
 
@@ -76,8 +64,6 @@ Frequently asked questions and troubleshooting
 ### 📋 [Development Workflow](DEVELOPMENT_WORKFLOW.md)
 Guide for contributing to the project
 
----
-
 ## System Requirements
 
 These scripts are designed for **Fedora Linux** distributions. While some scripts may work on other RPM-based systems, they are specifically tested and optimized for:
@@ -91,27 +77,21 @@ These scripts are designed for **Fedora Linux** distributions. While some script
 ### Quick Start
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/neardaniel-pls/fedora-user-scripts.git
-   cd fedora-user-scripts
-   ```
+```bash
+git clone https://github.com/neardaniel-pls/fedora-user-scripts.git
+cd fedora-user-scripts
+```
 
 2. Make scripts executable:
-   ```bash
-   chmod +x scripts/**/*.sh
-   ```
+```bash
+chmod +x scripts/**/*.sh
+```
 
-3. Install dependencies (see individual script documentation)
-
-### Dependencies
-
-Each script has its own dependencies. Check the individual script documentation or run:
+3. Install dependencies (see individual script documentation):
 ```bash
 # Check for common dependencies
 sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
 ```
-
----
 
 ## Contributing
 
@@ -133,7 +113,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🐛 [Report Bugs](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=bug_report.md)
 - 💡 [Request Features](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=feature_request.md)
 - 📖 [Documentation](https://github.com/neardaniel-pls/fedora-user-scripts/wiki)
+- 🙏 [Acknowledgments](https://github.com/neardaniel-pls/fedora-user-scripts/blob/main/README.md#acknowledgments)
 
-## Acknowledgments
+---
 
-Thanks to the Fedora community and all contributors who help improve this project.
+**Note**: For comprehensive Fedora system administration guides, see the companion [fedora-system-setup](https://github.com/yourusername/fedora-system-setup) repository.

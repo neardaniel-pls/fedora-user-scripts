@@ -42,16 +42,208 @@
 #   - Uncommitted changes are detected and reported to prevent data loss
 #   - The script refuses to run on non-git repositories or unexpected remotes
 
-# Source shared libraries
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/logging.sh"
+# --- Color Detection ---
+# Detect if colors should be enabled
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    # Output is to a terminal and NO_COLOR is not set
+    COLORS_ENABLED=1
+else
+    # Output is redirected or NO_COLOR is set
+    COLORS_ENABLED=0
+fi
 
-# Initialize script with version
-init_script "1.0.0"
+# --- Icon Configuration ---
+# Allow disabling icons for environments that don't support Unicode
+USE_ICONS="${USE_ICONS:-1}"
 
-# Initialize logging
-init_logging
+# --- Color Definitions ---
+# Define colors only if colors are enabled
+if (( COLORS_ENABLED )); then
+    readonly BOLD="\033[1m"
+    readonly BLUE="\033[34m"
+    readonly GREEN="\033[32m"
+    readonly YELLOW="\033[33m"
+    readonly RED="\033[31m"
+    readonly RESET="\033[0m"
+else
+    # Set to empty strings when colors are disabled
+    readonly BOLD=""
+    readonly BLUE=""
+    readonly GREEN=""
+    readonly YELLOW=""
+    readonly RED=""
+    readonly RESET=""
+fi
+
+# --- Icon Definitions ---
+# Define icons only if icons are enabled AND colors are enabled
+if (( USE_ICONS && COLORS_ENABLED )); then
+    readonly INFO_ICON="ℹ️"
+    readonly SUCCESS_ICON="✅"
+    readonly WARNING_ICON="⚠️"
+    readonly ERROR_ICON="❌"
+else
+    # Set to empty strings when icons or colors are disabled
+    readonly INFO_ICON=""
+    readonly SUCCESS_ICON=""
+    readonly WARNING_ICON=""
+    readonly ERROR_ICON=""
+fi
+
+# --- Output Functions ---
+info() {
+    local message="$1"
+    echo -e "${BOLD}${BLUE}${INFO_ICON}  ${message}${RESET}"
+}
+
+success() {
+    local message="$1"
+    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} ${message}${RESET}"
+}
+
+warning() {
+    local message="$1"
+    echo -e "${BOLD}${YELLOW}${WARNING_ICON} ${message}${RESET}"
+}
+
+error() {
+    local message="$1"
+    echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
+}
+
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+}
+
+print_separator() {
+    echo -e "${BOLD}====================================================${RESET}"
+}
+
+print_subheader() {
+    local text="$1"
+    echo -e "${BOLD}${text}${RESET}"
+}
+
+# --- Script Initialization ---
+# Initialize script environment
+readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
+readonly SCRIPT_VERSION="1.0.0"
+
+# --- Logging Configuration ---
+# Default log level if not specified
+LOG_LEVEL_CURRENT="${LOG_LEVEL:-INFO}"
+# Default to stderr unless LOG_TO_FILE is set
+LOG_DESTINATION="${LOG_DESTINATION:-stderr}"
+
+# --- Dependency Checking ---
+check_dependencies() {
+    local missing_deps=0
+    local cmd
+    
+    for cmd in "$@"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            error "Dependency '$cmd' is not installed."
+            missing_deps=1
+        fi
+    done
+    
+    if [ "$missing_deps" -eq 1 ]; then
+        error "Please install missing dependencies and try again."
+        exit 1
+    fi
+    
+    return 0
+}
+
+# --- Logging Functions ---
+validate_log_level() {
+    local level="$1"
+    
+    case "$level" in
+        DEBUG|INFO|WARN|ERROR)
+            return 0
+            ;;
+        *)
+            echo "Invalid log level: $level" >&2
+            echo "Valid levels: DEBUG, INFO, WARN, ERROR" >&2
+            return 1
+            ;;
+    esac
+}
+
+should_log() {
+    local message_level="$1"
+    local current_level_num
+    local message_level_num
+    
+    # Convert current level to numeric
+    case "$LOG_LEVEL_CURRENT" in
+        DEBUG) current_level_num=0 ;;
+        INFO)  current_level_num=1 ;;
+        WARN)  current_level_num=2 ;;
+        ERROR) current_level_num=3 ;;
+        *) current_level_num=1 ;;
+    esac
+    
+    # Convert message level to numeric
+    case "$message_level" in
+        DEBUG) message_level_num=0 ;;
+        INFO)  message_level_num=1 ;;
+        WARN) message_level_num=2 ;;
+        ERROR) message_level_num=3 ;;
+        *) message_level_num=1 ;;
+    esac
+    
+    # Check if message level should be displayed
+    [ "$message_level_num" -ge "$current_level_num" ]
+}
+
+_log_message() {
+    local level="$1"
+    local message="$2"
+    local timestamp
+    local formatted_message
+    
+    # Create timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    # Format message with level and timestamp
+    formatted_message="[$timestamp] [$level] $message"
+    
+    # Output based on destination
+    if [[ "$LOG_DESTINATION" == "file" && -n "${LOG_FILE:-}" ]]; then
+        # Output to file
+        echo "$formatted_message" >> "$LOG_FILE"
+    else
+        # Output to stderr with colors if available
+        case "$level" in
+            DEBUG) info "$formatted_message" ;;
+            INFO)  info "$formatted_message" ;;
+            WARN)  warning "$formatted_message" ;;
+            ERROR) error "$formatted_message" ;;
+            *) info "$formatted_message" ;;
+        esac
+    fi
+}
+
+init_logging() {
+    # Validate log level if specified
+    if [[ -n "${LOG_LEVEL:-}" ]]; then
+        if ! validate_log_level "$LOG_LEVEL"; then
+            echo "Invalid LOG_LEVEL: $LOG_LEVEL" >&2
+            exit 1
+        fi
+    fi
+    
+    # Set up file logging if configured
+    if [[ "${LOG_TO_FILE:-}" == "1" && -n "${LOG_FILE:-}" ]]; then
+        LOG_DESTINATION="file"
+    fi
+    
+    _log_message "DEBUG" "Logging initialized with level: $LOG_LEVEL_CURRENT"
+}
 
 # Display script introduction with formatting
 print_header "Updating SearxNG"

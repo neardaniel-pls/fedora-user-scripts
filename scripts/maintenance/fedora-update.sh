@@ -50,8 +50,89 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
-# Source shared colors library
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
+# --- Color Detection ---
+# Detect if colors should be enabled
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    # Output is to a terminal and NO_COLOR is not set
+    COLORS_ENABLED=1
+else
+    # Output is redirected or NO_COLOR is set
+    COLORS_ENABLED=0
+fi
+
+# --- Icon Configuration ---
+# Allow disabling icons for environments that don't support Unicode
+USE_ICONS="${USE_ICONS:-1}"
+
+# --- Color Definitions ---
+# Define colors only if colors are enabled
+if (( COLORS_ENABLED )); then
+    readonly BOLD="\033[1m"
+    readonly BLUE="\033[34m"
+    readonly GREEN="\033[32m"
+    readonly YELLOW="\033[33m"
+    readonly RED="\033[31m"
+    readonly RESET="\033[0m"
+else
+    # Set to empty strings when colors are disabled
+    readonly BOLD=""
+    readonly BLUE=""
+    readonly GREEN=""
+    readonly YELLOW=""
+    readonly RED=""
+    readonly RESET=""
+fi
+
+# --- Icon Definitions ---
+# Define icons only if icons are enabled AND colors are enabled
+if (( USE_ICONS && COLORS_ENABLED )); then
+    readonly INFO_ICON="ℹ️"
+    readonly SUCCESS_ICON="✅"
+    readonly WARNING_ICON="⚠️"
+    readonly ERROR_ICON="❌"
+else
+    # Set to empty strings when icons or colors are disabled
+    readonly INFO_ICON=""
+    readonly SUCCESS_ICON=""
+    readonly WARNING_ICON=""
+    readonly ERROR_ICON=""
+fi
+
+# --- Output Functions ---
+info() {
+    local message="$1"
+    echo -e "${BOLD}${BLUE}${INFO_ICON}  ${message}${RESET}"
+}
+
+success() {
+    local message="$1"
+    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} ${message}${RESET}"
+}
+
+warning() {
+    local message="$1"
+    echo -e "${BOLD}${YELLOW}${WARNING_ICON} ${message}${RESET}"
+}
+
+error() {
+    local message="$1"
+    echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
+}
+
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+}
+
+print_separator() {
+    echo -e "${BOLD}====================================================${RESET}"
+}
+
+print_subheader() {
+    local text="$1"
+    echo -e "${BOLD}${text}${RESET}"
+}
 
 # ===== Configuration =====
 # Path to the optional SearxNG update script
@@ -108,8 +189,14 @@ confirm_and_execute_destructive() {
 
 # ===== Verify sudo privileges upfront =====
 # Early verification to fail fast if sudo is unavailable
-info "Verifying sudo privileges..."
-sudo -v || { error "sudo authentication failed. Exiting."; exit 1; }
+if command -v sudo >/dev/null 2>&1; then
+    info "Verifying sudo privileges..."
+    sudo -v || { error "sudo authentication failed. Exiting."; exit 1; }
+    SUDO_AVAILABLE=true
+else
+    warning "sudo is not available. Some operations may be skipped."
+    SUDO_AVAILABLE=false
+fi
 
 # ===== Detect dnf5 vs classic dnf =====
 # Fedora 42+ uses dnf5 by default, but we need to support older versions
@@ -119,8 +206,13 @@ else
     DNF="dnf"   # Fallback for systems still using classic dnf
 fi
 
-# Construct the package manager command with sudo prefix
-PKG="sudo ${DNF}"
+# Construct the package manager command with sudo prefix (if available)
+if [ "$SUDO_AVAILABLE" = true ]; then
+    PKG="sudo ${DNF}"
+else
+    PKG="${DNF}"
+    warning "Running package manager without sudo. This may have limited functionality."
+fi
 
 # ===== Update repository cache =====
 # Refresh the repository metadata to ensure we have the latest package information
@@ -247,12 +339,20 @@ while true; do
         case "$opt" in
             1)
                 # System restart option
-                confirm_and_execute_destructive "RESTART" "sudo reboot"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "RESTART" "sudo reboot"
+                else
+                    warning "Cannot restart: sudo is not available."
+                fi
                 break
                 ;;
             2)
                 # System shutdown option
-                confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                else
+                    warning "Cannot shut down: sudo is not available."
+                fi
                 break
                 ;;
             3)

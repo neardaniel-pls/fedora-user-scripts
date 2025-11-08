@@ -95,7 +95,6 @@ source ~/.bashrc
 1. **Read Detailed Guides**: Check [docs/guides/](guides/) for detailed instructions
 2. **Explore Scripts**: See [main README](../README.md) for all available scripts
 3. **Customize**: Adjust scripts to your needs
-4. **Stay Updated**: Check [CHANGELOG](../CHANGELOG.md) for updates
 
 ## ❓ Need Help?
 

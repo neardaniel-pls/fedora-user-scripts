@@ -49,7 +49,6 @@ Real-world usage examples and configurations:
 ### Need Help?
 - **Quick Answers**: Check the [FAQ](FAQ.md)
 - **Common Issues**: Each guide has troubleshooting section
-- **Latest Updates**: See [CHANGELOG](../CHANGELOG.md) for recent changes
 - **Community**: Open an [issue](https://github.com/neardaniel-pls/fedora-user-scripts/issues)
 
 ### Documentation Feedback?
@@ -71,7 +70,6 @@ Found something unclear or missing? Please:
 Documentation is updated with each release. To stay informed:
 - ⭐ Watch the repository on GitHub
 - 📧 Subscribe to release notifications
-- 📖 Check the [CHANGELOG](../CHANGELOG.md) regularly
 
 ---
 

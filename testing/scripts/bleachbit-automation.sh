@@ -6,10 +6,91 @@
 # This script provides a structured and safe way to run BleachBit with a predefined set of cleaners.
 #
 
-# Source shared colors library
-source "$(dirname "${BASH_SOURCE[0]}")/../../lib/colors.sh"
-
 set -euo pipefail
+
+# --- Color Detection ---
+# Detect if colors should be enabled
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+    # Output is to a terminal and NO_COLOR is not set
+    COLORS_ENABLED=1
+else
+    # Output is redirected or NO_COLOR is set
+    COLORS_ENABLED=0
+fi
+
+# --- Icon Configuration ---
+# Allow disabling icons for environments that don't support Unicode
+USE_ICONS="${USE_ICONS:-1}"
+
+# --- Color Definitions ---
+# Define colors only if colors are enabled
+if (( COLORS_ENABLED )); then
+    readonly BOLD="\033[1m"
+    readonly BLUE="\033[34m"
+    readonly GREEN="\033[32m"
+    readonly YELLOW="\033[33m"
+    readonly RED="\033[31m"
+    readonly RESET="\033[0m"
+else
+    # Set to empty strings when colors are disabled
+    readonly BOLD=""
+    readonly BLUE=""
+    readonly GREEN=""
+    readonly YELLOW=""
+    readonly RED=""
+    readonly RESET=""
+fi
+
+# --- Icon Definitions ---
+# Define icons only if icons are enabled AND colors are enabled
+if (( USE_ICONS && COLORS_ENABLED )); then
+    readonly INFO_ICON="ℹ️"
+    readonly SUCCESS_ICON="✅"
+    readonly WARNING_ICON="⚠️"
+    readonly ERROR_ICON="❌"
+else
+    # Set to empty strings when icons or colors are disabled
+    readonly INFO_ICON=""
+    readonly SUCCESS_ICON=""
+    readonly WARNING_ICON=""
+    readonly ERROR_ICON=""
+fi
+
+# --- Output Functions ---
+info() {
+    local message="$1"
+    echo -e "${BOLD}${BLUE}${INFO_ICON}  ${message}${RESET}"
+}
+
+success() {
+    local message="$1"
+    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} ${message}${RESET}"
+}
+
+warning() {
+    local message="$1"
+    echo -e "${BOLD}${YELLOW}${WARNING_ICON} ${message}${RESET}"
+}
+
+error() {
+    local message="$1"
+    echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
+}
+
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+}
+
+print_separator() {
+    echo -e "${BOLD}====================================================${RESET}"
+}
+
+print_subheader() {
+    local text="$1"
+    echo -e "${BOLD}${text}${RESET}"
+}
 
 # ===== Core Functions =====
 

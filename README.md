@@ -13,24 +13,27 @@ This repository contains shell scripts designed specifically for Fedora environm
 
 ### clean-metadata.sh
 - **Purpose:** Cleans metadata from PDF, PNG, and JPEG files and optimizes them
-- **Usage:** `scripts/maintenance/clean-metadata.sh [file|directory]`
-- **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`
+- **Usage:** `scripts/maintenance/clean-metadata.sh [OPTIONS] <file|directory> [...]`
+- **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`, `shred`
+- **Options:** `--help`, `--replace`, `--verbose`
 
 ### fedora-update.sh
 - **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning
 - **Usage:** `scripts/maintenance/fedora-update.sh`
-- **Note:** This script is specific to Fedora and uses DNF package manager operations
+- **Dependencies:** `dnf` or `dnf5`, `flatpak` (optional), `sudo`, `stat`
+- **Note:** Interactive completion menu offers restart/shutdown options
 
 ### secure-delete.sh
 - **Purpose:** Securely deletes files and directories by overwriting them with random data
-- **Usage:** `scripts/security/secure-delete.sh [file|directory]`
-- **Dependencies:** `shred`
+- **Usage:** `scripts/security/secure-delete.sh <file|directory> [...]`
+- **Dependencies:** `shred`, `find`, `rm`
 
 ### security-sweep.sh
 - **Purpose:** Performs comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations
-- **Usage:** `sudo scripts/security/security-sweep.sh`
-- **Dependencies:** `chkrootkit`, `clamav`, `lynis`
-- **Note:** Fedora-specific security audit script for systems hardening
+- **Usage:** `sudo scripts/security/security-sweep.sh [OPTIONS]`
+- **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `lynis`
+- **Options:** `-i` (integrity), `-r` (rootkit), `-m` (malware), `-a` (audit), `-p` (packages), `-e` (exclude home), `-h` (help)
+- **Note:** Requires root privileges; creates logs in `/var/log/`
 
 ### run-searxng.sh
 - **Purpose:** Runs SearXNG instance using Python virtual environment
@@ -112,9 +115,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 🐛 [Report Bugs](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=bug_report.md)
 - 💡 [Request Features](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=feature_request.md)
-- 📖 [Documentation](https://github.com/neardaniel-pls/fedora-user-scripts/wiki)
-- 🙏 [Acknowledgments](https://github.com/neardaniel-pls/fedora-user-scripts/blob/main/README.md#acknowledgments)
 
 ---
 
-**Note**: For comprehensive Fedora system administration guides, see the companion [fedora-system-setup](https://github.com/yourusername/fedora-system-setup) repository.
+**Note**: For comprehensive Fedora system setup guide, see the companion [fedora-system-setup](https://github.com/neardaniel-pls/fedora-system-setup) repository.
+
+**Note**: For a collection of guides for setting up AI on Fedora, see the companion [fedora-ai-setup](https://github.com/neardaniel-pls/fedora-ai-setup) repository.

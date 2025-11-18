@@ -32,7 +32,7 @@ Note: `rpm` and `dnf` come pre-installed with Fedora.
 
 2. (Optional) Create an alias in `~/.bashrc`:
    ```bash
-   alias security_sweep='sudo bash "$HOME/user-scripts/scripts/security/security-sweep.sh"'
+   alias security_sweep='sudo bash "$HOME/fedora-user-scripts/scripts/security/security-sweep.sh"'
    source ~/.bashrc
    ```
 

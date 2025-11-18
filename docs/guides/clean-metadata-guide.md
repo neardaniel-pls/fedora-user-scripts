@@ -29,7 +29,7 @@ sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils
 
 2. (Optional) Create an alias in `~/.bashrc`:
    ```bash
-   alias cleanmeta='bash "$HOME/user-scripts/scripts/maintenance/clean-metadata.sh"'
+   alias cleanmeta='bash "$HOME/fedora-user-scripts/scripts/maintenance/clean-metadata.sh"'
    source ~/.bashrc
    ```
 

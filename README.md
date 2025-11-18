@@ -96,6 +96,22 @@ chmod +x scripts/**/*.sh
 sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
 ```
 
+### Setting Up Aliases (Optional)
+
+For convenience, you can add these aliases to your `~/.bashrc` file:
+
+```bash
+# Fedora User Scripts aliases
+alias update='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/fedora-update.sh"'
+alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-metadata.sh"'
+alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
+alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
+alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
+alias bleachbit_automation='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/testing/bleachbit-automation.sh"'
+```
+
+After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.
+
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.

@@ -27,7 +27,7 @@
 #   - flatpak: Optional, for Flatpak application management
 #   - sudo: Required for system package operations
 #   - stat: For file permission checks
-#   - Optional: SearxNG update script at ~/Documents/code/user-scripts/scripts/searxng/update-searxng.sh
+#   - Optional: SearxNG update script at ~/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh
 #
 # OPERATIONAL NOTES:
 #   - The script requires sudo privileges for package management operations
@@ -136,7 +136,7 @@ print_subheader() {
 
 # ===== Configuration =====
 # Path to the optional SearxNG update script
-SEARXNG_UPDATE_SCRIPT="${HOME}/Documents/code/user-scripts/scripts/searxng/update-searxng.sh"
+SEARXNG_UPDATE_SCRIPT="${HOME}/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"
 
 # Display script introduction with formatting
 echo -e "${BOLD}${BLUE}${INFO_ICON} Fedora maintenance (updates and cleaning)...${RESET}"

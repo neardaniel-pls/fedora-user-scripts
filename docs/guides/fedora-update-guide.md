@@ -33,12 +33,12 @@ Standard Fedora tools are typically pre-installed:
 
 3. (Optional) Configure SearxNG update path in the script:
    ```bash
-   SEARXNG_UPDATE_SCRIPT="${HOME}/user-scripts/scripts/searxng/update-searxng.sh"
+   SEARXNG_UPDATE_SCRIPT="${HOME}/fedora-user-scripts/scripts/searxng/update-searxng.sh"
    ```
 
    Ensure the SearxNG script has restricted permissions:
    ```bash
-   chmod 700 ~/user-scripts/scripts/searxng/update-searxng.sh
+   chmod 700 ~/fedora-user-scripts/scripts/searxng/update-searxng.sh
    ```
 
 ## Usage

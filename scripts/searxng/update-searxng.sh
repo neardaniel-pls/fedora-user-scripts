@@ -114,16 +114,32 @@ error() {
 print_header() {
     local text="$1"
     echo
-    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}🔍 ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
 }
 
 print_separator() {
-    echo -e "${BOLD}====================================================${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
 }
 
 print_subheader() {
     local text="$1"
     echo -e "${BOLD}${text}${RESET}"
+}
+
+print_command_output() {
+    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
 # --- Script Initialization ---
@@ -245,12 +261,20 @@ init_logging() {
     _log_message "DEBUG" "Logging initialized with level: $LOG_LEVEL_CURRENT"
 }
 
-# Display script introduction with formatting
-print_header "Updating SearxNG"
+# Display script introduction with formatting (skip if being called from another script)
+if [[ "${QUIET:-}" != "1" ]]; then
+    print_header "SEARXNG UPDATE"
+fi
 
 # ===== Configuration =====
 # Path to the local SearxNG repository
-SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
+# Use SUDO_USER if available (when running with sudo), otherwise use HOME
+if [ -n "${SUDO_USER:-}" ]; then
+    ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    SEARXNG_DIR="${ORIGINAL_USER_HOME}/Documents/code/searxng/searxng"
+else
+    SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
+fi
 
 # ===== Dependency Check =====
 # Verify required tools are available
@@ -276,7 +300,11 @@ if [ ! -d ".git" ]; then
 fi
 
 # Verify the remote origin matches the official SearxNG repository
-info "Verifying repository..."
+if [[ "${QUIET:-}" != "1" ]]; then
+    print_operation_start "Updating SearxNG"
+    print_command_output
+fi
+echo "  Verifying repository..."
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
 if [[ ! "$REMOTE_URL" =~ github\.com[:/]searxng/searxng ]]; then
   error "Unexpected git remote origin: $REMOTE_URL"
@@ -294,19 +322,32 @@ fi
 
 # ===== Repository Update =====
 # Pull the latest changes from the official repository
-info "Checking for updates..."
+echo "  Checking for updates..."
 
 # Try to update from main branch first, then fall back to master
 # Use --ff-only to ensure only fast-forward updates are applied
 if git pull origin main --ff-only 2>/dev/null || git pull origin master --ff-only 2>/dev/null; then
   # Check if any actual changes were downloaded
   if git diff --quiet HEAD@{1} HEAD 2>/dev/null; then
-    success "SearxNG is already up to date."
+    echo "Already up to date."
+    if [[ "${QUIET:-}" != "1" ]]; then
+        print_operation_end "SearxNG updated"
+        success "SearxNG updated successfully"
+    fi
   else
-    success "SearxNG updated successfully!"
+    echo " SearxNG updated successfully!"
+    if [[ "${QUIET:-}" != "1" ]]; then
+        print_operation_end "SearxNG updated"
+        success "SearxNG updated successfully"
+    fi
   fi
 else
   error "Failed to update. Please check for conflicts or network issues."
   echo "You may need to resolve conflicts or check your internet connection."
   exit 1
+fi
+
+# Only print separator if not being called quietly
+if [[ "${QUIET:-}" != "1" ]]; then
+    print_separator
 fi

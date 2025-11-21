@@ -85,6 +85,8 @@ if (( COLORS_ENABLED )); then
     readonly GREEN="\033[32m"
     readonly YELLOW="\033[33m"
     readonly RED="\033[31m"
+    readonly CYAN="\033[36m"
+    readonly MAGENTA="\033[35m"
     readonly RESET="\033[0m"
 else
     # Set to empty strings when colors are disabled
@@ -93,6 +95,8 @@ else
     readonly GREEN=""
     readonly YELLOW=""
     readonly RED=""
+    readonly CYAN=""
+    readonly MAGENTA=""
     readonly RESET=""
 fi
 
@@ -103,28 +107,66 @@ if (( USE_ICONS && COLORS_ENABLED )); then
     readonly SUCCESS_ICON="✅"
     readonly WARNING_ICON="⚠️"
     readonly ERROR_ICON="❌"
+    readonly SECTION_ICON="🔧"
+    readonly START_ICON="🚀"
+    readonly PACKAGE_ICON="📦"
+    readonly CLEAN_ICON="🧹"
+    readonly SECURITY_ICON="🔒"
+    readonly SCAN_ICON="🔍"
 else
     # Set to empty strings when icons or colors are disabled
     readonly INFO_ICON=""
     readonly SUCCESS_ICON=""
     readonly WARNING_ICON=""
     readonly ERROR_ICON=""
+    readonly SECTION_ICON=""
+    readonly START_ICON=""
+    readonly PACKAGE_ICON=""
+    readonly CLEAN_ICON=""
+    readonly SECURITY_ICON=""
+    readonly SCAN_ICON=""
 fi
 
 # --- Output Functions ---
 print_header() {
     local text="$1"
     echo
-    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}🔧 ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_section_header() {
+    local text="$1"
+    local icon="$2"
+    echo
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo
 }
 
 print_separator() {
-    echo -e "${BOLD}====================================================${RESET}"
+    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
 }
 
 print_subheader() {
     local text="$1"
     echo -e "${BOLD}${text}${RESET}"
+}
+
+print_command_output() {
+    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
 # ===== Log file =====
@@ -221,7 +263,8 @@ check_dependencies() {
 #   Sets integrity_status variable based on scan results
 #
 run_integrity_check() {
-    info "Starting System File Integrity Check (rpm -Va)..."
+    print_section_header "SYSTEM FILE INTEGRITY CHECK" "${SECURITY_ICON}"
+    print_operation_start "Verifying package integrity (rpm -Va)"
     
     # Run RPM verification and capture output
     if output=$(sudo rpm -Va 2>&1); then
@@ -232,6 +275,7 @@ run_integrity_check() {
         else
             # Output indicates some files have issues
             warning "System file integrity check completed with findings. See log for details."
+            print_command_output
             echo "$output"
             log_message "FINDINGS" "rpm -Va found issues:\n---\n$output\n---"
             integrity_status="${YELLOW}Findings${RESET}"
@@ -239,11 +283,13 @@ run_integrity_check() {
     else
         # Command failed to execute
         error "System file integrity check failed to run."
+        print_command_output
         echo "$output"
         log_message "ERROR" "rpm -Va failed:\n---\n$output\n---"
         integrity_status="${RED}Error${RESET}"
     fi
-    echo
+    print_operation_end "System file integrity check completed"
+    print_separator
 }
 
 #
@@ -258,7 +304,8 @@ run_integrity_check() {
 #   Sets rootkit_status variable based on scan results
 #
 run_rootkit_scan() {
-    info "Starting Rootkit Scan (chkrootkit)..."
+    print_section_header "ROOTKIT DETECTION" "${SCAN_ICON}"
+    print_operation_start "Scanning for rootkits (chkrootkit)"
     
     # Run chkrootkit and capture output
     if output=$(sudo chkrootkit 2>&1); then
@@ -270,16 +317,19 @@ run_rootkit_scan() {
             success "chkrootkit scan completed. No rootkits found."
             rootkit_status="${GREEN}Passed${RESET}"
         fi
+        print_command_output
         echo "$output"
         log_message "SCAN_OUTPUT" "chkrootkit output:\n---\n$output\n---"
     else
         # Command failed to execute
         error "chkrootkit failed to run."
+        print_command_output
         echo "$output"
         log_message "ERROR" "chkrootkit failed:\n---\n$output\n---"
         rootkit_status="${RED}Error${RESET}"
     fi
-    echo
+    print_operation_end "Rootkit scan completed"
+    print_separator
 }
 
 #
@@ -294,23 +344,25 @@ run_rootkit_scan() {
 #   Sets malware_status variable based on scan results
 #
 run_malware_scan() {
-    info "Starting Malware Scan (ClamAV)..."
+    print_section_header "MALWARE DETECTION" "${CLEAN_ICON}"
+    print_operation_start "Updating virus definitions (freshclam)"
     
     # Update virus definitions for maximum protection
-    info "Updating ClamAV virus definitions (freshclam)..."
     if sudo freshclam; then
-        success "ClamAV definitions updated."
+        success "ClamAV definitions updated successfully."
     else
         warning "Could not update ClamAV definitions. Scanning with existing database."
     fi
 
+    print_operation_start "Scanning for malware (clamscan)"
+    info "This may take a long time depending on system size..."
+    
     # Configure scan options
-    info "Running ClamAV scan... (This may take a long time)"
     local clam_opts=(-r -i --exclude-dir="^/sys" --exclude-dir="^/proc" --exclude-dir="^/dev")
     
     # Add home directory exclusion if requested
     if [ "$exclude_home" -eq 1 ]; then
-        info "Excluding home directories from malware scan."
+        info "Excluding home directories from malware scan for privacy."
         clam_opts+=(--exclude-dir="^/home")
     fi
 
@@ -324,16 +376,19 @@ run_malware_scan() {
             warning "ClamAV found potential malware. See log for details."
             malware_status="${YELLOW}Findings${RESET}"
         fi
+        print_command_output
         echo "$output"
         log_message "SCAN_OUTPUT" "ClamAV output:\n---\n$output\n---"
     else
         # Command failed to execute
         error "ClamAV scan failed to run."
+        print_command_output
         echo "$output"
         log_message "ERROR" "ClamAV failed:\n---\n$output\n---"
         malware_status="${RED}Error${RESET}"
     fi
-    echo
+    print_operation_end "Malware scan completed"
+    print_separator
 }
 
 #
@@ -348,24 +403,28 @@ run_malware_scan() {
 #   Sets audit_status variable based on scan results
 #
 run_security_audit() {
-    info "Starting Security Audit (Lynis)..."
-    info "Note: The full Lynis report can be found in /var/log/lynis.log"
+    print_section_header "SECURITY AUDIT" "${SECURITY_ICON}"
+    print_operation_start "Performing comprehensive security audit (Lynis)"
+    info "The full Lynis report can be found in /var/log/lynis.log"
     
     # Run Lynis audit system
     if output=$(sudo lynis audit system --quiet 2>&1); then
         success "Lynis security audit completed."
         audit_status="${GREEN}Completed${RESET}"
         # Lynis provides a summary, which is good to have in our log
+        print_command_output
         echo "$output"
         log_message "SCAN_OUTPUT" "Lynis output:\n---\n$output\n---"
     else
         # Command failed to execute
         error "Lynis security audit failed to run."
+        print_command_output
         echo "$output"
         log_message "ERROR" "Lynis failed:\n---\n$output\n---"
         audit_status="${RED}Error${RESET}"
     fi
-    echo
+    print_operation_end "Security audit completed"
+    print_separator
 }
 
 #
@@ -380,7 +439,8 @@ run_security_audit() {
 #   Sets package_status variable based on check results
 #
 run_package_check() {
-    info "Starting Package & Dependency Verification..."
+    print_section_header "PACKAGE VERIFICATION" "${PACKAGE_ICON}"
+    print_operation_start "Verifying package dependencies and consistency"
     
     # Detect which package manager is available
     local DNF
@@ -389,7 +449,7 @@ run_package_check() {
     else
       DNF="dnf"
     fi
-    info "Using ${DNF} for package check."
+    success "Using ${DNF} for package check."
 
     # Temporarily disable exit on error to handle dnf's exit code 100
     # DNF returns 100 when issues are found, which is not a command failure
@@ -405,17 +465,20 @@ run_package_check() {
     elif [ $exit_code -eq 100 ]; then
         # DNF found issues but command executed successfully
         warning "Package dependency check found issues. See log for details."
+        print_command_output
         echo "$output"
         log_message "FINDINGS" "DNF Check found issues:\n---\n$output\n---"
         package_status="${YELLOW}Findings${RESET}"
     else
         # Command failed to execute
         error "Package dependency check failed to run (Exit code: $exit_code)."
+        print_command_output
         echo "$output"
         log_message "ERROR" "DNF Check failed:\n---\n$output\n---"
         package_status="${RED}Error${RESET}"
     fi
-    echo
+    print_operation_end "Package verification completed"
+    print_separator
 }
 
 
@@ -499,7 +562,7 @@ main() {
 
 print_summary() {
     echo
-    print_header "Scan Summary"
+    print_header "SECURITY SWEEP SUMMARY"
     echo -e "$(printf "%-35s" "System File Integrity"): $integrity_status"
     echo -e "$(printf "%-35s" "Rootkit Scan (chkrootkit)"): $rootkit_status"
     echo -e "$(printf "%-35s" "Malware Scan (ClamAV)"): $malware_status"
@@ -507,7 +570,7 @@ print_summary() {
     echo -e "$(printf "%-35s" "Package & Dependency Verification"): $package_status"
     print_separator
     echo
-    success "Security sweep completed!"
+    success "Security sweep completed successfully!"
     info "Review the log file for detailed results: ${LOG_FILE}"
 }
 

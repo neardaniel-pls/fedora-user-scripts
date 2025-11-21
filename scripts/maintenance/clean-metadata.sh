@@ -83,6 +83,8 @@ if (( COLORS_ENABLED )); then
     readonly GREEN="\033[32m"
     readonly YELLOW="\033[33m"
     readonly RED="\033[31m"
+    readonly CYAN="\033[36m"
+    readonly MAGENTA="\033[35m"
     readonly RESET="\033[0m"
 else
     # Set to empty strings when colors are disabled
@@ -91,6 +93,8 @@ else
     readonly GREEN=""
     readonly YELLOW=""
     readonly RED=""
+    readonly CYAN=""
+    readonly MAGENTA=""
     readonly RESET=""
 fi
 
@@ -101,12 +105,24 @@ if (( USE_ICONS && COLORS_ENABLED )); then
     readonly SUCCESS_ICON="✅"
     readonly WARNING_ICON="⚠️"
     readonly ERROR_ICON="❌"
+    readonly SECTION_ICON="🔧"
+    readonly START_ICON="🚀"
+    readonly PACKAGE_ICON="📦"
+    readonly CLEAN_ICON="🧹"
+    readonly FILE_ICON="📄"
+    readonly METADATA_ICON="🏷️"
 else
     # Set to empty strings when icons or colors are disabled
     readonly INFO_ICON=""
     readonly SUCCESS_ICON=""
     readonly WARNING_ICON=""
     readonly ERROR_ICON=""
+    readonly SECTION_ICON=""
+    readonly START_ICON=""
+    readonly PACKAGE_ICON=""
+    readonly CLEAN_ICON=""
+    readonly FILE_ICON=""
+    readonly METADATA_ICON=""
 fi
 
 # --- Output Functions ---
@@ -133,16 +149,42 @@ error() {
 print_header() {
     local text="$1"
     echo
-    echo -e "${BOLD}${BLUE}================== ${text} ==================${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}🔧 ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_section_header() {
+    local text="$1"
+    local icon="$2"
+    echo
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo
 }
 
 print_separator() {
-    echo -e "${BOLD}====================================================${RESET}"
+    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
 }
 
 print_subheader() {
     local text="$1"
     echo -e "${BOLD}${text}${RESET}"
+}
+
+print_command_output() {
+    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
 # --- Configuration ---
@@ -153,14 +195,19 @@ readonly JPEG_QUALITY="${JPEG_QUALITY:-80}"     # JPEG quality percentage
 readonly PDF_SETTINGS="${PDF_SETTINGS:-/ebook}" # Ghostscript PDF preset for size optimization
 readonly GS_DEVICE="${GS_DEVICE:-pdfwrite}"     # Ghostscript device for PDF output
 
-# --- Dependency Check ---
+# ===== Dependency Check =====
 # Verify all required tools are available before proceeding
+print_section_header "DEPENDENCY VERIFICATION" "${PACKAGE_ICON}"
+print_operation_start "Checking required dependencies"
 for cmd in exiftool gs pngquant jpegoptim numfmt; do
   if ! command -v "$cmd" &> /dev/null; then
-    echo "Error: Dependency '$cmd' is not installed." >&2
+    error "Dependency '$cmd' is not installed."
     exit 1
   fi
 done
+print_operation_end "Dependency verification completed"
+success "All required dependencies are available"
+print_separator
 
 # --- Temporary Directory ---
 # Create a secure temporary directory and ensure it's cleaned up on exit
@@ -168,6 +215,11 @@ done
 TMP_DIR=$(mktemp -d)
 # Set up cleanup trap to remove temporary directory on script exit (normal or error)
 trap 'rm -rf "$TMP_DIR"' EXIT
+
+# Display script introduction with formatting
+print_header "METADATA CLEANING AND OPTIMIZATION"
+echo -e "${BOLD}${GREEN}${START_ICON} Starting privacy-focused metadata removal...${RESET}"
+echo
 
 # --- Main Function ---
 #
@@ -234,8 +286,8 @@ EOF
 
   # Validate that at least one file or directory was provided
   if [ $# -eq 0 ]; then
-    echo "Usage: cleanmetadata <file|directory> [...]" >&2
-    echo "Try 'cleanmetadata --help' for more information." >&2
+    error "Usage: cleanmetadata <file|directory> [...]"
+    error "Try 'cleanmetadata --help' for more information."
     return 1
   fi
 
@@ -252,7 +304,19 @@ EOF
     fi
 
     if [ -d "$target" ]; then
-      info "Processing directory: $target"
+      print_section_header "PROCESSING DIRECTORY" "${FILE_ICON}"
+      info "Scanning directory: $target"
+      print_operation_start "Finding supported files"
+      
+      # Count files for progress reporting
+      local file_count=0
+      while IFS= read -r -d '' file; do
+        ((file_count++))
+      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' -print0)
+      
+      print_operation_end "Found $file_count supported files"
+      echo
+      
       # Use process substitution to preserve parent scope for error_count
       # Find command with -print0 handles filenames with spaces/newlines safely
       # The regex pattern excludes already processed files to prevent duplication
@@ -280,11 +344,14 @@ EOF
   done
 
   # Report final status based on error count
+  print_header "PROCESSING SUMMARY"
   if [ "$error_count" -gt 0 ]; then
       error "Operation completed with $error_count errors."
+      print_separator
       return 1
   else
-      success "Operation completed successfully."
+      success "All files processed successfully!"
+      print_separator
   fi
 }
 
@@ -395,22 +462,25 @@ cleanmetadata_file() {
   fi
 
   # Display processing header for user feedback
-  print_separator
+  print_section_header "FILE PROCESSING" "${METADATA_ICON}"
   print_subheader "Processing: $f"
 
   # Show essential metadata if verbose mode is enabled
   if [[ "$verbose" == "1" ]]; then
-    echo "Found metadata:"
+    echo -e "${BOLD}${BLUE}Found metadata:${RESET}"
     # Filter for common metadata fields to avoid overwhelming output
     exiftool -G1 "$f" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (no significant metadata found)"
+    echo
   fi
 
   # Step 1: Remove all metadata using exiftool
-  info "Cleaning all metadata..."
+  print_operation_start "Removing all metadata"
+  print_command_output
   if ! exiftool -all= -P -o "$tmp_cleaned" "$f"; then
     error "Failed to clean metadata. Aborting."
     return 1
   fi
+  print_operation_end "Metadata removal completed"
 
   # Verify the cleaned file was created and is not empty
   if [ ! -s "$tmp_cleaned" ]; then
@@ -423,11 +493,11 @@ cleanmetadata_file() {
   tamanho_limpo=$(stat -c%s "$tmp_cleaned")
 
   # Step 2: Apply format-specific optimization
+  print_operation_start "Optimizing ${ext^^} file"
+  print_command_output
+  
   case "${ext,,}" in
     pdf)
-      info "Optimizing PDF..."
-      # Ghostscript optimization with ebook settings for size reduction
-      # Redirect stderr to /dev/null to suppress all non-error Ghostscript logs
       if ! gs -sDEVICE="$GS_DEVICE" -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
          -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
          -sOutputFile="$tmp_optimized" "$tmp_cleaned" 2>/dev/null; then
@@ -442,16 +512,12 @@ cleanmetadata_file() {
       fi
       ;;
     png)
-      info "Optimizing PNG..."
-      # PNG optimization using pngquant with quality range
       if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned"; then
         warning "PNG optimization failed. Using cleaned file instead."
         cp "$tmp_cleaned" "$tmp_optimized"
       fi
       ;;
     jpg|jpeg)
-      info "Optimizing JPEG..."
-      # JPEG optimization using jpegoptim with quality limit
       if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized"; then
         warning "JPEG optimization failed. Using cleaned file instead."
         cp "$tmp_cleaned" "$tmp_optimized"
@@ -459,10 +525,11 @@ cleanmetadata_file() {
       ;;
     *)
       # This should never be reached due to earlier validation, but included for safety
-      info "Format not supported for optimization: $f"
+      warning "Format not supported for optimization: $f"
       cp "$tmp_cleaned" "$tmp_optimized"
       ;;
   esac
+  print_operation_end "File optimization completed"
 
   # Verify the optimized file was created and is not empty
   if [ ! -s "$tmp_optimized" ]; then
@@ -486,7 +553,7 @@ cleanmetadata_file() {
 
   # Step 3: Handle file output based on replace flag
   if [[ "$replace_original" == "1" ]]; then
-    info "Replacing original file..."
+    print_operation_start "Replacing original file"
     # Use -n to avoid overwriting other files if the original name is reused
     if ! mv -n "$source_file_for_final" "$f"; then
         error "Error replacing original file. A file with the original name may already exist."
@@ -498,17 +565,21 @@ cleanmetadata_file() {
         shred -ufz -n 1 "$f" 2>/dev/null || true # ignore shred errors
     fi
     mv "$f" "$final" # Rename to final name with _cleaned_opt suffix
+    print_operation_end "Original file replaced"
   else
+    print_operation_start "Creating cleaned file"
     # Create a new file with the _cleaned_opt suffix
     if ! mv -n "$source_file_for_final" "$final"; then
         warning "Output file already exists or could not be moved: $final"
         return 1
     fi
+    print_operation_end "Cleaned file created"
   fi
 
   # Verify metadata was successfully removed
-  info "Metadata removed:"
+  echo -e "${BOLD}${BLUE}Metadata verification:${RESET}"
   exiftool -G1 "$final" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (clean)"
+  echo
 
   # Calculate and display file size change
   local antes
@@ -527,7 +598,7 @@ cleanmetadata_file() {
   depois_h=$(numfmt --to=iec --suffix=B "$depois")
 
   # Display size comparison
-  printf "📊 Size: Before: %8s → After: %8s | Δ %s%s\n" \
+  printf "${BOLD}${GREEN}📊 Size: Before: %8s → After: %8s | Δ %s%s${RESET}\n" \
          "$antes_h" "$depois_h" "$sinal" "$(numfmt --to=iec --suffix=B $diff_abs)"
   print_separator
 }

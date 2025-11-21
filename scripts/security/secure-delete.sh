@@ -75,6 +75,8 @@ if (( COLORS_ENABLED )); then
     readonly GREEN="\033[32m"
     readonly YELLOW="\033[33m"
     readonly RED="\033[31m"
+    readonly CYAN="\033[36m"
+    readonly MAGENTA="\033[35m"
     readonly RESET="\033[0m"
 else
     # Set to empty strings when colors are disabled
@@ -83,6 +85,8 @@ else
     readonly GREEN=""
     readonly YELLOW=""
     readonly RED=""
+    readonly CYAN=""
+    readonly MAGENTA=""
     readonly RESET=""
 fi
 
@@ -93,12 +97,24 @@ if (( USE_ICONS && COLORS_ENABLED )); then
     readonly SUCCESS_ICON="✅"
     readonly WARNING_ICON="⚠️"
     readonly ERROR_ICON="❌"
+    readonly SECTION_ICON="🔧"
+    readonly START_ICON="🚀"
+    readonly PACKAGE_ICON="📦"
+    readonly CLEAN_ICON="🧹"
+    readonly FILE_ICON="📄"
+    readonly DELETE_ICON="🗑️"
 else
     # Set to empty strings when icons or colors are disabled
     readonly INFO_ICON=""
     readonly SUCCESS_ICON=""
     readonly WARNING_ICON=""
     readonly ERROR_ICON=""
+    readonly SECTION_ICON=""
+    readonly START_ICON=""
+    readonly PACKAGE_ICON=""
+    readonly CLEAN_ICON=""
+    readonly FILE_ICON=""
+    readonly DELETE_ICON=""
 fi
 
 # --- Output Functions ---
@@ -122,6 +138,47 @@ error() {
     echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
 }
 
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}🔧 ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_section_header() {
+    local text="$1"
+    local icon="$2"
+    echo
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo
+}
+
+print_separator() {
+    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_subheader() {
+    local text="$1"
+    echo -e "${BOLD}${text}${RESET}"
+}
+
+print_command_output() {
+    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
+}
+
 # ===== Dependency Check =====
 # Verify that the required 'shred' command is available on the system
 if ! command -v shred &> /dev/null; then
@@ -131,42 +188,68 @@ fi
 
 # ===== Usage Validation =====
 # Ensure at least one target file or directory was provided
+print_section_header "TARGET VALIDATION" "${FILE_ICON}"
+print_operation_start "Validating command-line arguments"
+
 if [ $# -eq 0 ]; then
     error "Usage: secure-delete.sh <file|directory> [...]"
     exit 1
 fi
 
+success "Found $# target(s) to process"
+print_operation_end "Target validation completed"
+print_separator
+
 # ===== Main Processing Loop =====
 # Iterate through each target provided as a command-line argument
+print_section_header "SECURE DELETION PROCESS" "${DELETE_ICON}"
+local processed_count=0
+local skipped_count=0
+
 for target in "$@"; do
     # Check if the target exists (file, directory, or other)
     if [ ! -e "$target" ]; then
         warning "'$target' not found. Skipping."
+        ((skipped_count++))
         continue
     fi
 
     # Handle directory targets
     if [ -d "$target" ]; then
-        info "Processing directory: $target"
+        print_operation_start "Processing directory: $target"
         # Find all files in the directory and shred them recursively
         # shred options:
         #   -n 3: Perform 3 overwrite passes with random data
         #   -z:   Final pass with zeros to hide shredding
         #   -v:   Verbose output to show progress
+        print_command_output
         find "$target" -type f -exec shred -n 3 -z -v {} \;
         # Remove the now-empty directory structure
         rm -rf "$target"
         success "Directory '$target' securely deleted."
+        ((processed_count++))
     # Handle regular file targets
     elif [ -f "$target" ]; then
-        info "Processing file: $target"
+        print_operation_start "Processing file: $target"
         # Shred the file with the same security parameters
+        print_command_output
         shred -n 3 -z -v "$target"
         # Remove the shredded file
         rm "$target"
         success "File '$target' securely deleted."
+        ((processed_count++))
     fi
 done
 
-# ===== Completion Message =====
-success "Secure delete operation completed."
+print_operation_end "Secure deletion process completed"
+print_separator
+
+# ===== Completion Summary =====
+print_header "DELETION SUMMARY"
+echo -e "${BOLD}${GREEN}Processed: ${processed_count} target(s)${RESET}"
+if [ "$skipped_count" -gt 0 ]; then
+    echo -e "${BOLD}${YELLOW}Skipped: ${skipped_count} target(s)${RESET}"
+fi
+print_separator
+echo
+success "Secure delete operation completed successfully!"

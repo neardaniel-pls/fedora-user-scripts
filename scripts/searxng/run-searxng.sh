@@ -76,6 +76,8 @@ if (( COLORS_ENABLED )); then
     readonly GREEN="\033[32m"
     readonly YELLOW="\033[33m"
     readonly RED="\033[31m"
+    readonly CYAN="\033[36m"
+    readonly MAGENTA="\033[35m"
     readonly RESET="\033[0m"
 else
     # Set to empty strings when colors are disabled
@@ -84,6 +86,8 @@ else
     readonly GREEN=""
     readonly YELLOW=""
     readonly RED=""
+    readonly CYAN=""
+    readonly MAGENTA=""
     readonly RESET=""
 fi
 
@@ -94,12 +98,24 @@ if (( USE_ICONS && COLORS_ENABLED )); then
     readonly SUCCESS_ICON="✅"
     readonly WARNING_ICON="⚠️"
     readonly ERROR_ICON="❌"
+    readonly SECTION_ICON="🔧"
+    readonly START_ICON="🚀"
+    readonly PACKAGE_ICON="📦"
+    readonly CLEAN_ICON="🧹"
+    readonly SEARCH_ICON="🔍"
+    readonly WEB_ICON="🌐"
 else
     # Set to empty strings when icons or colors are disabled
     readonly INFO_ICON=""
     readonly SUCCESS_ICON=""
     readonly WARNING_ICON=""
     readonly ERROR_ICON=""
+    readonly SECTION_ICON=""
+    readonly START_ICON=""
+    readonly PACKAGE_ICON=""
+    readonly CLEAN_ICON=""
+    readonly SEARCH_ICON=""
+    readonly WEB_ICON=""
 fi
 
 # --- Output Functions ---
@@ -123,6 +139,47 @@ error() {
     echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
 }
 
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}🔧 ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_section_header() {
+    local text="$1"
+    local icon="$2"
+    echo
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo
+}
+
+print_separator() {
+    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_subheader() {
+    local text="$1"
+    echo -e "${BOLD}${text}${RESET}"
+}
+
+print_command_output() {
+    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
+}
+
 # ===== Configuration =====
 # Base directory for SearxNG installation
 SEARXNG_BASE="$HOME/Documents/code/searxng"
@@ -136,62 +193,84 @@ WEBAPP_SCRIPT="$SEARXNG_APP/searx/webapp.py"
 SEARXNG_PORT="${SEARXNG_PORT:-8888}"
 
 # Display script introduction with formatting
-echo -e "${BOLD}${BLUE}${INFO_ICON} Starting SearxNG...${RESET}"
+print_header "SEARXNG LAUNCHER"
+echo -e "${BOLD}${GREEN}${START_ICON} Starting privacy-respecting search engine...${RESET}"
+echo
 
 # ===== Environment Validation =====
 # Verify all required directories and files exist before proceeding
+print_section_header "ENVIRONMENT VALIDATION" "${SECTION_ICON}"
+print_operation_start "Validating SearxNG installation"
 
 # Check if base SearxNG directory exists
 if [ ! -d "$SEARXNG_BASE" ]; then
   error "SearxNG directory not found: $SEARXNG_BASE"
-  echo "Please ensure SearxNG is installed in the expected location."
+  error "Please ensure SearxNG is installed in the expected location."
   exit 1
 fi
+success "Base directory found: $SEARXNG_BASE"
 
 # Check if virtual environment directory exists
 if [ ! -d "$SEARXNG_VENV" ]; then
   error "Virtual environment not found: $SEARXNG_VENV"
-  echo "Please create a virtual environment for SearxNG dependencies."
+  error "Please create a virtual environment for SearxNG dependencies."
   exit 1
 fi
+success "Virtual environment found: $SEARXNG_VENV"
 
 # Check if virtual environment activation script exists
 if [ ! -f "$SEARXNG_VENV/bin/activate" ]; then
   error "Virtual environment activation script not found"
-  echo "The virtual environment appears to be corrupted or incomplete."
+  error "The virtual environment appears to be corrupted or incomplete."
   exit 1
 fi
+success "Virtual environment activation script found"
 
 # Check if the main web application script exists
 if [ ! -f "$WEBAPP_SCRIPT" ]; then
   error "webapp.py not found: $WEBAPP_SCRIPT"
-  echo "Please ensure SearxNG is properly installed."
+  error "Please ensure SearxNG is properly installed."
   exit 1
 fi
+success "Web application script found: $WEBAPP_SCRIPT"
+
+print_operation_end "Environment validation completed"
+print_separator
 
 # ===== Port Conflict Detection =====
 # Check if the specified port is already in use to prevent conflicts
+print_section_header "PORT VALIDATION" "${WEB_ICON}"
+print_operation_start "Checking for port conflicts on $SEARXNG_PORT"
 
 # Try using lsof first (more detailed information)
 if command -v lsof &> /dev/null; then
   if lsof -Pi :$SEARXNG_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
-    warning "Port $SEARXNG_PORT is already in use."
-    echo "SearxNG may already be running. Use 'lsof -ti :$SEARXNG_PORT | xargs kill' to stop it."
+    error "Port $SEARXNG_PORT is already in use."
+    info "SearxNG may already be running. Use 'lsof -ti :$SEARXNG_PORT | xargs kill' to stop it."
     exit 1
   fi
+  success "Port $SEARXNG_PORT is available (checked with lsof)"
 # Fallback to ss if lsof is not available
 elif command -v ss &> /dev/null; then
   if ss -ltn "sport = :$SEARXNG_PORT" | grep -q ":$SEARXNG_PORT"; then
-    warning "Port $SEARXNG_PORT is already in use."
-    echo "SearxNG may already be running."
+    error "Port $SEARXNG_PORT is already in use."
+    info "SearxNG may already be running."
     exit 1
   fi
+  success "Port $SEARXNG_PORT is available (checked with ss)"
+else
+  warning "Neither lsof nor ss is available for port checking"
+  info "Proceeding without port validation"
 fi
+
+print_operation_end "Port validation completed"
+print_separator
 
 # ===== Virtual Environment Activation =====
 # Activate the Python virtual environment to access SearxNG dependencies
 
-info "Activating virtual environment..."
+print_section_header "VIRTUAL ENVIRONMENT" "${PACKAGE_ICON}"
+print_operation_start "Activating Python virtual environment"
 # Source the activation script (shellcheck disabled as this is a standard pattern)
 # shellcheck disable=SC1091
 source "$SEARXNG_VENV/bin/activate"
@@ -199,18 +278,23 @@ source "$SEARXNG_VENV/bin/activate"
 # Verify that the virtual environment was successfully activated
 if [ -z "${VIRTUAL_ENV:-}" ]; then
   error "Failed to activate virtual environment"
-  echo "The virtual environment may be corrupted."
+  error "The virtual environment may be corrupted."
   exit 1
 fi
 
-success "Virtual environment activated"
+print_operation_end "Virtual environment activated"
+success "Python environment ready: $VIRTUAL_ENV"
+print_separator
 
 # ===== Cleanup Handler =====
 # Define a function to handle graceful shutdown when signals are received
 cleanup() {
-  echo -e "\n${BOLD}${YELLOW}${WARNING_ICON} Shutting down SearxNG...${RESET}"
+  echo
+  print_section_header "SHUTDOWN" "${WARNING_ICON}"
+  info "Shutting down SearxNG gracefully..."
   # Deactivate the virtual environment (ignore errors if already deactivated)
   deactivate 2>/dev/null || true
+  success "SearxNG stopped successfully"
   exit 0
 }
 
@@ -219,12 +303,19 @@ trap cleanup SIGINT SIGTERM
 
 # ===== Launch SearxNG Application =====
 # Change to the application directory and start the web server
-
-success "Starting SearxNG web application..."
-echo -e "${BOLD}Access SearxNG at: http://localhost:$SEARXNG_PORT${RESET}\n"
+print_section_header "LAUNCHING SEARXNG" "${SEARCH_ICON}"
+print_operation_start "Starting SearxNG web application"
 
 # Change to the SearxNG application directory (exit if this fails)
 cd "$SEARXNG_APP" || exit 1
+
+print_operation_end "Application directory changed to: $SEARXNG_APP"
+print_separator
+
+# Display access information
+echo -e "${BOLD}${GREEN}${WEB_ICON} Access SearxNG at: ${BOLD}${BLUE}http://localhost:$SEARXNG_PORT${RESET}"
+echo -e "${BOLD}${CYAN}Press Ctrl+C to stop the server${RESET}"
+echo
 
 # Start the SearxNG web application
 # This will run until interrupted or terminated

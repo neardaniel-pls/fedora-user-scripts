@@ -44,7 +44,7 @@ Standard Fedora tools are typically pre-installed:
 ## 🎬 Demo
 
 See script in action:
-[![Fedora Update Demo](../../assets/demos/fedora-update.webm)](../../assets/demos/fedora-update.webm)
+[![Fedora Update Demo](../../assets/demos/fedora-update.webm.mp4)](../../assets/demos/fedora-update.webm.mp4)
 
 ## Usage
 

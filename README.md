@@ -16,14 +16,14 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Usage:** `scripts/maintenance/clean-metadata.sh [OPTIONS] <file|directory> [...]`
 - **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`, `shred`
 - **Options:** `--help`, `--replace`, `--verbose`
-- **Demo:** [See it in action](assets/demos/cleanmeta.webm.mp4)](assets/demos/cleanmeta.webm.mp4)
+- **Demo:** [See it in action](assets/demos/cleanmeta.webm.mp4)
 
 ### fedora-update.sh
 - **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning
 - **Usage:** `scripts/maintenance/fedora-update.sh`
 - **Dependencies:** `dnf` or `dnf5`, `flatpak` (optional), `sudo`, `stat`
 - **Note:** Interactive completion menu offers restart/shutdown options
-- **Demo:** [See it in action](assets/demos/fedora-update.webm.mp4)](assets/demos/fedora-update.webm.mp4)
+- **Demo:** [See it in action](assets/demos/fedora-update.webm.mp4)
 
 ### secure-delete.sh
 - **Purpose:** Securely deletes files and directories by overwriting them with random data
@@ -41,7 +41,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Purpose:** Runs SearXNG instance using Python virtual environment
 - **Usage:** `scripts/searxng/run-searxng.sh`
 - **Dependencies:** python3, virtual environment, SearXNG installation at $HOME/Documents/code/searxng/
-- **Demo:** [See it in action](assets/demos/searxng.webm.mp4)](assets/demos/searxng.webm.mp4)
+- **Demo:** [See it in action](assets/demos/searxng.webm.mp4)
 
 ### update-searxng.sh
 - **Purpose:** Updates SearXNG instance by pulling latest changes from git repository

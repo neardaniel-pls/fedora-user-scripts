@@ -26,7 +26,6 @@ List which scripts are modified (if applicable):
 - [ ] secure-delete.sh
 - [ ] run-searxng.sh
 - [ ] update-searxng.sh
-- [ ] bleachbit-automation.sh
 - [ ] template.sh
 - [ ] Other: [specify]
 

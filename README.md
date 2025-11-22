@@ -107,7 +107,6 @@ alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintena
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
-alias bleachbit_automation='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/testing/bleachbit-automation.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

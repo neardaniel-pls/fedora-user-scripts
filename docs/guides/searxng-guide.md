@@ -39,7 +39,7 @@ deactivate
 ## 🎬 Demo
 
 See script in action:
-[![SearXNG Demo](../../assets/demos/searxng.webm)](../../assets/demos/searxng.webm)
+[![SearXNG Demo](../../assets/demos/searxng.webm.mp4)](../../assets/demos/searxng.webm.mp4)
 
 ## Running SearXNG
 

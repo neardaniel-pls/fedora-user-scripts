@@ -39,6 +39,11 @@ sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils
 - `--verbose`: Show metadata before cleaning (useful for verification)
 - `--replace`: Replace the original file instead of creating a `_cleaned_opt` copy
 
+## 🎬 Demo
+
+See the script in action:
+[![Clean Metadata Demo](../../assets/demos/cleanmeta.webm)](../../assets/demos/cleanmeta.webm)
+
 ## Usage
 
 ### Basic Usage

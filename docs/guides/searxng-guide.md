@@ -36,6 +36,11 @@ export SEARXNG_SETTINGS_PATH="/etc/searxng/settings.yml"
 deactivate
 ```
 
+## 🎬 Demo
+
+See script in action:
+[![SearXNG Demo](../../assets/demos/searxng.webm)](../../assets/demos/searxng.webm)
+
 ## Running SearXNG
 
 Use the provided script:

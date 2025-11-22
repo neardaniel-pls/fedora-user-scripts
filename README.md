@@ -16,7 +16,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Usage:** `scripts/maintenance/clean-metadata.sh [OPTIONS] <file|directory> [...]`
 - **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`, `shred`
 - **Options:** `--help`, `--replace`, `--verbose`
-- **Demo:** [See it in action](assets/demos/cleanmeta.webm.mp4)
+- **Demo:** ![](assets/demos/cleanmeta.webm)
 
 ### fedora-update.sh
 - **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning

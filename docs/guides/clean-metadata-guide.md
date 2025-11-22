@@ -42,7 +42,7 @@ sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils
 ## 🎬 Demo
 
 See the script in action:
-[![Clean Metadata Demo](../../assets/demos/cleanmeta.webm.mp4)](../../assets/demos/cleanmeta.webm.mp4)
+[![Clean Metadata Demo](../../assets/demos/cleanmeta.gif)](../../assets/demos/cleanmeta.gif)
 
 ## Usage
 

@@ -18,7 +18,6 @@ Which script(s) would this feature affect?
 - [ ] secure-delete.sh
 - [ ] run-searxng.sh
 - [ ] update-searxng.sh
-- [ ] bleachbit-automation.sh
 - [ ] New script: [specify]
 
 ## Use Case

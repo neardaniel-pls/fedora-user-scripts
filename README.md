@@ -16,12 +16,14 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Usage:** `scripts/maintenance/clean-metadata.sh [OPTIONS] <file|directory> [...]`
 - **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`, `shred`
 - **Options:** `--help`, `--replace`, `--verbose`
+- **Demo:** [See it in action](assets/demos/cleanmeta.webm)
 
 ### fedora-update.sh
 - **Purpose:** Performs weekly maintenance on Fedora systems, including package updates and cache cleaning
 - **Usage:** `scripts/maintenance/fedora-update.sh`
 - **Dependencies:** `dnf` or `dnf5`, `flatpak` (optional), `sudo`, `stat`
 - **Note:** Interactive completion menu offers restart/shutdown options
+- **Demo:** [See it in action](assets/demos/fedora-update.webm)
 
 ### secure-delete.sh
 - **Purpose:** Securely deletes files and directories by overwriting them with random data
@@ -39,6 +41,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Purpose:** Runs SearXNG instance using Python virtual environment
 - **Usage:** `scripts/searxng/run-searxng.sh`
 - **Dependencies:** python3, virtual environment, SearXNG installation at $HOME/Documents/code/searxng/
+- **Demo:** [See it in action](assets/demos/searxng.webm)
 
 ### update-searxng.sh
 - **Purpose:** Updates SearXNG instance by pulling latest changes from git repository
@@ -107,7 +110,6 @@ alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintena
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
-alias bleachbit_automation='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/testing/bleachbit-automation.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

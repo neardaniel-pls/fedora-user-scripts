@@ -41,6 +41,11 @@ Standard Fedora tools are typically pre-installed:
    chmod 700 ~/fedora-user-scripts/scripts/searxng/update-searxng.sh
    ```
 
+## 🎬 Demo
+
+See script in action:
+[![Fedora Update Demo](../../assets/demos/fedora-update.webm)](../../assets/demos/fedora-update.webm)
+
 ## Usage
 
 Run the script with `sudo` privileges:

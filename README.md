@@ -136,6 +136,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: For comprehensive Fedora system setup guide, see the companion [fedora-system-setup](https://github.com/neardaniel-pls/fedora-system-setup) repository.
+## Related Projects
 
-**Note**: For a collection of guides for setting up AI on Fedora, see the companion [fedora-ai-setup](https://github.com/neardaniel-pls/fedora-ai-setup) repository.
+Check out these other companion projects:
+
+- **[fedora-system-setup](https://github.com/neardaniel-pls/fedora-system-setup)**: Comprehensive post-installation guide for Fedora Linux systems with essential configurations, repositories, drivers, and applications
+
+- **[fedora-ai-setup](https://github.com/neardaniel-pls/fedora-ai-setup)**: Collection of guides for setting up AI, machine learning, and LLM tools on Fedora Linux systems
+
+- **[near-whisper](https://github.com/neardaniel-pls/near-whisper)**: Free and open source GUI for local Whisper audio transcription on Fedora Linux systems

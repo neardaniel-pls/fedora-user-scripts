@@ -38,7 +38,8 @@
 #   - rpm: For package integrity verification
 #   - dnf or dnf5: For package management and dependency checking
 #   - chkrootkit: For rootkit detection
-#   - clamscan/freshclam: For malware scanning and definition updates
+#   - clamscan: For malware scanning
+#   - freshclam: For updating ClamAV virus definitions
 #   - lynis: For comprehensive security auditing
 #
 # OPERATIONAL NOTES:
@@ -236,7 +237,7 @@ check_dependencies() {
     local missing_deps=0  # Flag to track if any dependencies are missing
     
     # Check for each required tool
-    for cmd in rpm dnf chkrootkit clamscan lynis; do
+    for cmd in rpm dnf chkrootkit clamscan freshclam lynis; do
         if ! command -v "$cmd" &> /dev/null; then
             error "Dependency '$cmd' is not installed."
             missing_deps=1

@@ -33,7 +33,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 ### security-sweep.sh
 - **Purpose:** Performs comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations
 - **Usage:** `sudo scripts/security/security-sweep.sh [OPTIONS]`
-- **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `lynis`
+- **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `clamav-update`, `lynis`
 - **Options:** `-i` (integrity), `-r` (rootkit), `-m` (malware), `-a` (audit), `-p` (packages), `-e` (exclude home), `-h` (help)
 - **Note:** Requires root privileges; creates logs in `/var/log/`
 
@@ -96,7 +96,7 @@ chmod +x scripts/**/*.sh
 3. Install dependencies (see individual script documentation):
 ```bash
 # Check for common dependencies
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis bleachbit
 ```
 
 ### Setting Up Aliases (Optional)

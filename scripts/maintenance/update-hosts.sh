@@ -21,7 +21,7 @@
 #
 # OPERATIONAL NOTES:
 #   - The script requires write access to the hosts repository directory
-#   - The script will automatically answer "yes" to prompts during hosts file generation
+#   - The script answers prompts with a specific sequence: "yes" for replacing hosts file, "no" for DNS cache flush
 #   - Exit codes: 0 for success, 1 for errors
 #
 
@@ -166,13 +166,16 @@ select_extensions() {
     
     echo -e "${BOLD}${CYAN}Enter the numbers of extensions you want to use (comma-separated, e.g., 1,2):${RESET}"
     echo -e "${YELLOW}Press Enter to use default extensions (gambling,porn) or input your selection:${RESET}"
+    
+    # Initialize EXTENSIONS with default value
+    EXTENSIONS=""
+    
     # Read with a timeout to handle Enter key press
     if read -t 30 -r user_selection; then
         # Check if user just pressed Enter without typing anything
         if [ -z "$user_selection" ]; then
             # Use default extensions
-            EXTENSIONS="gambling,porn"
-            echo -e "${YELLOW}No selection made. Using default extensions: gambling,porn${RESET}"
+            echo -e "${YELLOW}No selection made. Using default extensions: $EXTENSIONS${RESET}"
         else
             # Parse user selection and build extensions string
             selected_extensions=()
@@ -193,37 +196,15 @@ select_extensions() {
             echo -e "${GREEN}Selected extensions: $EXTENSIONS${RESET}"
         fi
     else
-        echo -e "${RED}Timeout waiting for input. Using default extensions: gambling,porn${RESET}"
-        EXTENSIONS="gambling,porn"
+        echo -e "${RED}Timeout waiting for input. Using default extensions: $EXTENSIONS${RESET}"
     fi
     
-    if [ -z "$user_selection" ] || [ "$user_selection" = "" ]; then
-        # Use default extensions if no selection made or just Enter pressed
-        EXTENSIONS="gambling,porn"
-        echo -e "${YELLOW}No selection made. Using default extensions: gambling,porn${RESET}"
-    else
-        # Parse user selection and build extensions string
-        selected_extensions=()
-        IFS=',' read -ra selections <<< "$user_selection"
-        
-        for num in "${selections[@]}"; do
-            case "$num" in
-                1) selected_extensions+=("fakenews") ;;
-                2) selected_extensions+=("gambling") ;;
-                3) selected_extensions+=("porn") ;;
-                4) selected_extensions+=("social") ;;
-                *) echo -e "${RED}Invalid selection: $num${RESET}"; return 1 ;;
-            esac
-        done
-        
-        # Join selected extensions with comma
-        EXTENSIONS=$(IFS=','; echo "${selected_extensions[*]}")
-        echo -e "${GREEN}Selected extensions: $EXTENSIONS${RESET}"
-    fi
+    # Export EXTENSIONS for use in the main script
+    export EXTENSIONS
 }
 
 # Default extensions to use
-DEFAULT_EXTENSIONS="gambling,porn"
+DEFAULT_EXTENSIONS=""
 # Allow customizing extensions via environment variable
 if [ -n "${HOSTS_EXTENSIONS:-}" ]; then
     EXTENSIONS="$HOSTS_EXTENSIONS"
@@ -231,6 +212,12 @@ if [ -n "${HOSTS_EXTENSIONS:-}" ]; then
 else
     # Interactive selection if not set via environment
     select_extensions
+    
+    # Make sure EXTENSIONS is set (it should be exported by the function)
+    if [ -z "${EXTENSIONS:-}" ]; then
+        EXTENSIONS="$DEFAULT_EXTENSIONS"
+        echo -e "${YELLOW}Using default extensions: $EXTENSIONS${RESET}"
+    fi
 fi
 
 # Display script introduction with formatting
@@ -323,8 +310,9 @@ else
 fi
 
 # Run the updateHostsFile.py script with the specified extensions
-# Use 'yes' command to automatically answer 'yes' to prompts
-if python3 updateHostsFile.py --extensions "$EXTENSIONS" --auto; then
+# Pipe responses to handle each prompt individually
+# First "yes" for replacing existing hosts file, then "no" for DNS cache flush
+if printf "y\nn\ny\nn" | python3 updateHostsFile.py --extensions "$EXTENSIONS"; then
     print_operation_end "Hosts file generated successfully"
     success "Hosts file has been updated with extensions: $EXTENSIONS"
 else
@@ -340,8 +328,6 @@ echo
 info "The hosts file has been updated with the following extensions: ${BOLD}${EXTENSIONS}${RESET}"
 info "You can find the generated hosts file in: ${HOSTS_REPO}/hosts"
 echo
-print_separator
-echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Thank you for using the StevenBlack hosts update script!${RESET}"
 print_separator
 
 exit 0

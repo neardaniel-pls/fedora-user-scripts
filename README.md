@@ -49,6 +49,12 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `git`
 - **Note:** This script is included in `scripts/maintenance/fedora-update.sh`
 
+### update-hosts.sh
+- **Purpose:** Updates StevenBlack hosts repository with customizable extensions for blocking unwanted content
+- **Usage:** `scripts/maintenance/update-hosts.sh`
+- **Dependencies:** `git`, `python3`, StevenBlack/hosts repository
+- **Note:** Interactive extension selection with automatic hosts file installation
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -63,6 +69,7 @@ Detailed documentation for each script:
 - [Fedora Update Guide](docs/guides/fedora-update-guide.md)
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
+- [Update Hosts Guide](docs/guides/update-hosts-guide.md)
 
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting
@@ -107,6 +114,7 @@ For convenience, you can add these aliases to your `~/.bashrc` file:
 # Fedora User Scripts aliases
 alias update='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/fedora-update.sh"'
 alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-metadata.sh"'
+alias updatehosts='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/update-hosts.sh"'
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'

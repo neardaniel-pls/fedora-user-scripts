@@ -148,11 +148,15 @@ print_operation_end() {
 # ===== Configuration =====
 # Path to the StevenBlack hosts repository
 # Use SUDO_USER if available (when running with sudo), otherwise use HOME
-if [ -n "${SUDO_USER:-}" ]; then
-    ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    HOSTS_REPO="${ORIGINAL_USER_HOME}/Documents/code/hosts"
-else
-    HOSTS_REPO="${HOME}/Documents/code/hosts"
+# Allow customizing the repository path via environment variable
+HOSTS_REPO="${HOSTS_REPO_PATH:-}"
+if [ -z "$HOSTS_REPO" ]; then
+    if [ -n "${SUDO_USER:-}" ]; then
+        ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        HOSTS_REPO="${ORIGINAL_USER_HOME}/Documents/code/hosts"
+    else
+        HOSTS_REPO="${HOME}/Documents/code/hosts"
+    fi
 fi
 
 # Function to select extensions interactively
@@ -167,8 +171,8 @@ select_extensions() {
     echo -e "${BOLD}${CYAN}Enter the numbers of extensions you want to use (comma-separated, e.g., 1,2):${RESET}"
     echo -e "${YELLOW}Press Enter to use default extensions (gambling,porn) or input your selection:${RESET}"
     
-    # Initialize EXTENSIONS with default value
-    EXTENSIONS=""
+    # Initialize EXTENSIONS with actual default value
+    EXTENSIONS="gambling,porn"
     
     # Read with a timeout to handle Enter key press
     if read -t 30 -r user_selection; then
@@ -204,7 +208,7 @@ select_extensions() {
 }
 
 # Default extensions to use
-DEFAULT_EXTENSIONS=""
+DEFAULT_EXTENSIONS="gambling,porn"
 # Allow customizing extensions via environment variable
 if [ -n "${HOSTS_EXTENSIONS:-}" ]; then
     EXTENSIONS="$HOSTS_EXTENSIONS"
@@ -263,31 +267,66 @@ print_section_header "REPOSITORY UPDATE" "${UPDATE_ICON}"
 print_operation_start "Updating StevenBlack hosts repository"
 cd "$HOSTS_REPO"
 
-# Stash any local changes before pulling
-if git status --porcelain | grep -q .; then
-    info "Local changes detected, stashing them before update..."
-    if git stash push -m "Auto-stash before update $(date)"; then
-        success "Local changes stashed successfully"
-    else
-        warning "Failed to stash local changes, continuing anyway..."
-    fi
-else
-    info "No local changes to stash"
+# Fix permissions first if running as sudo
+if [ -n "${SUDO_USER:-}" ]; then
+    chown -R "$SUDO_USER":"$(id -gn "$SUDO_USER")" .
 fi
 
-# Pull the latest changes from the repository
-if git pull; then
-    print_operation_end "Repository updated successfully"
-    success "Repository updated with latest changes"
+# Stash any local changes before pulling
+if [ -n "${SUDO_USER:-}" ]; then
+    # Run git as the original user, not root
+    if sudo -u "$SUDO_USER" git status --porcelain | grep -q .; then
+        info "Local changes detected, stashing them before update..."
+        if sudo -u "$SUDO_USER" git stash push -m "Auto-stash before update $(date)"; then
+            success "Local changes stashed successfully"
+        else
+            warning "Failed to stash local changes, continuing anyway..."
+        fi
+    else
+        info "No local changes to stash"
+    fi
     
-    # Check if we stashed changes and offer to restore them
-    if git stash list | grep -q "Auto-stash before update"; then
-        info "Previously stashed changes found. You can restore them later with:"
-        echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
+    # Pull the latest changes from the repository
+    if sudo -u "$SUDO_USER" git pull; then
+        print_operation_end "Repository updated successfully"
+        success "Repository updated with latest changes"
+        
+        # Check if we stashed changes and offer to restore them
+        if sudo -u "$SUDO_USER" git stash list | grep -q "Auto-stash before update"; then
+            info "Previously stashed changes found. You can restore them later with:"
+            echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
+        fi
+    else
+        error "Failed to update the repository"
+        exit 1
     fi
 else
-    error "Failed to update the repository"
-    exit 1
+    # Run as current user
+    if git status --porcelain | grep -q .; then
+        info "Local changes detected, stashing them before update..."
+        if git stash push -m "Auto-stash before update $(date)"; then
+            success "Local changes stashed successfully"
+        else
+            warning "Failed to stash local changes, continuing anyway..."
+        fi
+    else
+        info "No local changes to stash"
+    fi
+    
+    # Pull the latest changes from the repository
+    if git pull; then
+        print_operation_end "Repository updated successfully"
+        success "Repository updated with latest changes"
+        
+        # Check if we stashed changes and offer to restore them
+        if git stash list | grep -q "Auto-stash before update"; then
+            info "Previously stashed changes found. You can restore them later with:"
+            echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
+        fi
+    else
+        error "Failed to update the repository"
+        exit 1
+    fi
 fi
 print_separator
 
@@ -298,23 +337,24 @@ print_operation_start "Generating hosts file with extensions: $EXTENSIONS"
 # Change to the hosts repository directory if not already there
 cd "$HOSTS_REPO"
 
-# Ensure we have proper permissions for the hosts repository
-if [ -n "${SUDO_USER:-}" ]; then
-    # If running with sudo, change ownership to the original user
-    sudo chown -R "$SUDO_USER":"$(id -gn "$SUDO_USER")" .
-    # Run git operations with the original user
-    sudo -u "$SUDO_USER" git pull
-else
-    # Run with current user
-    git pull
+# Fix the default extension logic
+if [ -z "$EXTENSIONS" ]; then
+    # Actually set the defaults you promised in the text
+    EXTENSIONS="gambling,porn"
+    echo -e "${YELLOW}No extensions specified. Using default extensions: $EXTENSIONS${RESET}"
 fi
 
-# Run the updateHostsFile.py script with the specified extensions
-# Pipe responses to handle each prompt individually
-# First "yes" for replacing existing hosts file, then "no" for DNS cache flush
-if printf "y\nn\ny\nn" | python3 updateHostsFile.py --extensions "$EXTENSIONS"; then
-    print_operation_end "Hosts file generated successfully"
-    success "Hosts file has been updated with extensions: $EXTENSIONS"
+# Construct the command with proper flags
+# StevenBlack script flags:
+# --auto : skip prompts (equivalent to answering 'yes' to replace hosts file)
+# --replace : replace /etc/hosts
+# --extensions : specify extensions to use
+CMD="python3 updateHostsFile.py --auto --replace --extensions $EXTENSIONS"
+
+# Execute the command
+if $CMD; then
+    print_operation_end "Hosts file generated and installed successfully"
+    success "System hosts file updated with extensions: $EXTENSIONS"
 else
     error "Failed to generate the hosts file"
     exit 1

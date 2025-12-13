@@ -375,231 +375,188 @@ EOF
 #
 cleanmetadata_file() {
   local f="$1"           # Input file path
-  local resolved         # Canonical (absolute) path to the file
+  local resolved         # Canonical (absolute) path
   
-  # Explicitly check for symlink FIRST to avoid TOCTOU (Time-of-Check-Time-of-Use) race condition
-  # This prevents following symlinks which could lead to processing unintended files
+  # Security: Symlink check
   if [ -L "$f" ]; then
       warning "Symbolic links are not supported: $f"
       return 1
   fi
   
-  # Verify the target is a regular file (not a directory, device file, etc.)
   if [ ! -f "$f" ]; then
       warning "Not a regular file: $f"
       return 1
   fi
   
-  # Get canonical path (resolves .., ., symbolic links, etc.) to prevent path traversal attacks
-  # This ensures we're working with the actual file location, not a relative path
+  # Security: Path traversal protection
   resolved=$(readlink -e "$f") || {
       error "Cannot resolve path: $f"
       return 1
   }
-  
-  # Use the resolved, absolute path from here on to prevent path manipulation
   f="$resolved"
-  local replace_original="$2"  # Replace flag from main function
-  local verbose="$3"           # Verbose flag from main function
+  
+  local replace_original="$2"
+  local verbose="$3"
 
-  # Extract filename and extension safely using parameter expansion
-  # This approach avoids issues with spaces and special characters in filenames
   local basename_f
   basename_f=$(basename "$f")
   
-  local base ext  # Base name without extension, and file extension
-  if [[ "$basename_f" == *.* ]]; then
-      # Has extension: split on last dot using parameter expansion
-      ext="${basename_f##*.}"  # Everything after the last dot
-      base="${basename_f%.*}"   # Everything before the last dot
-  else
-      # No extension found - cannot determine file type
-      warning "File has no extension: $f"
-      return 1
+  # Robust extension extraction
+  local ext="${basename_f##*.}"
+  local base="${basename_f%.*}"
+  
+  # Check if file had no extension
+  if [[ "$basename_f" == "$base" ]]; then
+       warning "File has no extension: $f"
+       return 1
   fi
   
-  # Validate extension is supported by our processing tools
-  # Using case-insensitive comparison with ${ext,,}
   case "${ext,,}" in
-      pdf|png|jpg|jpeg)
-          # Valid extension, continue processing
-          ;;
+      pdf|png|jpg|jpeg) ;;
       *)
           warning "Unsupported file type: $f (extension: $ext)"
           return 1
           ;;
   esac
 
-  # Sanitize base name to prevent directory traversal in output filename
-  # This removes potentially dangerous characters that could affect path handling
-  base="${base//\//_}"  # Replace forward slashes with underscores
-  base="${base//../_}"   # Replace relative path components with underscores
+  # Sanitize filename for temp files
+  local safe_base="${base//\//_}"
+  safe_base="${safe_base//../_}"
   
-  # Define temporary file paths in our secure temporary directory
-  local tmp_cleaned="$TMP_DIR/${base}_cleaned.tmp"      # After metadata removal
-  local tmp_optimized="$TMP_DIR/${base}_optimized.tmp"   # After optimization
+  local tmp_cleaned="$TMP_DIR/${safe_base}_cleaned.tmp"
+  local tmp_optimized="$TMP_DIR/${safe_base}_optimized.tmp"
   
-  # Get the directory of the input file and ensure it's canonical
-  # This prevents issues with relative paths in directory references
+  # Define final paths
   local final_dir
   final_dir=$(dirname "$f")
-  final_dir=$(readlink -f "$final_dir")  # Resolve to absolute path
+  # No need to readlink final_dir again as we derived it from resolved path $f
   
-  # Define the final output path with the _cleaned_opt suffix
-  local final="$final_dir/${base}_cleaned_opt.${ext}"
-  
-  # Security check: Verify final path is within the expected directory
-  # This prevents directory traversal attacks through manipulated filenames
-  local final_canonical
-  final_canonical=$(dirname "$final")
-  final_canonical=$(readlink -f "$final_canonical")
-  
-  if [[ "$final_canonical" != "$final_dir" ]]; then
-      error "Refusing to write outside source directory."
-      error "    Expected: $final_dir"
-      error "    Got: $final_canonical"
-      return 1
+  local final_path
+  if [[ "$replace_original" == "1" ]]; then
+      final_path="$f"
+  else
+      final_path="$final_dir/${base}_cleaned_opt.${ext}"
   fi
 
-  # Display processing header for user feedback
+  # Display status
   print_section_header "FILE PROCESSING" "${METADATA_ICON}"
   print_subheader "Processing: $f"
 
-  # Show essential metadata if verbose mode is enabled
   if [[ "$verbose" == "1" ]]; then
     echo -e "${BOLD}${BLUE}Found metadata:${RESET}"
-    # Filter for common metadata fields to avoid overwhelming output
     exiftool -G1 "$f" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (no significant metadata found)"
     echo
   fi
 
-  # Step 1: Remove all metadata using exiftool
+  # Step 1: Remove metadata
   print_operation_start "Removing all metadata"
-  print_command_output
-  if ! exiftool -all= -P -o "$tmp_cleaned" "$f"; then
-    error "Failed to clean metadata. Aborting."
+  if ! exiftool -all= -P -o "$tmp_cleaned" "$f" >/dev/null 2>&1; then
+    error "Failed to clean metadata."
     return 1
   fi
   print_operation_end "Metadata removal completed"
 
-  # Verify the cleaned file was created and is not empty
   if [ ! -s "$tmp_cleaned" ]; then
-    error "The cleaned file is empty or was not created. Aborting."
+    error "Cleaned file is empty."
     return 1
   fi
 
-  # Get the size of the cleaned file for later comparison
-  local tamanho_limpo
-  tamanho_limpo=$(stat -c%s "$tmp_cleaned")
-
-  # Step 2: Apply format-specific optimization
+  # Step 2: Optimize
   print_operation_start "Optimizing ${ext^^} file"
-  print_command_output
   
   case "${ext,,}" in
     pdf)
-      if ! gs -sDEVICE="$GS_DEVICE" -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
+      # Added -dSAFER for security
+      if ! gs -sDEVICE="$GS_DEVICE" -dSAFER -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
          -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
          -sOutputFile="$tmp_optimized" "$tmp_cleaned" 2>/dev/null; then
-         warning "PDF optimization failed. Using cleaned file instead."
+         warning "PDF optimization failed. Using cleaned file."
           cp "$tmp_cleaned" "$tmp_optimized"
-      else
-        # Validate the optimized PDF is readable by attempting to parse it
-        if ! gs -dNODISPLAY -dQUIET -dBATCH "$tmp_optimized" 2>/dev/null; then
-            warning "Optimized PDF appears corrupted. Using cleaned file instead."
+      elif ! gs -dNODISPLAY -dQUIET -dBATCH "$tmp_optimized" 2>/dev/null; then
+            warning "Optimized PDF corrupted. Using cleaned file."
             cp "$tmp_cleaned" "$tmp_optimized"
-        fi
       fi
       ;;
     png)
-      if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned"; then
-        warning "PNG optimization failed. Using cleaned file instead."
+      if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned" 2>/dev/null; then
+        warning "PNG optimization failed. Using cleaned file."
         cp "$tmp_cleaned" "$tmp_optimized"
       fi
       ;;
     jpg|jpeg)
-      if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized"; then
-        warning "JPEG optimization failed. Using cleaned file instead."
+      if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized" 2>/dev/null; then
+        warning "JPEG optimization failed. Using cleaned file."
         cp "$tmp_cleaned" "$tmp_optimized"
       fi
-      ;;
-    *)
-      # This should never be reached due to earlier validation, but included for safety
-      warning "Format not supported for optimization: $f"
-      cp "$tmp_cleaned" "$tmp_optimized"
       ;;
   esac
   print_operation_end "File optimization completed"
 
-  # Verify the optimized file was created and is not empty
   if [ ! -s "$tmp_optimized" ]; then
-      error "Optimized file is empty. Using cleaned file instead."
       cp "$tmp_cleaned" "$tmp_optimized"
   fi
 
-  # Get the size of the optimized file for comparison
-  local tamanho_opt
-  tamanho_opt=$(stat -c%s "$tmp_optimized")
+  # Compare sizes
+  local size_clean
+  size_clean=$(stat -c%s "$tmp_cleaned")
+  local size_opt
+  size_opt=$(stat -c%s "$tmp_optimized")
 
-  # Determine which file to use as the final output
-  # Use the optimized version only if it's smaller than the cleaned version
-  local source_file_for_final
-  if [ "$tamanho_opt" -ge "$tamanho_limpo" ]; then
-    warning "Optimized file is not smaller, using cleaned file."
-    source_file_for_final="$tmp_cleaned"
-  else
-    source_file_for_final="$tmp_optimized"
+  local source_to_move="$tmp_optimized"
+  if [ "$size_opt" -ge "$size_clean" ]; then
+    source_to_move="$tmp_cleaned"
   fi
 
-  # Step 3: Handle file output based on replace flag
+  # Step 3: Finalize
   if [[ "$replace_original" == "1" ]]; then
     print_operation_start "Replacing original file"
-    # Use -n to avoid overwriting other files if the original name is reused
-    if ! mv -n "$source_file_for_final" "$f"; then
-        error "Error replacing original file. A file with the original name may already exist."
+    
+    # Secure overwrite if shred is available
+    if command -v shred &>/dev/null; then
+        # Shred original before overwriting
+        shred -u -n 1 "$f" 2>/dev/null || true
+    fi
+    
+    # Move new file to original location
+    if mv "$source_to_move" "$f"; then
+        print_operation_end "Original file replaced"
+    else
+        error "Failed to replace original file!"
         return 1
     fi
-    # Securely delete the original file if shred is available
-    # This helps ensure data privacy when replacing files
-    if command -v shred &>/dev/null; then
-        shred -ufz -n 1 "$f" 2>/dev/null || true # ignore shred errors
-    fi
-    mv "$f" "$final" # Rename to final name with _cleaned_opt suffix
-    print_operation_end "Original file replaced"
   else
     print_operation_start "Creating cleaned file"
-    # Create a new file with the _cleaned_opt suffix
-    if ! mv -n "$source_file_for_final" "$final"; then
-        warning "Output file already exists or could not be moved: $final"
+    # Ensure we don't overwrite an existing destination (unless it's the same file, logic handled above)
+    if [[ -e "$final_path" ]]; then
+       warning "File exists: $final_path. Skipping."
+       return 1
+    fi
+    
+    if mv "$source_to_move" "$final_path"; then
+        print_operation_end "Cleaned file created"
+    else
+        error "Failed to create output file."
         return 1
     fi
-    print_operation_end "Cleaned file created"
   fi
 
-  # Verify metadata was successfully removed
-  echo -e "${BOLD}${BLUE}Metadata verification:${RESET}"
-  exiftool -G1 "$final" 2>/dev/null | grep -E "(Author|Title|Creator|Create Date|Modify Date|Subject|Keywords|Producer|Comment)" || echo "   (clean)"
-  echo
+  # Final Stats
+  local size_orig
+  size_orig=$(stat -c%s "$f")
+  local size_final
+  size_final=$(stat -c%s "$final_path")
+  local diff=$((size_final - size_orig))
+  local diff_abs=${diff#-}
+  local sign="+"
+  [ $diff -lt 0 ] && sign="-"
 
-  # Calculate and display file size change
-  local antes
-  antes=$(stat -c%s "$f")           # Original file size
-  local depois
-  depois=$(stat -c%s "$final")      # Final file size
-  local diff=$((depois - antes))     # Size difference
-  local diff_abs=${diff#-}           # Absolute value of difference
-  local sinal="+"
-  [ $diff -lt 0 ] && sinal="-"       # Use minus sign for size reduction
+  local orig_h
+  orig_h=$(numfmt --to=iec --suffix=B "$size_orig")
+  local final_h
+  final_h=$(numfmt --to=iec --suffix=B "$size_final")
 
-  # Format sizes in human-readable format (KB, MB, etc.)
-  local antes_h
-  antes_h=$(numfmt --to=iec --suffix=B "$antes")
-  local depois_h
-  depois_h=$(numfmt --to=iec --suffix=B "$depois")
-
-  # Display size comparison
   printf "${BOLD}${GREEN}📊 Size: Before: %8s → After: %8s | Δ %s%s${RESET}\n" \
-         "$antes_h" "$depois_h" "$sinal" "$(numfmt --to=iec --suffix=B $diff_abs)"
+         "$orig_h" "$final_h" "$sign" "$(numfmt --to=iec --suffix=B $diff_abs)"
   print_separator
 }
 

@@ -432,65 +432,70 @@ print_separator
 echo
 
 # Interactive menu for post-maintenance actions
-# Loop until valid input received or timeout occurs
 print_section_header "NEXT ACTIONS" "🎯"
-echo -e "${BOLD}${CYAN}Please select your next action:${RESET}"
-echo
-echo -e "${BOLD}  ${GREEN}1)${RESET} ${YELLOW}🔄${RESET} Restart the system"
-echo -e "${BOLD}  ${GREEN}2)${RESET} ${YELLOW}⚡${RESET} Shut down the system"
-echo -e "${BOLD}  ${GREEN}3)${RESET} ${YELLOW}🚪${RESET} Exit"
-echo
-print_separator
 
-# Read user input with 30-second timeout
-if read -r -t 30 -p "${BOLD}${BLUE}Choose (1-3):${RESET} " opt 2>/dev/null; then
-    case "$opt" in
-        1)
-            # System restart option
-            echo
-            print_section_header "SYSTEM RESTART" "🔄"
-            if [ "$SUDO_AVAILABLE" = true ]; then
-                confirm_and_execute_destructive "RESTART" "sudo reboot"
-            else
-                warning "Cannot restart: sudo is not available."
-            fi
-            break
-            ;;
-        2)
-            # System shutdown option
-            echo
-            print_section_header "SYSTEM SHUTDOWN" "⚡"
-            if [ "$SUDO_AVAILABLE" = true ]; then
-                confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
-            else
-                warning "Cannot shut down: sudo is not available."
-            fi
-            break
-            ;;
-        3)
-            # Exit without system changes
-            echo
-            info "Exiting maintenance script..."
-            echo
-            print_separator
-            echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Thank you for using Fedora System Maintenance!${RESET}"
-            print_separator
-            exit 0
-            ;;
-        *)
-            # Invalid input - prompt again
-            echo
-            warning "Invalid option. Please choose 1, 2, or 3."
-            continue
-            ;;
-    esac
-else
-    # Timeout occurred - exit safely
+# Loop endlessly until a valid choice is made or timeout
+while true; do
+    echo -e "${BOLD}${CYAN}Please select your next action:${RESET}"
     echo
-    warning "No input received (timeout). Exiting..."
+    echo -e "${BOLD}  ${GREEN}1)${RESET} ${YELLOW}🔄${RESET} Restart the system"
+    echo -e "${BOLD}  ${GREEN}2)${RESET} ${YELLOW}⚡${RESET} Shut down the system"
+    echo -e "${BOLD}  ${GREEN}3)${RESET} ${YELLOW}🚪${RESET} Exit"
     echo
     print_separator
-    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Maintenance completed - timed out gracefully${RESET}"
-    print_separator
-    exit 0
-fi
+
+    # Read user input with 30-second timeout
+    echo -n -e "${BOLD}${BLUE}Choose (1-3):${RESET} "
+    if read -r -t 30 opt 2>/dev/null; then
+        case "$opt" in
+            1)
+                # System restart option
+                echo
+                print_section_header "SYSTEM RESTART" "🔄"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "RESTART" "sudo reboot"
+                else
+                    warning "Cannot restart: sudo is not available."
+                fi
+                break
+                ;;
+            2)
+                # System shutdown option
+                echo
+                print_section_header "SYSTEM SHUTDOWN" "⚡"
+                if [ "$SUDO_AVAILABLE" = true ]; then
+                    confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                else
+                    warning "Cannot shut down: sudo is not available."
+                fi
+                break
+                ;;
+            3)
+                # Exit without system changes
+                echo
+                info "Exiting maintenance script..."
+                echo
+                print_separator
+                echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Thank you for using Fedora System Maintenance!${RESET}"
+                print_separator
+                exit 0
+                ;;
+            *)
+                # Invalid input - loop handles the re-prompt automatically
+                echo
+                warning "Invalid option. Please choose 1, 2, or 3."
+                echo
+                # The loop continues here automatically
+                ;;
+        esac
+    else
+        # Timeout occurred - exit safely
+        echo
+        warning "No input received (timeout). Exiting..."
+        echo
+        print_separator
+        echo -e "${BOLD}${GREEN}${SUCCESS_ICON} Maintenance completed - timed out gracefully${RESET}"
+        print_separator
+        exit 0
+    fi
+done

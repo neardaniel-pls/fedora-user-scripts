@@ -113,6 +113,22 @@ error() {
     echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
 }
 
+# ===== Verify Root/Sudo =====
+# The script modifies /etc/hosts, so root privileges are mandatory.
+if [ "$EUID" -ne 0 ]; then
+    error "This script must be run with sudo to update /etc/hosts."
+    info "Please run: sudo ./update-hosts.sh"
+    exit 1
+fi
+
+# Ensure SUDO_USER is set (in case someone ran it as actual root, not sudo)
+if [ -z "${SUDO_USER:-}" ]; then
+    warning "SUDO_USER not set. Assuming you are logged in as root."
+    # If strictly root, we can't drop privileges effectively,
+    # but the script will likely still work, just with root-owned git files.
+    SUDO_USER="root"
+fi
+
 print_header() {
     local text="$1"
     echo

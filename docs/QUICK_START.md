@@ -18,10 +18,13 @@ cd fedora-user-scripts
 ### Step 2: Install Dependencies (2 minutes)
 ```bash
 # Install all common dependencies at once
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit git python3
 
 # For SearXNG (if using)
 sudo dnf install python3 python3-pip python3-virtualenv docker
+
+# For update-hosts script, also clone the StevenBlack hosts repository:
+git clone https://github.com/StevenBlack/hosts.git ~/Documents/code/hosts
 ```
 
 ### Step 3: Make Scripts Executable (30 seconds)
@@ -76,6 +79,15 @@ sudo ./scripts/security/security-sweep.sh -i -r
 # Access at http://localhost:8888
 ```
 
+### Update Hosts File
+```bash
+# Update StevenBlack hosts file with default extensions
+./scripts/maintenance/update-hosts.sh
+
+# Or with specific extensions
+HOSTS_EXTENSIONS="fakenews,gambling" ./scripts/maintenance/update-hosts.sh
+```
+
 ## 🔧 Configuration (Optional)
 
 ### Set Up Aliases (1 minute)
@@ -85,6 +97,7 @@ Add to your `~/.bashrc` for easier access:
 alias cleanmeta='bash ~/fedora-user-scripts/scripts/maintenance/clean-metadata.sh'
 alias secscan='sudo ~/fedora-user-scripts/scripts/security/security-sweep.sh'
 alias fedora-update='bash ~/fedora-user-scripts/scripts/maintenance/fedora-update.sh'
+alias updatehosts='bash ~/fedora-user-scripts/scripts/maintenance/update-hosts.sh'
 
 # Reload shell
 source ~/.bashrc
@@ -124,6 +137,9 @@ secscan
 
 # Start SearXNG
 ./scripts/searxng/run-searxng.sh
+
+# Update hosts file
+updatehosts
 ```
 
 **Happy scripting!** 🎉

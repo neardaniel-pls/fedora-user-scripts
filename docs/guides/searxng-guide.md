@@ -92,6 +92,7 @@ git pull "https://github.com/searxng/searxng"
 
 - **Port already in use**: Check with `lsof -i :8888` or use different port with `SEARXNG_PORT=9000 ./run-searxng.sh`
 - **Settings file not found**: Verify `/etc/searxng/settings.yml` exists and is readable
+- **TypeError: Unexpected keyword argument 'name'**: Run `pip install --upgrade -r requirements.txt`
 - **Git pull failures**: Check for uncommitted changes with `git status`
 
 ### Error Messages
@@ -104,7 +105,7 @@ git pull "https://github.com/searxng/searxng"
 - Store `/etc/searxng/settings.yml` securely with restricted access
 - Regularly update SearXNG for security patches
 - For internet-facing instances, use a reverse proxy with TLS/HTTPS
-- Keep your Fedora system updated: `sudo dnf update -y`
+- Keep your Fedora system updated
 
 ---
 

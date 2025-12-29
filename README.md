@@ -33,7 +33,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 ### security-sweep.sh
 - **Purpose:** Performs comprehensive security sweep on Fedora systems, checking file integrity, rootkits, malware, and auditing security configurations
 - **Usage:** `sudo scripts/security/security-sweep.sh [OPTIONS]`
-- **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `lynis`
+- **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `clamav-update`, `lynis`
 - **Options:** `-i` (integrity), `-r` (rootkit), `-m` (malware), `-a` (audit), `-p` (packages), `-e` (exclude home), `-h` (help)
 - **Note:** Requires root privileges; creates logs in `/var/log/`
 
@@ -49,6 +49,12 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `git`
 - **Note:** This script is included in `scripts/maintenance/fedora-update.sh`
 
+### update-hosts.sh
+- **Purpose:** Updates StevenBlack hosts repository with customizable extensions for blocking unwanted content
+- **Usage:** `scripts/maintenance/update-hosts.sh`
+- **Dependencies:** `git`, `python3`, StevenBlack/hosts repository
+- **Note:** Interactive extension selection with automatic hosts file installation
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -63,6 +69,7 @@ Detailed documentation for each script:
 - [Fedora Update Guide](docs/guides/fedora-update-guide.md)
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
+- [Update Hosts Guide](docs/guides/update-hosts-guide.md)
 
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting
@@ -96,7 +103,7 @@ chmod +x scripts/**/*.sh
 3. Install dependencies (see individual script documentation):
 ```bash
 # Check for common dependencies
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis bleachbit
 ```
 
 ### Setting Up Aliases (Optional)
@@ -107,6 +114,7 @@ For convenience, you can add these aliases to your `~/.bashrc` file:
 # Fedora User Scripts aliases
 alias update='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/fedora-update.sh"'
 alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-metadata.sh"'
+alias updatehosts='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/update-hosts.sh"'
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
@@ -136,6 +144,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Note**: For comprehensive Fedora system setup guide, see the companion [fedora-system-setup](https://github.com/neardaniel-pls/fedora-system-setup) repository.
+## Related Projects
 
-**Note**: For a collection of guides for setting up AI on Fedora, see the companion [fedora-ai-setup](https://github.com/neardaniel-pls/fedora-ai-setup) repository.
+Check out these other companion projects:
+
+- **[fedora-system-setup](https://github.com/neardaniel-pls/fedora-system-setup)**: Comprehensive post-installation guide for Fedora Linux systems with essential configurations, repositories, drivers, and applications
+
+- **[fedora-ai-setup](https://github.com/neardaniel-pls/fedora-ai-setup)**: Collection of guides for setting up AI, machine learning, and LLM tools on Fedora Linux systems
+
+- **[near-whisper](https://github.com/neardaniel-pls/near-whisper)**: Free and open source GUI for local Whisper audio transcription on Fedora Linux systems

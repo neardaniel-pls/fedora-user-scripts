@@ -18,7 +18,7 @@ The script performs:
 Install required scanning tools:
 
 ```bash
-sudo dnf install chkrootkit clamav lynis
+sudo dnf install chkrootkit clamav clamav-update lynis
 ```
 
 Note: `rpm` and `dnf` come pre-installed with Fedora.
@@ -119,7 +119,7 @@ Script keeps the 7 most recent `security-sweep` logs and deletes older ones.
 - **Alias not working with sudo**: Include `sudo` in the alias definition
 - **Permission denied**: Always run with `sudo`
 - **Missing dependencies**: Install with `sudo dnf install chkrootkit clamav lynis`
-- **ClamAV update fails**: Script proceeds with existing database; update manually with `sudo freshclam`
+- **ClamAV update fails**: Ensure `clamav-update` is installed; script proceeds with existing database; update manually with `sudo freshclam`
 
 ### Error Messages
 

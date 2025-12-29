@@ -11,6 +11,7 @@ Detailed step-by-step guides for each script and tool:
 - **[Fedora Update Guide](guides/fedora-update-guide.md)** - System maintenance and updates
 - **[SearXNG Guide](guides/searxng-guide.md)** - Privacy-respecting search engine setup
 - **[Security Sweep Guide](guides/security-sweep-guide.md)** - Comprehensive security scanning
+- **[Update Hosts Guide](guides/update-hosts-guide.md)** - StevenBlack hosts repository management
 
 ### [API Reference](api/)
 Technical documentation for script interfaces and usage patterns:
@@ -35,12 +36,12 @@ Real-world usage examples and configurations:
 ## 📖 Navigation Tips
 
 ### By Use Case
-- **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md)
+- **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md), [Update Hosts](guides/update-hosts-guide.md)
 - **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
 
 ### By Skill Level
-- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md)
+- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md)
 - **Intermediate**: [Clean Metadata Guide](guides/clean-metadata-guide.md), [SearXNG Guide](guides/searxng-guide.md)
 - **Advanced**: [Security Sweep Guide](guides/security-sweep-guide.md)
 
@@ -64,6 +65,7 @@ Found something unclear or missing? Please:
 | [Fedora Update](guides/fedora-update-guide.md) | System maintenance | Beginner | dnf |
 | [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Docker, Python |
 | [Security Sweep](guides/security-sweep-guide.md) | Security scanning | Advanced | chkrootkit, clamav, lynis |
+| [Update Hosts](guides/update-hosts-guide.md) | StevenBlack hosts management | Beginner | git, python3 |
 
 ## 🔄 Keeping Updated
 

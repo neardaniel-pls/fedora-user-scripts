@@ -453,7 +453,10 @@ while true; do
                 echo
                 print_section_header "SYSTEM RESTART" "🔄"
                 if [ "$SUDO_AVAILABLE" = true ]; then
-                    confirm_and_execute_destructive "RESTART" "sudo reboot"
+                    info "Restarting the system..."
+                    # Invalidate sudo credentials before executing system command
+                    sudo -k
+                    sudo reboot
                 else
                     warning "Cannot restart: sudo is not available."
                 fi
@@ -464,7 +467,10 @@ while true; do
                 echo
                 print_section_header "SYSTEM SHUTDOWN" "⚡"
                 if [ "$SUDO_AVAILABLE" = true ]; then
-                    confirm_and_execute_destructive "SHUT DOWN" "sudo poweroff"
+                    info "Shutting down the system..."
+                    # Invalidate sudo credentials before executing system command
+                    sudo -k
+                    sudo poweroff
                 else
                     warning "Cannot shut down: sudo is not available."
                 fi

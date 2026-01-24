@@ -10,18 +10,26 @@
 #   checking and provides colored output for better user experience.
 #
 # USAGE:
-#   ./run-searxng.sh
+#   ./run-searxng.sh [OPTIONS]
 #
 # OPTIONS:
-#   SEARXNG_PORT - Optional environment variable to specify the port (default: 8888)
-#                 Example: SEARXNG_PORT=8080 ./run-searxng.sh
+#   -v, --verbose: Show all SearxNG output including non-critical warnings
+#   -h, --help:    Display this help message
+#   SEARXNG_PORT:  Optional environment variable to specify the port (default: 8888)
+#                  Example: SEARXNG_PORT=8080 ./run-searxng.sh
 #
 # EXAMPLES:
-#   # Run SearxNG on default port (8888)
+#   # Run SearxNG on default port (8888) with filtered warnings
 #   ./run-searxng.sh
+#
+#   # Run SearxNG with verbose output (show all warnings and errors)
+#   ./run-searxng.sh --verbose
 #
 #   # Run SearxNG on custom port
 #   SEARXNG_PORT=8080 ./run-searxng.sh
+#
+#   # Run SearxNG with verbose output on custom port
+#   SEARXNG_PORT=8080 ./run-searxng.sh -v
 #
 #   # Stop any existing SearxNG instance and restart
 #   lsof -ti :8888 | xargs kill -9 2>/dev/null || true
@@ -191,6 +199,56 @@ SEARXNG_APP="$SEARXNG_BASE/searxng"
 WEBAPP_SCRIPT="$SEARXNG_APP/searx/webapp.py"
 # Port for the web service (default: 8888, can be overridden via environment variable)
 SEARXNG_PORT="${SEARXNG_PORT:-8888}"
+# Show all SearxNG output including non-critical warnings (default: 0 to filter warnings)
+VERBOSE_MODE=0
+
+# ===== Argument Parsing =====
+# Parse command-line arguments
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+OPTIONS:
+  -v, --verbose  Show all SearxNG output including non-critical warnings
+  -h, --help     Display this help message
+
+ENVIRONMENT VARIABLES:
+  SEARXNG_PORT   Port for the web service (default: 8888)
+                 Example: SEARXNG_PORT=8080 $0
+
+EXAMPLES:
+  # Run SearxNG with filtered warnings (default)
+  $0
+
+  # Run SearxNG with verbose output
+  $0 --verbose
+
+  # Run SearxNG on custom port
+  SEARXNG_PORT=8080 $0
+
+  # Run SearxNG with verbose output on custom port
+  SEARXNG_PORT=8080 $0 -v
+EOF
+    exit 0
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -v|--verbose)
+            VERBOSE_MODE=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            error "Unknown option: $1"
+            echo "Use --help for usage information."
+            exit 1
+            ;;
+    esac
+done
 
 # Display script introduction with formatting
 print_header "SEARXNG LAUNCHER"
@@ -319,7 +377,13 @@ echo
 
 # Start the SearxNG web application
 # This will run until interrupted or terminated
-python3 searx/webapp.py
+if (( VERBOSE_MODE )); then
+  # Show all output including non-critical warnings
+  python3 searx/webapp.py
+else
+  # Filter out non-critical warnings and errors (engine loading, bot detection)
+  python3 searx/webapp.py 2>&1 | grep -v "searx.engines.*loading engine.*failed" | grep -v "searx.botdetection.config.*missing config file" | grep -v "searx.botdetection.*X-Forwarded-For nor X-Real-IP header is set"
+fi
 
 # Deactivate the virtual environment on normal exit
 deactivate

@@ -8,11 +8,21 @@
 #   runs the updateHostsFile.py script with the specified extensions.
 #
 # USAGE:
-#   ./update-hosts.sh
+#   sudo ./update-hosts.sh [OPTIONS]
+#
+# OPTIONS:
+#   --help          Show this help message and exit
+#   --auto          Automatically flush DNS cache after updating hosts file
 #
 # EXAMPLES:
 #   # Run the hosts update with default extensions (gambling, porn)
-#   ./update-hosts.sh
+#   sudo ./update-hosts.sh
+#
+#   # Run with automatic DNS cache flush
+#   sudo ./update-hosts.sh --auto
+#
+#   # Show help message
+#   sudo ./update-hosts.sh --help
 #
 # DEPENDENCIES:
 #   - git: For repository operations
@@ -22,6 +32,7 @@
 # OPERATIONAL NOTES:
 #   - The script requires write access to the hosts repository directory
 #   - The script answers prompts with a specific sequence: "yes" for replacing hosts file, "no" for DNS cache flush
+#   - Use --auto flag to automatically flush the DNS cache for immediate effect
 #   - Exit codes: 0 for success, 1 for errors
 #
 
@@ -92,6 +103,109 @@ else
     readonly UPDATE_ICON=""
 fi
 
+# --- Helper Functions ---
+show_help() {
+    # Use printf to properly handle escape codes
+    printf '%b' "${BOLD}${GREEN}${START_ICON} StevenBlack Hosts Update Utility${RESET}\n"
+    printf '\n'
+    printf '%b' "${BOLD}USAGE:${RESET}\n"
+    printf '    sudo ./update-hosts.sh [OPTIONS]\n'
+    printf '\n'
+    printf '%b' "${BOLD}OPTIONS:${RESET}\n"
+    printf '    %b--help, -h%b       Show this help message and exit\n' "${BOLD}" "${RESET}"
+    printf '    %b--auto%b           Automatically flush DNS cache after updating hosts file\n' "${BOLD}" "${RESET}"
+    printf '\n'
+    printf '%b' "${BOLD}DESCRIPTION:${RESET}\n"
+    printf '    This script updates the StevenBlack hosts repository and generates a new hosts file\n'
+    printf '    with specified extensions. It pulls the latest changes from the repository and then\n'
+    printf '    runs the updateHostsFile.py script with the specified extensions.\n'
+    printf '\n'
+    printf '%b' "${BOLD}AVAILABLE EXTENSIONS:${RESET}\n"
+    printf '    1. fakenews    - Block fake news websites\n'
+    printf '    2. gambling    - Block gambling websites\n'
+    printf '    3. porn        - Block adult content websites\n'
+    printf '    4. social      - Block social media websites\n'
+    printf '\n'
+    printf '%b' "${BOLD}EXAMPLES:${RESET}\n"
+    printf '    %b#%b Run with default extensions (gambling, porn)\n' "${GREEN}" "${RESET}"
+    printf '    sudo ./update-hosts.sh\n'
+    printf '\n'
+    printf '    %b#%b Run with automatic DNS cache flush\n' "${GREEN}" "${RESET}"
+    printf '    sudo ./update-hosts.sh --auto\n'
+    printf '\n'
+    printf '    %b#%b Use custom extensions via environment variable\n' "${GREEN}" "${RESET}"
+    printf '    HOSTS_EXTENSIONS=fakenews,social sudo ./update-hosts.sh --auto\n'
+    printf '\n'
+    printf '%b' "${BOLD}ENVIRONMENT VARIABLES:${RESET}\n"
+    printf '    %bHOSTS_EXTENSIONS%b    Comma-separated list of extensions to use\n' "${BOLD}" "${RESET}"
+    printf '    %bHOSTS_REPO_PATH%b     Custom path to the hosts repository\n' "${BOLD}" "${RESET}"
+    printf '    %bNO_COLOR%b            Disable colored output\n' "${BOLD}" "${RESET}"
+    printf '    %bUSE_ICONS%b           Disable icons (set to 0)\n' "${BOLD}" "${RESET}"
+    printf '\n'
+    printf '%b' "${BOLD}DEPENDENCIES:${RESET}\n"
+    printf '    - git: For repository operations\n'
+    printf '    - python3: For running the updateHostsFile.py script\n'
+    printf '    - StevenBlack/hosts repository in ~/Documents/code/hosts\n'
+    printf '\n'
+    printf '%b' "${BOLD}DNS CACHE FLUSH:${RESET}\n"
+    printf '    When using the %b--auto%b flag, the script will automatically flush the\n' "${BOLD}" "${RESET}"
+    printf '    DNS cache for immediate effect. Without this flag, you may need to manually\n'
+    printf '    flush the cache using one of these commands:\n'
+    printf '\n'
+    printf '    %bsudo systemctl restart systemd-resolved%b\n' "${GREEN}" "${RESET}"
+    printf '    %bsudo systemctl restart nscd%b\n' "${GREEN}" "${RESET}"
+    printf '    %bsudo systemctl restart dnsmasq%b\n' "${GREEN}" "${RESET}"
+    printf '\n'
+    printf '%b' "${BOLD}EXIT CODES:${RESET}\n"
+    printf '    0    Success\n'
+    printf '    1    Error\n'
+    printf '\n'
+}
+
+flush_dns_cache() {
+    print_section_header "DNS CACHE FLUSH" "${UPDATE_ICON}"
+    print_operation_start "Flushing DNS cache for immediate effect"
+
+    local flushed=0
+
+    # Try systemd-resolved first (most common on Fedora)
+    if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        if systemctl restart systemd-resolved 2>/dev/null; then
+            success "systemd-resolved DNS cache flushed successfully"
+            flushed=1
+        else
+            warning "Failed to flush systemd-resolved cache"
+        fi
+    # Try nscd
+    elif systemctl is-active --quiet nscd 2>/dev/null; then
+        if systemctl restart nscd 2>/dev/null; then
+            success "nscd DNS cache flushed successfully"
+            flushed=1
+        else
+            warning "Failed to flush nscd cache"
+        fi
+    # Try dnsmasq
+    elif systemctl is-active --quiet dnsmasq 2>/dev/null; then
+        if systemctl restart dnsmasq 2>/dev/null; then
+            success "dnsmasq DNS cache flushed successfully"
+            flushed=1
+        else
+            warning "Failed to flush dnsmasq cache"
+        fi
+    else
+        info "No active DNS caching service detected"
+    fi
+
+    if [ "$flushed" -eq 1 ]; then
+        print_operation_end "DNS cache flush completed"
+        success "DNS cache flushed - hosts file changes are now in effect"
+    else
+        info "DNS cache was not flushed. Changes will take effect gradually."
+        info "To manually flush the cache, run: sudo systemctl restart systemd-resolved"
+    fi
+    print_separator
+}
+
 # --- Output Functions ---
 info() {
     local message="$1"
@@ -112,6 +226,29 @@ error() {
     local message="$1"
     echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
 }
+
+# --- Argument Parsing ---
+# Default values
+AUTO_FLUSH_DNS=0
+
+# Parse command-line arguments (before root check so --help works without sudo)
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        --auto)
+            AUTO_FLUSH_DNS=1
+            shift
+            ;;
+        *)
+            error "Unknown option: $1"
+            echo "Use --help for usage information."
+            exit 1
+            ;;
+    esac
+done
 
 # ===== Verify Root/Sudo =====
 # The script modifies /etc/hosts, so root privileges are mandatory.
@@ -377,12 +514,24 @@ else
 fi
 print_separator
 
+# ===== Flush DNS Cache (if --auto flag is set) =====
+if [ "$AUTO_FLUSH_DNS" -eq 1 ]; then
+    flush_dns_cache
+fi
+
 # ===== Completion =====
 print_header "UPDATE SUMMARY"
 echo -e "${BOLD}${GREEN}${SUCCESS_ICON} StevenBlack hosts update completed successfully!${RESET}"
 echo
 info "The hosts file has been updated with the following extensions: ${BOLD}${EXTENSIONS}${RESET}"
 info "You can find the generated hosts file in: ${HOSTS_REPO}/hosts"
+if [ "$AUTO_FLUSH_DNS" -eq 1 ]; then
+    success "DNS cache was automatically flushed - changes are now in effect"
+else
+    info "DNS cache was not flushed. Changes will take effect gradually."
+    info "To flush manually: sudo systemctl restart systemd-resolved"
+    info "Or run with --auto flag next time for automatic flush"
+fi
 echo
 print_separator
 

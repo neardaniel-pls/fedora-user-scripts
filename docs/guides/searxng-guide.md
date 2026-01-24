@@ -46,7 +46,17 @@ See script in action:
 Use the provided script:
 
 ```bash
+# Run with filtered warnings (default)
 ./run-searxng.sh
+
+# Run with verbose output to see all warnings and errors
+./run-searxng.sh --verbose
+
+# Run on custom port
+SEARXNG_PORT=9000 ./run-searxng.sh
+
+# Show help
+./run-searxng.sh --help
 ```
 
 Or run manually:
@@ -94,6 +104,7 @@ git pull "https://github.com/searxng/searxng"
 - **Settings file not found**: Verify `/etc/searxng/settings.yml` exists and is readable
 - **TypeError: Unexpected keyword argument 'name'**: Run `pip install --upgrade -r requirements.txt`
 - **Git pull failures**: Check for uncommitted changes with `git status`
+- **Engine loading warnings**: Use `./run-searxng.sh --verbose` to see full output for debugging
 
 ### Error Messages
 

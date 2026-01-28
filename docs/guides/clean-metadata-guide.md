@@ -38,6 +38,8 @@ sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils
 - `--help` / `-h`: Display usage information
 - `--verbose`: Show metadata before cleaning (useful for verification)
 - `--replace`: Replace the original file instead of creating a `_cleaned_opt` copy
+- `--clean`: Only remove metadata without optimization
+- `--optimize`: Only optimize without removing metadata
 
 ## 🎬 Demo
 
@@ -66,6 +68,27 @@ By default, creates a new file with `_cleaned_opt` suffix:
 - Processed: `document_cleaned_opt.pdf`
 
 With `--replace`, the original file is securely deleted and replaced with the cleaned version.
+
+With `--clean`, creates a file with `_cleaned` suffix (metadata only):
+- Original: `document.pdf`
+- Processed: `document_cleaned.pdf`
+
+With `--optimize`, creates a file with `_optimized` suffix (optimization only):
+- Original: `document.pdf`
+- Processed: `document_optimized.pdf`
+
+### Advanced Usage
+
+```bash
+# Only remove metadata (no optimization)
+cleanmeta --clean /path/to/file.pdf
+
+# Only optimize (keep metadata)
+cleanmeta --optimize /path/to/image.jpg
+
+# Clean and optimize (default behavior)
+cleanmeta /path/to/file.pdf
+```
 
 ## Configuration
 
@@ -96,7 +119,7 @@ PDF_SETTINGS=/screen cleanmeta book.pdf
 - **Permission denied**: Use `chmod +x` on the script
 - **Dependency not found**: Install missing packages with dnf
 - **Symlink rejected**: Use actual file path, not symlink
-- **File already processed**: Rename file to remove `_cleaned` or `_cleaned_opt` suffix
+- **File already processed**: Rename file to remove `_cleaned`, `_cleaned_opt`, or `_optimized` suffix
 
 ### Error Messages
 
@@ -106,5 +129,5 @@ PDF_SETTINGS=/screen cleanmeta book.pdf
 
 ---
 
-**Last Updated**: October 2025  
+**Last Updated**: January 2026
 **Script Version**: Security Hardened Edition

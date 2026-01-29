@@ -15,7 +15,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Purpose:** Cleans metadata from PDF, PNG, and JPEG files and optimizes them
 - **Usage:** `scripts/maintenance/clean-metadata.sh [OPTIONS] <file|directory> [...]`
 - **Dependencies:** `exiftool`, `gs`, `pngquant`, `jpegoptim`, `numfmt`, `shred`
-- **Options:** `--help`, `--replace`, `--verbose`
+- **Options:** `--help`, `--replace`, `--verbose`, `--clean`, `--optimize`
 - **Demo:** ![](assets/demos/cleanmeta.gif)
 
 ### fedora-update.sh

@@ -10,20 +10,31 @@
 #   implementing proper path validation, temporary file handling, and error
 #   checking to prevent data loss or security issues.
 #
+#   Use --clean to only remove metadata without optimization, or
+#   --optimize to only optimize without removing metadata.
+#
 # USAGE:
 #   cleanmetadata [OPTIONS] <file|directory> [...]
 #
 # OPTIONS:
-#   --help, -h     Display this help message and exit
-#   --replace      Replace original files instead of creating copies (use with caution)
-#   --verbose      Display metadata before cleaning for verification purposes
+#   --help, -h        Display this help message and exit
+#   --replace         Replace original files instead of creating copies (use with caution)
+#   --verbose         Display metadata before cleaning for verification purposes
+#   --clean           Only remove metadata without optimizing (default: both clean and optimize)
+#   --optimize        Only optimize without removing metadata (default: both clean and optimize)
 #
 # EXAMPLES:
-#   # Process a single file
+#   # Process a single file (clean and optimize)
 #   cleanmetadata document.pdf
 #
 #   # Process an entire directory recursively
 #   cleanmetadata ~/Documents/
+#
+#   # Only remove metadata without optimization
+#   cleanmetadata --clean document.pdf
+#
+#   # Only optimize without removing metadata
+#   cleanmetadata --optimize image.jpg
 #
 #   # Replace original files (destructive operation)
 #   cleanmetadata --replace sensitive.pdf
@@ -43,13 +54,14 @@
 #   - shred: Optional, for secure file deletion when using --replace
 #
 # OPERATIONAL NOTES:
-#   - Files with "cleaned" or "cleaned_opt" in their names are automatically skipped
+#   - Files with "cleaned", "cleaned_opt", or "optimized" in their names are automatically skipped
 #   - Symbolic links are not processed for security reasons
 #   - All temporary files are created in a secure temporary directory that is
 #     automatically cleaned up on script exit
 #   - The script validates output paths to prevent directory traversal attacks
 #   - When optimization fails or results in larger files, the cleaned (non-optimized)
 #     version is used instead
+#   - Output suffixes: "_cleaned_opt" (default), "_cleaned" (--clean), "_optimized" (--optimize)
 #   - Exit codes: 0 for success, 1 for errors
 #
 # For more detailed information, see clean-metadata-guide.md
@@ -240,6 +252,8 @@ cleanmetadata() {
   # --- Option Parsing ---
   local replace_original=0  # Flag: 1=replace original, 0=create copy
   local verbose=0          # Flag: 1=show metadata, 0=quiet operation
+  local clean_only=0       # Flag: 1=only clean metadata, 0=optimize too
+  local optimize_only=0    # Flag: 1=only optimize, 0=clean too
   local paths=()           # Array to store file/directory paths
   
   # Process command-line arguments using a while loop and case statement
@@ -252,13 +266,17 @@ Usage: cleanmetadata [OPTIONS] <file|directory> [...]
 Remove metadata and optimize PDF, PNG, and JPEG files.
 
 Options:
-  --help, -h     Show this help message
-  --replace      Replace original files instead of creating copies (use with caution)
-  --verbose      Show metadata before cleaning
+  --help, -h        Show this help message
+  --replace         Replace original files instead of creating copies (use with caution)
+  --verbose         Show metadata before cleaning
+  --clean           Only remove metadata without optimization
+  --optimize        Only optimize without removing metadata
 
 Examples:
   cleanmetadata document.pdf
   cleanmetadata ~/Documents/
+  cleanmetadata --clean document.pdf
+  cleanmetadata --optimize image.jpg
   cleanmetadata --replace sensitive.pdf
 
 For more information, see clean-metadata-guide.md
@@ -271,6 +289,14 @@ EOF
         ;;
       --verbose)
         verbose=1
+        shift
+        ;;
+      --clean)
+        clean_only=1
+        shift
+        ;;
+      --optimize)
+        optimize_only=1
         shift
         ;;
       *)
@@ -288,6 +314,13 @@ EOF
   if [ $# -eq 0 ]; then
     error "Usage: cleanmetadata <file|directory> [...]"
     error "Try 'cleanmetadata --help' for more information."
+    return 1
+  fi
+
+  # Validate that --clean and --optimize are not used together
+  if [[ "$clean_only" == "1" && "$optimize_only" == "1" ]]; then
+    error "Error: --clean and --optimize cannot be used together."
+    error "Choose one or neither to perform both operations."
     return 1
   fi
 
@@ -312,7 +345,7 @@ EOF
       local file_count=0
       while IFS= read -r -d '' file; do
         ((file_count++))
-      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' -print0)
+      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' ! -iname '*optimized*' -print0)
       
       print_operation_end "Found $file_count supported files"
       echo
@@ -321,20 +354,20 @@ EOF
       # Find command with -print0 handles filenames with spaces/newlines safely
       # The regex pattern excludes already processed files to prevent duplication
       while IFS= read -r -d '' file; do
-        if ! cleanmetadata_file "$file" "$replace_original" "$verbose"; then
+        if ! cleanmetadata_file "$file" "$replace_original" "$verbose" "$clean_only" "$optimize_only"; then
           error_count=$((error_count + 1))
           error "An error occurred while processing $file"
         fi
-      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' -print0)
+      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' ! -iname '*optimized*' -print0)
     elif [ -f "$target" ]; then
       # Check if file has already been processed by examining its name
       case "$target" in
-        *cleaned*|*cleaned_opt*)
+        *cleaned*|*cleaned_opt*|*optimized*)
           warning "Ignoring already processed file: $target"
           ;;
         *)
           # Process the file and track any errors
-          if ! cleanmetadata_file "$target" "$replace_original" "$verbose"; then
+          if ! cleanmetadata_file "$target" "$replace_original" "$verbose" "$clean_only" "$optimize_only"; then
             error_count=$((error_count + 1))
             error "An error occurred while processing $target"
           fi
@@ -357,17 +390,20 @@ EOF
 
 # --- File Processing Function ---
 #
-# cleanmetadata_file - Processes a single file to remove metadata and optimize it
+# cleanmetadata_file - Processes a single file to remove metadata and/or optimize it
 #
 # DESCRIPTION:
-#   Takes a single file, validates it, removes all metadata, applies format-specific
-#   optimization, and either creates a new file or replaces the original. Implements
-#   multiple security checks to prevent path traversal and ensure safe file handling.
+#   Takes a single file, validates it, removes all metadata (unless --optimize),
+#   applies format-specific optimization (unless --clean), and either creates
+#   a new file or replaces the original. Implements multiple security checks to prevent
+#   path traversal and ensure safe file handling.
 #
 # PARAMETERS:
 #   $1 - File path to process
 #   $2 - Replace flag (1=replace original, 0=create copy)
 #   $3 - Verbose flag (1=show metadata, 0=quiet operation)
+#   $4 - Clean only flag (1=only clean metadata, 0=optimize too)
+#   $5 - Optimize only flag (1=only optimize, 0=clean too)
 #
 # RETURNS:
 #   0 - Success (file processed successfully)
@@ -397,6 +433,8 @@ cleanmetadata_file() {
   
   local replace_original="$2"
   local verbose="$3"
+  local clean_only="$4"
+  local optimize_only="$5"
 
   local basename_f
   basename_f=$(basename "$f")
@@ -435,7 +473,16 @@ cleanmetadata_file() {
   if [[ "$replace_original" == "1" ]]; then
       final_path="$f"
   else
-      final_path="$final_dir/${base}_cleaned_opt.${ext}"
+      # Determine output suffix based on mode
+      local output_suffix
+      if [[ "$clean_only" == "1" ]]; then
+          output_suffix="cleaned"
+      elif [[ "$optimize_only" == "1" ]]; then
+          output_suffix="optimized"
+      else
+          output_suffix="cleaned_opt"
+      fi
+      final_path="$final_dir/${base}_${output_suffix}.${ext}"
   fi
 
   # Display status
@@ -448,62 +495,111 @@ cleanmetadata_file() {
     echo
   fi
 
-  # Step 1: Remove metadata
-  print_operation_start "Removing all metadata"
-  if ! exiftool -all= -P -o "$tmp_cleaned" "$f" >/dev/null 2>&1; then
-    error "Failed to clean metadata."
-    return 1
-  fi
-  print_operation_end "Metadata removal completed"
+  local source_to_move=""  # Will hold the final file to move
 
-  if [ ! -s "$tmp_cleaned" ]; then
-    error "Cleaned file is empty."
-    return 1
+  # Step 1: Remove metadata (skip if --optimize)
+  if [[ "$optimize_only" != "1" ]]; then
+    print_operation_start "Removing all metadata"
+    if ! exiftool -all= -P -o "$tmp_cleaned" "$f" >/dev/null 2>&1; then
+      error "Failed to clean metadata."
+      return 1
+    fi
+    print_operation_end "Metadata removal completed"
+
+    if [ ! -s "$tmp_cleaned" ]; then
+      error "Cleaned file is empty."
+      return 1
+    fi
   fi
 
-  # Step 2: Optimize
-  print_operation_start "Optimizing ${ext^^} file"
-  
-  case "${ext,,}" in
-    pdf)
-      # Added -dSAFER for security
-      if ! gs -sDEVICE="$GS_DEVICE" -dSAFER -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
-         -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
-         -sOutputFile="$tmp_optimized" "$tmp_cleaned" 2>/dev/null; then
-         warning "PDF optimization failed. Using cleaned file."
-          cp "$tmp_cleaned" "$tmp_optimized"
+  # Step 2: Optimize (skip if --clean)
+  if [[ "$clean_only" != "1" ]]; then
+    # Determine input file for optimization
+    local optimize_input
+    if [[ "$optimize_only" == "1" ]]; then
+        optimize_input="$f"  # Use original file
+        print_operation_start "Optimizing ${ext^^} file (without removing metadata)"
+    else
+        optimize_input="$tmp_cleaned"  # Use cleaned file
+        print_operation_start "Optimizing ${ext^^} file"
+    fi
+    
+    case "${ext,,}" in
+      pdf)
+        # Added -dSAFER for security
+        if ! gs -sDEVICE="$GS_DEVICE" -dSAFER -dCompatibilityLevel=1.4 -dPDFSETTINGS="$PDF_SETTINGS" \
+           -dFastWebView=true -dAutoRotatePages=/None -dNOPAUSE -dQUIET -dBATCH \
+           -sOutputFile="$tmp_optimized" "$optimize_input" 2>/dev/null; then
+           warning "PDF optimization failed."
+           if [[ "$optimize_only" == "1" ]]; then
+               cp "$optimize_input" "$tmp_optimized"
+           else
+               cp "$tmp_cleaned" "$tmp_optimized"
+           fi
       elif ! gs -dNODISPLAY -dQUIET -dBATCH "$tmp_optimized" 2>/dev/null; then
-            warning "Optimized PDF corrupted. Using cleaned file."
-            cp "$tmp_cleaned" "$tmp_optimized"
+            warning "Optimized PDF corrupted."
+            if [[ "$optimize_only" == "1" ]]; then
+                cp "$optimize_input" "$tmp_optimized"
+            else
+                cp "$tmp_cleaned" "$tmp_optimized"
+            fi
       fi
       ;;
     png)
-      if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$tmp_cleaned" 2>/dev/null; then
-        warning "PNG optimization failed. Using cleaned file."
-        cp "$tmp_cleaned" "$tmp_optimized"
+      if ! pngquant --quality="$PNG_QUALITY" --speed 1 --output "$tmp_optimized" --force "$optimize_input" 2>/dev/null; then
+        warning "PNG optimization failed."
+        if [[ "$optimize_only" == "1" ]]; then
+            cp "$optimize_input" "$tmp_optimized"
+        else
+            cp "$tmp_cleaned" "$tmp_optimized"
+        fi
       fi
       ;;
     jpg|jpeg)
-      if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$tmp_cleaned" > "$tmp_optimized" 2>/dev/null; then
-        warning "JPEG optimization failed. Using cleaned file."
-        cp "$tmp_cleaned" "$tmp_optimized"
+      if ! jpegoptim --max="$JPEG_QUALITY" --strip-all --stdout "$optimize_input" > "$tmp_optimized" 2>/dev/null; then
+        warning "JPEG optimization failed."
+        if [[ "$optimize_only" == "1" ]]; then
+            cp "$optimize_input" "$tmp_optimized"
+        else
+            cp "$tmp_cleaned" "$tmp_optimized"
+        fi
       fi
       ;;
-  esac
-  print_operation_end "File optimization completed"
+    esac
+    print_operation_end "File optimization completed"
 
-  if [ ! -s "$tmp_optimized" ]; then
-      cp "$tmp_cleaned" "$tmp_optimized"
-  fi
+    if [ ! -s "$tmp_optimized" ]; then
+        if [[ "$optimize_only" == "1" ]]; then
+            cp "$optimize_input" "$tmp_optimized"
+        else
+            cp "$tmp_cleaned" "$tmp_optimized"
+        fi
+    fi
 
-  # Compare sizes
-  local size_clean
-  size_clean=$(stat -c%s "$tmp_cleaned")
-  local size_opt
-  size_opt=$(stat -c%s "$tmp_optimized")
-
-  local source_to_move="$tmp_optimized"
-  if [ "$size_opt" -ge "$size_clean" ]; then
+    # Compare sizes (only if we did optimization)
+    if [[ "$optimize_only" == "1" ]]; then
+        local size_orig
+        size_orig=$(stat -c%s "$f")
+        local size_opt
+        size_opt=$(stat -c%s "$tmp_optimized")
+        
+        source_to_move="$tmp_optimized"
+        if [ "$size_opt" -ge "$size_orig" ]; then
+            source_to_move="$f"
+        fi
+    else
+        local size_clean
+        size_clean=$(stat -c%s "$tmp_cleaned")
+        local size_opt
+        size_opt=$(stat -c%s "$tmp_optimized")
+        
+        source_to_move="$tmp_optimized"
+        if [ "$size_opt" -ge "$size_clean" ]; then
+            source_to_move="$tmp_cleaned"
+        fi
+    fi
+  else
+    # --clean mode: use the cleaned file
     source_to_move="$tmp_cleaned"
   fi
 
@@ -555,8 +651,16 @@ cleanmetadata_file() {
   local final_h
   final_h=$(numfmt --to=iec --suffix=B "$size_final")
 
-  printf "${BOLD}${GREEN}📊 Size: Before: %8s → After: %8s | Δ %s%s${RESET}\n" \
-         "$orig_h" "$final_h" "$sign" "$(numfmt --to=iec --suffix=B $diff_abs)"
+  # Display operation mode in stats
+  local mode_text=""
+  if [[ "$clean_only" == "1" ]]; then
+      mode_text=" (metadata cleaned only)"
+  elif [[ "$optimize_only" == "1" ]]; then
+      mode_text=" (optimized only)"
+  fi
+
+  printf "${BOLD}${GREEN}📊 Size: Before: %8s → After: %8s | Δ %s%s%s${RESET}\n" \
+         "$orig_h" "$final_h" "$sign" "$(numfmt --to=iec --suffix=B $diff_abs)" "$mode_text"
   print_separator
 }
 

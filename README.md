@@ -55,6 +55,19 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `git`, `python3`, StevenBlack/hosts repository
 - **Note:** Interactive extension selection with automatic hosts file installation
 
+### update-ollama-openwebui.sh
+- **Purpose:** Updates Ollama and Open Web UI installations with automatic backup
+- **Usage:** `scripts/ai/update-ollama-openwebui.sh [OPTIONS]`
+- **Dependencies:** `podman`, `curl`, `systemctl`, `tar`
+- **Options:** `--backup-only`, `--restore`, `--restore-date`, `--no-backup`, `--help`
+- **Note:** Creates backups before updating; preserves models and configurations
+
+### start-ollama-openwebui.sh
+- **Purpose:** Starts Ollama and Open Web UI services
+- **Usage:** `scripts/ai/start-ollama-openwebui.sh`
+- **Dependencies:** `podman`, `systemctl`
+- **Note:** Starts both services; press Ctrl+C to stop both
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -70,6 +83,8 @@ Detailed documentation for each script:
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
 - [Update Hosts Guide](docs/guides/update-hosts-guide.md)
+- [Ollama and Open Web UI Update Guide](docs/guides/ollama-openwebui-guide.md)
+- [Ollama and Open Web UI Start Guide](docs/guides/start-ollama-openwebui-guide.md)
 
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting
@@ -118,6 +133,8 @@ alias updatehosts='bash "$HOME/Documents/code/fedora-user-scripts/scripts/mainte
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
+alias ai_update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/update-ollama-openwebui.sh"'
+alias ai_start='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/start-ollama-openwebui.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

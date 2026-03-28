@@ -502,10 +502,10 @@ fi
 # --auto : skip prompts (equivalent to answering 'yes' to replace hosts file)
 # --replace : replace /etc/hosts
 # --extensions : specify extensions to use
-CMD="python3 updateHostsFile.py --auto --replace --extensions $EXTENSIONS"
+CMD=(python3 updateHostsFile.py --auto --replace --extensions "$EXTENSIONS")
 
 # Execute the command
-if $CMD; then
+if "${CMD[@]}"; then
     print_operation_end "Hosts file generated and installed successfully"
     success "System hosts file updated with extensions: $EXTENSIONS"
 else

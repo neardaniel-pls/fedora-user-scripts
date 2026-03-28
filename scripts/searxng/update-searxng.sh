@@ -42,6 +42,13 @@
 #   - Uncommitted changes are detected and reported to prevent data loss
 #   - The script refuses to run on non-git repositories or unexpected remotes
 
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Treat unset variables as an error when substituting.
+set -u
+# Pipes return the exit status of the last command to exit with a non-zero status.
+set -o pipefail
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -306,7 +313,7 @@ if [[ "${QUIET:-}" != "1" ]]; then
 fi
 echo "  Verifying repository..."
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-if [[ ! "$REMOTE_URL" =~ github\.com[:/]searxng/searxng ]]; then
+if [[ ! "$REMOTE_URL" =~ ^https?://github\.com[:/]searxng/searxng(\.git)?$ ]]; then
   error "Unexpected git remote origin: $REMOTE_URL"
   echo "For security reasons, this script only works with the official SearxNG repository."
   exit 1

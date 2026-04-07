@@ -12,6 +12,7 @@ Detailed step-by-step guides for each script and tool:
 - **[SearXNG Guide](guides/searxng-guide.md)** - Privacy-respecting search engine setup
 - **[Security Sweep Guide](guides/security-sweep-guide.md)** - Comprehensive security scanning
 - **[Update Hosts Guide](guides/update-hosts-guide.md)** - StevenBlack hosts repository management
+- **[Drive Check Guide](guides/drive-check-guide.md)** - Storage drive inspection and diagnostics
 
 ### [API Reference](api/)
 Technical documentation for script interfaces and usage patterns:
@@ -38,6 +39,7 @@ Real-world usage examples and configurations:
 ### By Use Case
 - **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md), [Update Hosts](guides/update-hosts-guide.md)
 - **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md)
+- **Hardware**: [Drive Check](guides/drive-check-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
 
 ### By Skill Level
@@ -66,6 +68,7 @@ Found something unclear or missing? Please:
 | [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Docker, Python |
 | [Security Sweep](guides/security-sweep-guide.md) | Security scanning | Advanced | chkrootkit, clamav, lynis |
 | [Update Hosts](guides/update-hosts-guide.md) | StevenBlack hosts management | Beginner | git, python3 |
+| [Drive Check](guides/drive-check-guide.md) | Storage drive inspection | Beginner | lsblk, smartctl |
 
 ## 🔄 Keeping Updated
 

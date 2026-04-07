@@ -36,6 +36,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `rpm`, `dnf` or `dnf5`, `chkrootkit`, `clamav`, `clamav-update`, `lynis`
 - **Options:** `-i` (integrity), `-r` (rootkit), `-m` (malware), `-a` (audit), `-p` (packages), `-e` (exclude home), `-h` (help)
 - **Note:** Requires root privileges; creates logs in `/var/log/`
+- **Screenshot:** ![](assets/img/security-sweep.png)
 
 ### run-searxng.sh
 - **Purpose:** Runs SearXNG instance using Python virtual environment
@@ -54,6 +55,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Usage:** `scripts/maintenance/update-hosts.sh`
 - **Dependencies:** `git`, `python3`, StevenBlack/hosts repository
 - **Note:** Interactive extension selection with automatic hosts file installation
+- **Screenshot:** ![](assets/img/hosts.png) ![](assets/img/hosts-cont.png)
 
 ### update-ollama-openwebui.sh
 - **Purpose:** Updates Ollama and Open Web UI installations with automatic backup
@@ -74,6 +76,7 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `lsblk`, `fdisk`, `blockdev`, `lsusb`, `smartctl` (smartmontools, optional)
 - **Options:** `--health` (extended SMART), `--help`
 - **Note:** Read-only; requires root privileges for full device access
+- **Screenshot:** ![](assets/img/drivecheck.png)
 
 ## Documentation
 

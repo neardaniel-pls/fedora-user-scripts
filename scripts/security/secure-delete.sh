@@ -203,8 +203,8 @@ print_separator
 # ===== Main Processing Loop =====
 # Iterate through each target provided as a command-line argument
 print_section_header "SECURE DELETION PROCESS" "${DELETE_ICON}"
-local processed_count=0
-local skipped_count=0
+processed_count=0
+skipped_count=0
 
 for target in "$@"; do
     # Check if the target exists (file, directory, or other)

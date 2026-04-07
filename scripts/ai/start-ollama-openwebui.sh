@@ -30,6 +30,13 @@
 # SECURITY CONSIDERATIONS:
 #   - The script requires sudo privileges for systemctl operations
 
+# Exit immediately if a command exits with a non-zero status.
+set -e
+# Treat unset variables as an error when substituting.
+set -u
+# Pipes return the exit status of the last command to exit with a non-zero status.
+set -o pipefail
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -361,5 +368,5 @@ print_separator
 
 # Keep script running
 while true; do
-    sleep 1
+    sleep 1 || true
 done

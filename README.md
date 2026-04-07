@@ -68,6 +68,13 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Dependencies:** `podman`, `systemctl`
 - **Note:** Starts both services; press Ctrl+C to stop both
 
+### drive-check.sh
+- **Purpose:** Inspects storage drives for comprehensive info (model, capacity, USB version/speed, partitions, SMART health) without making any modifications
+- **Usage:** `sudo scripts/hardware/drive-check.sh [OPTIONS] <device>`
+- **Dependencies:** `lsblk`, `fdisk`, `blockdev`, `lsusb`, `smartctl` (smartmontools, optional)
+- **Options:** `--health` (extended SMART), `--help`
+- **Note:** Read-only; requires root privileges for full device access
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -85,6 +92,7 @@ Detailed documentation for each script:
 - [Update Hosts Guide](docs/guides/update-hosts-guide.md)
 - [Ollama and Open Web UI Update Guide](docs/guides/ollama-openwebui-guide.md)
 - [Ollama and Open Web UI Start Guide](docs/guides/start-ollama-openwebui-guide.md)
+- [Drive Check Guide](docs/guides/drive-check-guide.md)
 
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting
@@ -135,6 +143,7 @@ alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/sea
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
 alias ai_update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/update-ollama-openwebui.sh"'
 alias ai_start='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/start-ollama-openwebui.sh"'
+alias drivecheck='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/hardware/drive-check.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

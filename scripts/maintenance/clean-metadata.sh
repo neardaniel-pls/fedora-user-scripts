@@ -331,7 +331,7 @@ EOF
   for target in "$@"; do
     # Skip if target is not a regular file or directory, or is a symlink
     # This prevents processing of special files and potential security issues
-    if [ ! -f "$target" ] && [ ! -d "$target" ] || [ -L "$target" ]; then
+    if [[ ! -f "$target" && ! -d "$target" || -L "$target" ]]; then
         warning "Skipping invalid or non-regular file/directory: $target"
         continue
     fi
@@ -496,6 +496,10 @@ cleanmetadata_file() {
   fi
 
   local source_to_move=""  # Will hold the final file to move
+  local size_original=0    # Store original file size before any modifications
+
+  # Capture original file size before any processing (needed for accurate stats when --replace is used)
+  size_original=$(stat -c%s "$f")
 
   # Step 1: Remove metadata (skip if --optimize)
   if [[ "$optimize_only" != "1" ]]; then
@@ -637,17 +641,15 @@ cleanmetadata_file() {
   fi
 
   # Final Stats
-  local size_orig
-  size_orig=$(stat -c%s "$f")
   local size_final
   size_final=$(stat -c%s "$final_path")
-  local diff=$((size_final - size_orig))
+  local diff=$((size_final - size_original))
   local diff_abs=${diff#-}
   local sign="+"
   [ $diff -lt 0 ] && sign="-"
 
   local orig_h
-  orig_h=$(numfmt --to=iec --suffix=B "$size_orig")
+  orig_h=$(numfmt --to=iec --suffix=B "$size_original")
   local final_h
   final_h=$(numfmt --to=iec --suffix=B "$size_final")
 

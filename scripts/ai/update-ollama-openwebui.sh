@@ -265,7 +265,7 @@ check_dependencies() {
 
 # ===== Backup Functions =====
 backup_openwebui() {
-    local timestamp=$(date +%Y%m%d-%H%M%S)
+    local timestamp="$1"
     local backup_file="${OPENWEBUI_BACKUP_DIR}/open-webui-backup-${timestamp}.tar.gz"
 
     print_operation_start "Creating Open Web UI backup"
@@ -306,7 +306,7 @@ backup_openwebui() {
 }
 
 backup_ollama() {
-    local timestamp=$(date +%Y%m%d-%H%M%S)
+    local timestamp="$1"
     local backup_file="${OLLAMA_BACKUP_DIR}/ollama-backup-${timestamp}.tar.gz"
 
     print_operation_start "Creating Ollama backup"
@@ -435,6 +435,10 @@ update_ollama() {
     }
 
     # Run installer
+    # SECURITY NOTE: This downloads and executes a remote script without verification.
+    # While this is the official Ollama installation method, it introduces supply-chain
+    # risk. Consider pinning to a specific version or verifying a checksum for
+    # production environments.
     print_command_output
     curl -fsSL https://ollama.com/install.sh | sh || {
         error "Failed to update Ollama"
@@ -470,6 +474,13 @@ update_ollama() {
 # ===== Restore Functions =====
 restore_openwebui() {
     local backup_date="$1"
+
+    # Validate backup_date format (YYYYMMDD-HHMMSS) to prevent command injection
+    if [[ ! "$backup_date" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
+        error "Invalid restore date format: '$backup_date'. Expected YYYYMMDD-HHMMSS"
+        return 1
+    fi
+
     local backup_file="${OPENWEBUI_BACKUP_DIR}/open-webui-backup-${backup_date}.tar.gz"
 
     print_operation_start "Restoring Open Web UI from backup"
@@ -545,6 +556,13 @@ restore_openwebui() {
 
 restore_ollama() {
     local backup_date="$1"
+
+    # Validate backup_date format (YYYYMMDD-HHMMSS) to prevent command injection
+    if [[ ! "$backup_date" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
+        error "Invalid restore date format: '$backup_date'. Expected YYYYMMDD-HHMMSS"
+        return 1
+    fi
+
     local backup_file="${OLLAMA_BACKUP_DIR}/ollama-backup-${backup_date}.tar.gz"
 
     print_operation_start "Restoring Ollama from backup"
@@ -581,7 +599,7 @@ restore_ollama() {
 
     # Restore backup
     print_command_output
-    tar xzf "${backup_file}" -C "${HOME}" || {
+    tar xzf "${backup_file}" -C / || {
         error "Failed to restore Ollama backup"
         return 1
     }
@@ -679,8 +697,9 @@ fi
 # Handle backup-only mode
 if [ "$BACKUP_ONLY" = true ]; then
     print_section_header "BACKUP MODE" "${BACKUP_ICON}"
-    backup_openwebui || exit 1
-    backup_ollama || exit 1
+    BACKUP_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    backup_openwebui "$BACKUP_TIMESTAMP" || exit 1
+    backup_ollama "$BACKUP_TIMESTAMP" || exit 1
 
     print_header "BACKUP SUMMARY"
     success "Backup completed successfully"
@@ -694,8 +713,9 @@ print_section_header "UPDATE MODE" "${START_ICON}"
 # Create backups unless --no-backup is specified
 if [ "$NO_BACKUP" != true ]; then
     print_section_header "BACKUP" "${BACKUP_ICON}"
-    backup_openwebui || exit 1
-    backup_ollama || exit 1
+    BACKUP_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    backup_openwebui "$BACKUP_TIMESTAMP" || exit 1
+    backup_ollama "$BACKUP_TIMESTAMP" || exit 1
 fi
 
 # Perform updates

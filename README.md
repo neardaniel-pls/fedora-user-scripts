@@ -100,7 +100,7 @@ Detailed documentation for each script:
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting
 
-### 📋 [Development Workflow](DEVELOPMENT_WORKFLOW.md)
+### 📋 [Contributing Guide](CONTRIBUTING.md)
 Guide for contributing to the project
 
 ## System Requirements

@@ -155,6 +155,9 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 print_kv() {
     local key="$1"
     local value="$2"
@@ -427,23 +430,25 @@ show_usb_info() {
         local speed_label=""
         local speed_num
         speed_num=$(echo "$usb_speed" | grep -oP '[\d.]+')
+        local speed_int=${speed_num%.*}
+        : "${speed_int:=0}"
 
         local speed_gbps="" speed_unit="Mbps"
-        if (( $(echo "$speed_num >= 10000" | bc -l 2>/dev/null || echo 0) )); then
+        if (( speed_int >= 10000 )); then
             speed_label="USB 3.x SuperSpeed+ (Gen2 or higher)"
-            speed_gbps=$(echo "scale=1; $speed_num / 1000" | bc 2>/dev/null || echo "$speed_num")
+            speed_gbps=$(( speed_int / 1000 ))
             speed_unit="Gbps"
-        elif (( $(echo "$speed_num >= 5000" | bc -l 2>/dev/null || echo 0) )); then
+        elif (( speed_int >= 5000 )); then
             speed_label="USB 3.x SuperSpeed (Gen1)"
-            speed_gbps=$(echo "scale=1; $speed_num / 1000" | bc 2>/dev/null || echo "$speed_num")
+            speed_gbps=$(( speed_int / 1000 ))
             speed_unit="Gbps"
-        elif (( $(echo "$speed_num >= 480" | bc -l 2>/dev/null || echo 0) )); then
+        elif (( speed_int >= 480 )); then
             speed_label="USB 2.0 Hi-Speed"
-            speed_gbps="$speed_num"
+            speed_gbps="$speed_int"
             speed_unit="Mbps"
         else
             speed_label="USB 1.x Full/Low-Speed"
-            speed_gbps="$speed_num"
+            speed_gbps="$speed_int"
             speed_unit="Mbps"
         fi
 

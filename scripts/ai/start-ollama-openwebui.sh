@@ -150,6 +150,9 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 # ===== Configuration =====
 # Container and service names
 OPENWEBUI_CONTAINER="open-webui"

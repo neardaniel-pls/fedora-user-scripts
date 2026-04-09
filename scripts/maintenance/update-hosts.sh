@@ -103,6 +103,9 @@ else
     readonly UPDATE_ICON=""
 fi
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 # --- Helper Functions ---
 show_help() {
     # Use printf to properly handle escape codes

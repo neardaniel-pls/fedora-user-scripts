@@ -199,6 +199,9 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 # --- Configuration ---
 # Set quality and optimization parameters with environment variable overrides
 # These values balance file size reduction with acceptable quality for most use cases
@@ -206,20 +209,6 @@ readonly PNG_QUALITY="${PNG_QUALITY:-65-80}"    # PNG quality range (min-max)
 readonly JPEG_QUALITY="${JPEG_QUALITY:-80}"     # JPEG quality percentage
 readonly PDF_SETTINGS="${PDF_SETTINGS:-/ebook}" # Ghostscript PDF preset for size optimization
 readonly GS_DEVICE="${GS_DEVICE:-pdfwrite}"     # Ghostscript device for PDF output
-
-# ===== Dependency Check =====
-# Verify all required tools are available before proceeding
-print_section_header "DEPENDENCY VERIFICATION" "${PACKAGE_ICON}"
-print_operation_start "Checking required dependencies"
-for cmd in exiftool gs pngquant jpegoptim numfmt; do
-  if ! command -v "$cmd" &> /dev/null; then
-    error "Dependency '$cmd' is not installed."
-    exit 1
-  fi
-done
-print_operation_end "Dependency verification completed"
-success "All required dependencies are available"
-print_separator
 
 # --- Temporary Directory ---
 # Create a secure temporary directory and ensure it's cleaned up on exit
@@ -324,6 +313,19 @@ EOF
     return 1
   fi
 
+  # Verify all required tools are available before proceeding
+  print_section_header "DEPENDENCY VERIFICATION" "${PACKAGE_ICON}"
+  print_operation_start "Checking required dependencies"
+  for cmd in exiftool gs pngquant jpegoptim numfmt; do
+    if ! command -v "$cmd" &> /dev/null; then
+      error "Dependency '$cmd' is not installed."
+      return 1
+    fi
+  done
+  print_operation_end "Dependency verification completed"
+  success "All required dependencies are available"
+  print_separator
+
   # Initialize error counter for batch operations
   local error_count=0
   
@@ -341,11 +343,13 @@ EOF
       info "Scanning directory: $target"
       print_operation_start "Finding supported files"
       
+      local find_pattern=(-type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' ! -iname '*optimized*')
+      
       # Count files for progress reporting
       local file_count=0
       while IFS= read -r -d '' file; do
         ((file_count++))
-      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' ! -iname '*optimized*' -print0)
+      done < <(find "$target" "${find_pattern[@]}" -print0)
       
       print_operation_end "Found $file_count supported files"
       echo
@@ -358,7 +362,7 @@ EOF
           error_count=$((error_count + 1))
           error "An error occurred while processing $file"
         fi
-      done < <(find "$target" -type f \( -iname '*.pdf' -o -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) ! -iname '*cleaned*' ! -iname '*cleaned_opt*' ! -iname '*optimized*' -print0)
+      done < <(find "$target" "${find_pattern[@]}" -print0)
     elif [ -f "$target" ]; then
       # Check if file has already been processed by examining its name
       case "$target" in

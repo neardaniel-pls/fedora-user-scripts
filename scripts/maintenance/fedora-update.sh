@@ -28,6 +28,7 @@
 #   - sudo: Required for system package operations
 #   - stat: For file permission checks
 #   - Optional: SearxNG update script at ~/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh
+#     Override with the FEDORA_SCRIPTS_DIR environment variable if cloned elsewhere
 #
 # OPERATIONAL NOTES:
 #   - The script requires sudo privileges for package management operations
@@ -176,66 +177,28 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 # ===== Configuration =====
-# Path to the optional SearxNG update script
+# Base directory for this scripts repository
+# Override with FEDORA_SCRIPTS_DIR environment variable if cloned elsewhere
 # Use SUDO_USER if available (when running with sudo), otherwise use HOME
 if [ -n "${SUDO_USER:-}" ]; then
     ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    SEARXNG_UPDATE_SCRIPT="${ORIGINAL_USER_HOME}/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"
+    _DEFAULT_SCRIPTS_DIR="${ORIGINAL_USER_HOME}/Documents/code/fedora-user-scripts"
 else
-    SEARXNG_UPDATE_SCRIPT="${HOME}/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"
+    _DEFAULT_SCRIPTS_DIR="${HOME}/Documents/code/fedora-user-scripts"
 fi
+FEDORA_SCRIPTS_DIR="${FEDORA_SCRIPTS_DIR:-$_DEFAULT_SCRIPTS_DIR}"
+
+# Path to the optional SearxNG update script
+SEARXNG_UPDATE_SCRIPT="${FEDORA_SCRIPTS_DIR}/scripts/searxng/update-searxng.sh"
 
 # Display script introduction with formatting
 print_header "FEDORA SYSTEM MAINTENANCE"
 echo -e "${BOLD}${GREEN}${START_ICON} Starting comprehensive system maintenance...${RESET}"
 echo
-
-# ===== Helper Functions =====
-#
-# confirm_and_execute_destructive - Safely execute system-altering commands with user confirmation
-#
-# DESCRIPTION:
-#   Implements a safety mechanism for potentially destructive system operations
-#   like restart or shutdown. Requires explicit user confirmation and provides
-#   a countdown before execution. Invalidates sudo credentials before execution
-#   as an additional security measure.
-#
-# PARAMETERS:
-#   $1 - Action description (e.g., "RESTART", "SHUT DOWN")
-#   $2 - Command to execute (must be a trusted, hardcoded command)
-#
-# RETURNS:
-#   Does not return on successful execution (exits after command)
-#   Returns to caller if user cancels
-#
-confirm_and_execute_destructive() {
-    local action=$1      # Human-readable action description
-    local command=$2      # Command to execute (trusted, hardcoded)
-    
-    # SECURITY NOTE: $command is intentionally unquoted for hardcoded internal use.
-    # Only pass trusted, hardcoded commands (sudo reboot/poweroff).
-    # For dynamic commands, refactor to use array-based argument passing.
-    
-    # Display warning and request explicit confirmation
-    warning "About to $action the system."
-    read -r -t 10 -p "Type 'yes' to confirm: " confirmation
-    
-    if [ "$confirmation" = "yes" ]; then
-        # Provide countdown before execution to allow cancellation
-        info "$action in 5 seconds..."
-        sleep 5
-        
-        # Invalidate sudo credentials before executing system command
-        # This prevents privilege escalation in case of command injection
-        sudo -k
-        $command
-    else
-        # User cancelled the operation
-        warning "$action cancelled. Exiting..."
-        exit 0
-    fi
-}
 
 # ===== Verify sudo privileges upfront =====
 # Early verification to fail fast if sudo is unavailable

@@ -179,6 +179,9 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
 # ===== Dependency Check =====
 # Verify that the required 'shred' command is available on the system
 if ! command -v shred &> /dev/null; then
@@ -223,7 +226,16 @@ for target in "$@"; do
         #   -z:   Final pass with zeros to hide shredding
         #   -v:   Verbose output to show progress
         print_command_output
-        find "$target" -type f -exec shred -n 3 -z -v {} \;
+        local shred_errors=0
+        while IFS= read -r -d '' file; do
+            if ! shred -n 3 -z -v "$file"; then
+                error "Failed to shred: $file"
+                ((shred_errors++))
+            fi
+        done < <(find "$target" -type f -print0)
+        if [ "$shred_errors" -gt 0 ]; then
+            warning "$shred_errors file(s) could not be shredded."
+        fi
         # Remove the now-empty directory structure
         rm -rf "$target"
         success "Directory '$target' securely deleted."

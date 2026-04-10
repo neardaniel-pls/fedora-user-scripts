@@ -16,8 +16,8 @@
 
 ### Q: Do I need to be root to run these scripts?
 **A:** It depends on the script:
-- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh
-- **Root required**: security-sweep.sh, fedora-update.sh (for system updates), secure-delete.sh
+- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh, secure-delete.sh
+- **Root required**: security-sweep.sh, fedora-update.sh (for system updates)
 
 ### Q: How do I report security vulnerabilities?
 **A:** Please report security issues privately:

@@ -64,6 +64,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -170,6 +181,15 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Log file =====
 LOG_FILE="/var/log/security-sweep-$(date +%Y%m%d-%H%M%S).log"
 
@@ -222,34 +242,70 @@ error() {
 
 # ===== Scan Functions =====
 #
-# check_dependencies - Verify all required security tools are installed
+# check_dependencies - Verify required security tools are installed for selected scans
 #
 # DESCRIPTION:
-#   Checks for the presence of all required security tools before starting scans.
-#   This prevents partial scans due to missing dependencies and provides clear
-#   feedback about what needs to be installed.
+#   Checks for the presence of security tools needed for the selected scans.
+#   Only validates dependencies for scans that will actually run.
+#
+# PARAMETERS:
+#   $1 - run_integrity (1/0)
+#   $2 - run_rootkit (1/0)
+#   $3 - run_malware (1/0)
+#   $4 - run_audit (1/0)
+#   $5 - run_package (1/0)
 #
 # RETURNS:
 #   Exits with status 1 if any dependencies are missing
 #
 check_dependencies() {
+    local run_integrity="$1"
+    local run_rootkit="$2"
+    local run_malware="$3"
+    local run_audit="$4"
+    local run_package="$5"
+
     info "Checking for required tools..."
-    local missing_deps=0  # Flag to track if any dependencies are missing
-    
-    # Check for each required tool
-    for cmd in rpm dnf chkrootkit clamscan freshclam lynis; do
+    local missing_deps=0
+    local required_cmds=()
+
+    # rpm is needed by both integrity and package checks
+    if [ "$run_integrity" -eq 1 ] || [ "$run_package" -eq 1 ]; then
+        required_cmds+=(rpm)
+    fi
+
+    # dnf is needed by package check
+    if [ "$run_package" -eq 1 ]; then
+        required_cmds+=(dnf)
+    fi
+
+    # chkrootkit is needed by rootkit scan
+    if [ "$run_rootkit" -eq 1 ]; then
+        required_cmds+=(chkrootkit)
+    fi
+
+    # ClamAV is needed by malware scan
+    if [ "$run_malware" -eq 1 ]; then
+        required_cmds+=(clamscan freshclam)
+    fi
+
+    # Lynis is needed by security audit
+    if [ "$run_audit" -eq 1 ]; then
+        required_cmds+=(lynis)
+    fi
+
+    for cmd in "${required_cmds[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
             error "Dependency '$cmd' is not installed."
             missing_deps=1
         fi
     done
 
-    # Exit if any dependencies are missing
     if [ "$missing_deps" -eq 1 ]; then
         error "Please install the missing dependencies and try again."
         exit 1
     fi
-    success "All dependencies are installed."
+    success "All required dependencies are installed."
 }
 
 #
@@ -268,7 +324,7 @@ run_integrity_check() {
     print_operation_start "Verifying package integrity (rpm -Va)"
     
     # Run RPM verification and capture output
-    if output=$(sudo rpm -Va 2>&1); then
+    if output=$(rpm -Va 2>&1); then
         if [ -z "$output" ]; then
             # No output means all files passed verification
             success "System file integrity check passed. No issues found."
@@ -309,7 +365,7 @@ run_rootkit_scan() {
     print_operation_start "Scanning for rootkits (chkrootkit)"
     
     # Run chkrootkit and capture output
-    if output=$(sudo chkrootkit 2>&1); then
+    if output=$(chkrootkit 2>&1); then
         # Check if any infections were reported
         if echo "$output" | grep -q "INFECTED"; then
             warning "chkrootkit found potential issues. See log for details."
@@ -349,7 +405,7 @@ run_malware_scan() {
     print_operation_start "Updating virus definitions (freshclam)"
     
     # Update virus definitions for maximum protection
-    if sudo freshclam; then
+    if freshclam; then
         success "ClamAV definitions updated successfully."
     else
         warning "Could not update ClamAV definitions. Scanning with existing database."
@@ -368,7 +424,7 @@ run_malware_scan() {
     fi
 
     # Run the malware scan
-    if output=$(sudo clamscan "${clam_opts[@]}" / 2>&1); then
+    if output=$(clamscan "${clam_opts[@]}" / 2>&1); then
         # Check if any infected files were found
         if echo "$output" | grep -q "Infected files: 0"; then
             success "ClamAV scan completed. No malware found."
@@ -409,7 +465,7 @@ run_security_audit() {
     info "The full Lynis report can be found in /var/log/lynis.log"
     
     # Run Lynis audit system
-    if output=$(sudo lynis audit system --quiet 2>&1); then
+    if output=$(lynis audit system --quiet 2>&1); then
         success "Lynis security audit completed."
         audit_status="${GREEN}Completed${RESET}"
         # Lynis provides a summary, which is good to have in our log
@@ -455,7 +511,7 @@ run_package_check() {
     # Temporarily disable exit on error to handle dnf's exit code 100
     # DNF returns 100 when issues are found, which is not a command failure
     set +e
-    output=$(sudo "${DNF}" check 2>&1)
+    output=$("${DNF}" check 2>&1)
     exit_code=$?
     set -e
 
@@ -493,6 +549,7 @@ usage() {
     echo "  -p: Run Package check (dnf check)"
     echo "  -e: Exclude home directories from scans (Privacy option)"
     echo "  -h: Display this help message"
+    echo "  -V: Display script version"
     echo "If no options are specified, all scans will be performed."
     exit 1
 }
@@ -514,7 +571,7 @@ main() {
     local run_integrity=0 run_rootkit=0 run_malware=0 run_audit=0 run_package=0
     local all_scans=1
 
-    while getopts "irmaphe" opt; do
+    while getopts "irmapheV" opt; do
         all_scans=0
         case "$opt" in
             i) run_integrity=1 ;;
@@ -524,6 +581,7 @@ main() {
             p) run_package=1 ;;
             e) exclude_home=1 ;;
             h) usage ;;
+            V) echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"; exit 0 ;;
             *) usage ;;
         esac
     done
@@ -548,7 +606,7 @@ main() {
 
 
     print_header "Initializing Scans"
-    check_dependencies
+    check_dependencies "$run_integrity" "$run_rootkit" "$run_malware" "$run_audit" "$run_package"
     print_separator
     echo
 
@@ -576,6 +634,12 @@ print_summary() {
 }
 
 # ===== Script Execution =====
+# Allow --help and --version without root
+case "${1:-}" in
+    -h|--help) usage ;;
+    -V|--version) echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"; exit 0 ;;
+esac
+
 # Ensure the script is run with root privileges
 if [ "$EUID" -ne 0 ]; then
   error "This script must be run as root. Please use sudo."

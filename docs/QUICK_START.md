@@ -36,7 +36,7 @@ chmod +x scripts/**/*.sh
 ### Step 4: Test Installation (1 minute)
 ```bash
 # Test a simple script
-./scripts/maintenance/fedora-update.sh --help
+./scripts/maintenance/clean-metadata.sh --help
 
 # Test security script (requires sudo)
 sudo ./scripts/security/security-sweep.sh -h
@@ -94,10 +94,10 @@ HOSTS_EXTENSIONS="fakenews,gambling" ./scripts/maintenance/update-hosts.sh
 Add to your `~/.bashrc` for easier access:
 ```bash
 # Add these lines
-alias cleanmeta='bash ~/fedora-user-scripts/scripts/maintenance/clean-metadata.sh'
-alias secscan='sudo ~/fedora-user-scripts/scripts/security/security-sweep.sh'
-alias fedora-update='bash ~/fedora-user-scripts/scripts/maintenance/fedora-update.sh'
-alias updatehosts='bash ~/fedora-user-scripts/scripts/maintenance/update-hosts.sh'
+alias cleanmeta='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-metadata.sh"'
+alias secscan='sudo "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
+alias fedora-update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/fedora-update.sh"'
+alias updatehosts='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/update-hosts.sh"'
 
 # Reload shell
 source ~/.bashrc

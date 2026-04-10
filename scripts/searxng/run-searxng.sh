@@ -39,10 +39,11 @@
 #   - python3: Python interpreter for running the web application
 #   - virtual environment: Pre-configured Python environment with SearxNG dependencies
 #   - lsof or ss: For port conflict detection (standard Unix utilities)
-#   - SearxNG installation: Expected at $HOME/Documents/code/searxng/
+#   - SearxNG installation: Expected at $HOME/Documents/code/searxng/ (or set SEARXNG_BASE)
 #
 # OPERATIONAL NOTES:
 #   - The script expects SearxNG to be installed in $HOME/Documents/code/searxng/
+#     Override with the SEARXNG_BASE environment variable if installed elsewhere
 #   - A virtual environment named 'searxng-venv' should exist in the SearxNG base directory
 #   - The default port is 8888 but can be overridden via the SEARXNG_PORT environment variable
 #   - The script includes signal handlers for graceful shutdown (SIGINT, SIGTERM)
@@ -61,6 +62,17 @@ set -e
 set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
+
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
 
 # --- Color Detection ---
 # Detect if colors should be enabled
@@ -188,15 +200,25 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Configuration =====
 # Base directory for SearxNG installation
-SEARXNG_BASE="$HOME/Documents/code/searxng"
+# Override with SEARXNG_BASE environment variable if installed elsewhere
+SEARXNG_BASE="${SEARXNG_BASE:-$HOME/Documents/code/searxng}"
 # Virtual environment directory for Python dependencies
-SEARXNG_VENV="$SEARXNG_BASE/searxng-venv"
+SEARXNG_VENV="${SEARXNG_VENV:-$SEARXNG_BASE/searxng-venv}"
 # SearxNG application directory
-SEARXNG_APP="$SEARXNG_BASE/searxng"
+SEARXNG_APP="${SEARXNG_APP:-$SEARXNG_BASE/searxng}"
 # Path to the main web application script
-WEBAPP_SCRIPT="$SEARXNG_APP/searx/webapp.py"
+WEBAPP_SCRIPT="${WEBAPP_SCRIPT:-$SEARXNG_APP/searx/webapp.py}"
 # Port for the web service (default: 8888, can be overridden via environment variable)
 SEARXNG_PORT="${SEARXNG_PORT:-8888}"
 # Show all SearxNG output including non-critical warnings (default: 0 to filter warnings)
@@ -211,8 +233,12 @@ Usage: $0 [OPTIONS]
 OPTIONS:
   -v, --verbose  Show all SearxNG output including non-critical warnings
   -h, --help     Display this help message
+  -V, --version  Display script version
 
 ENVIRONMENT VARIABLES:
+  SEARXNG_BASE   Base directory for SearxNG installation (default: $HOME/Documents/code/searxng)
+  SEARXNG_VENV   Path to virtual environment (default: $SEARXNG_BASE/searxng-venv)
+  SEARXNG_APP    Path to SearxNG app directory (default: $SEARXNG_BASE/searxng)
   SEARXNG_PORT   Port for the web service (default: 8888)
                  Example: SEARXNG_PORT=8080 $0
 
@@ -241,6 +267,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             usage
+            ;;
+        -V|--version)
+            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+            exit 0
             ;;
         *)
             error "Unknown option: $1"
@@ -302,7 +332,7 @@ print_operation_start "Checking for port conflicts on $SEARXNG_PORT"
 
 # Try using lsof first (more detailed information)
 if command -v lsof &> /dev/null; then
-  if lsof -Pi :$SEARXNG_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+  if lsof -Pi :"${SEARXNG_PORT}" -sTCP:LISTEN -t >/dev/null 2>&1; then
     error "Port $SEARXNG_PORT is already in use."
     info "SearxNG may already be running. Use 'lsof -ti :$SEARXNG_PORT | xargs kill' to stop it."
     exit 1
@@ -310,7 +340,7 @@ if command -v lsof &> /dev/null; then
   success "Port $SEARXNG_PORT is available (checked with lsof)"
 # Fallback to ss if lsof is not available
 elif command -v ss &> /dev/null; then
-  if ss -ltn "sport = :$SEARXNG_PORT" | grep -q ":$SEARXNG_PORT"; then
+  if ss -ltn "sport = :${SEARXNG_PORT}" | grep -q ":${SEARXNG_PORT}"; then
     error "Port $SEARXNG_PORT is already in use."
     info "SearxNG may already be running."
     exit 1

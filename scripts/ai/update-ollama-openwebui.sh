@@ -56,6 +56,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -182,16 +193,28 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Configuration =====
+# Override with BACKUP_BASE_DIR and OLLAMA_DATA_DIR environment variables if needed
 # Use SUDO_USER if available (when running with sudo), otherwise use HOME
 if [ -n "${SUDO_USER:-}" ]; then
     ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    BACKUP_BASE_DIR="${ORIGINAL_USER_HOME}/backups"
-    OLLAMA_DATA_DIR="${ORIGINAL_USER_HOME}/.ollama"
+    _DEFAULT_BACKUP_BASE="${ORIGINAL_USER_HOME}/backups"
+    _DEFAULT_OLLAMA_DATA="${ORIGINAL_USER_HOME}/.ollama"
 else
-    BACKUP_BASE_DIR="${HOME}/backups"
-    OLLAMA_DATA_DIR="${HOME}/.ollama"
+    _DEFAULT_BACKUP_BASE="${HOME}/backups"
+    _DEFAULT_OLLAMA_DATA="${HOME}/.ollama"
 fi
+BACKUP_BASE_DIR="${BACKUP_BASE_DIR:-$_DEFAULT_BACKUP_BASE}"
+OLLAMA_DATA_DIR="${OLLAMA_DATA_DIR:-$_DEFAULT_OLLAMA_DATA}"
 
 # Backup directories
 OPENWEBUI_BACKUP_DIR="${BACKUP_BASE_DIR}/open-webui"
@@ -224,6 +247,7 @@ OPTIONS:
     --restore-date DATE  Specify backup date (YYYYMMDD-HHMMSS) for restore
     --no-backup          Skip backup before update (not recommended)
     --help               Display this help message
+    --version, -V        Display script version
 
 EXAMPLES:
     # Update both Ollama and Open Web UI with backup
@@ -234,6 +258,10 @@ EXAMPLES:
 
     # Restore from specific backup
     $0 --restore --restore-date 20260314-143000
+
+ENVIRONMENT VARIABLES:
+    BACKUP_BASE_DIR  Base directory for backups (default: ~/backups)
+    OLLAMA_DATA_DIR  Ollama data directory (default: ~/.ollama)
 
 BACKUP LOCATIONS:
     Open Web UI: ${backup_base_dir}/open-webui
@@ -435,15 +463,29 @@ update_ollama() {
     }
 
     # Run installer
-    # SECURITY NOTE: This downloads and executes a remote script without verification.
-    # While this is the official Ollama installation method, it introduces supply-chain
-    # risk. Consider pinning to a specific version or verifying a checksum for
-    # production environments.
+    # Download to temp file first to avoid piping unverified content to sh.
+    # Perform basic sanity check before execution.
+    local ollama_installer
+    ollama_installer=$(mktemp /tmp/ollama-install.XXXXXX.sh)
     print_command_output
-    curl -fsSL https://ollama.com/install.sh | sh || {
+    if ! curl -fsSL https://ollama.com/install.sh -o "$ollama_installer"; then
+        error "Failed to download Ollama installer"
+        rm -f "$ollama_installer"
+        return 1
+    fi
+
+    if ! head -1 "$ollama_installer" 2>/dev/null | grep -qE '^#!'; then
+        error "Downloaded installer does not appear to be a valid shell script"
+        rm -f "$ollama_installer"
+        return 1
+    fi
+
+    sh "$ollama_installer" || {
         error "Failed to update Ollama"
+        rm -f "$ollama_installer"
         return 1
     }
+    rm -f "$ollama_installer"
 
     # Start service
     print_command_output
@@ -658,6 +700,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help)
             show_help
+            exit 0
+            ;;
+        --version|-V)
+            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
             exit 0
             ;;
         *)

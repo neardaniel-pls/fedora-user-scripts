@@ -1,35 +1,23 @@
 ---
 name: Bug Report
-about: Create a report to help us improve
+about: Report a bug
 title: '[BUG] '
 labels: bug
 assignees: ''
 
 ---
 
-## Bug Description
-A clear and concise description of what the bug is.
+**Script**: [e.g., drive-check.sh]
+**Fedora version**: [e.g., 42]
 
-## Script Information
-- **Script Name**: [e.g., clean-metadata.sh, security-sweep.sh]
-- **Fedora Version**: [e.g., Fedora 42, Fedora 43]
+**Steps to reproduce**:
+1.
 
-## Reproduction Steps
-Please provide detailed steps to reproduce the issue:
-1. 
-2. 
-3. 
+**Expected behavior**:
 
-## Expected Behavior
-What you expected to happen.
+**Actual behavior**:
 
-## Actual Behavior
-What actually happened.
-
-## Error Messages
-```
-[Paste error messages here]
+**Error output**:
 ```
 
-## Additional Context
-Any other information about the problem.
+```

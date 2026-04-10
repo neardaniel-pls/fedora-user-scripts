@@ -26,10 +26,11 @@
 # DEPENDENCIES:
 #   - git: Version control system for repository operations
 #   - Standard Unix utilities: cd, echo, test
-#   - SearxNG installation: Expected at $HOME/Documents/code/searxng/searxng/
+#   - SearxNG installation: Expected at $HOME/Documents/code/searxng/searxng/ (or set SEARXNG_DIR)
 #
 # OPERATIONAL NOTES:
 #   - The script expects SearxNG to be installed in $HOME/Documents/code/searxng/searxng/
+#     Override with the SEARXNG_DIR environment variable if installed elsewhere
 #   - Only fast-forward updates are allowed to prevent history divergence
 #   - The script supports both 'main' and 'master' as the default branch
 #   - Uncommitted changes will prevent the update from proceeding
@@ -48,6 +49,17 @@ set -e
 set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
+
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
 
 # --- Color Detection ---
 # Detect if colors should be enabled
@@ -150,15 +162,14 @@ print_operation_end() {
 }
 
 # --- Script Initialization ---
-# Initialize script environment
 readonly SCRIPT_NAME="$(basename "${BASH_SOURCE[0]}")"
 readonly SCRIPT_VERSION="1.0.0"
 
-# --- Logging Configuration ---
-# Default log level if not specified
-LOG_LEVEL_CURRENT="${LOG_LEVEL:-INFO}"
-# Default to stderr unless LOG_TO_FILE is set
-LOG_DESTINATION="${LOG_DESTINATION:-stderr}"
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
 
 # --- Dependency Checking ---
 check_dependencies() {
@@ -180,94 +191,6 @@ check_dependencies() {
     return 0
 }
 
-# --- Logging Functions ---
-validate_log_level() {
-    local level="$1"
-    
-    case "$level" in
-        DEBUG|INFO|WARN|ERROR)
-            return 0
-            ;;
-        *)
-            echo "Invalid log level: $level" >&2
-            echo "Valid levels: DEBUG, INFO, WARN, ERROR" >&2
-            return 1
-            ;;
-    esac
-}
-
-should_log() {
-    local message_level="$1"
-    local current_level_num
-    local message_level_num
-    
-    # Convert current level to numeric
-    case "$LOG_LEVEL_CURRENT" in
-        DEBUG) current_level_num=0 ;;
-        INFO)  current_level_num=1 ;;
-        WARN)  current_level_num=2 ;;
-        ERROR) current_level_num=3 ;;
-        *) current_level_num=1 ;;
-    esac
-    
-    # Convert message level to numeric
-    case "$message_level" in
-        DEBUG) message_level_num=0 ;;
-        INFO)  message_level_num=1 ;;
-        WARN) message_level_num=2 ;;
-        ERROR) message_level_num=3 ;;
-        *) message_level_num=1 ;;
-    esac
-    
-    # Check if message level should be displayed
-    [ "$message_level_num" -ge "$current_level_num" ]
-}
-
-_log_message() {
-    local level="$1"
-    local message="$2"
-    local timestamp
-    local formatted_message
-    
-    # Create timestamp
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    # Format message with level and timestamp
-    formatted_message="[$timestamp] [$level] $message"
-    
-    # Output based on destination
-    if [[ "$LOG_DESTINATION" == "file" && -n "${LOG_FILE:-}" ]]; then
-        # Output to file
-        echo "$formatted_message" >> "$LOG_FILE"
-    else
-        # Output to stderr with colors if available
-        case "$level" in
-            DEBUG) info "$formatted_message" ;;
-            INFO)  info "$formatted_message" ;;
-            WARN)  warning "$formatted_message" ;;
-            ERROR) error "$formatted_message" ;;
-            *) info "$formatted_message" ;;
-        esac
-    fi
-}
-
-init_logging() {
-    # Validate log level if specified
-    if [[ -n "${LOG_LEVEL:-}" ]]; then
-        if ! validate_log_level "$LOG_LEVEL"; then
-            echo "Invalid LOG_LEVEL: $LOG_LEVEL" >&2
-            exit 1
-        fi
-    fi
-    
-    # Set up file logging if configured
-    if [[ "${LOG_TO_FILE:-}" == "1" && -n "${LOG_FILE:-}" ]]; then
-        LOG_DESTINATION="file"
-    fi
-    
-    _log_message "DEBUG" "Logging initialized with level: $LOG_LEVEL_CURRENT"
-}
-
 # Display script introduction with formatting (skip if being called from another script)
 if [[ "${QUIET:-}" != "1" ]]; then
     print_header "SEARXNG UPDATE"
@@ -278,10 +201,11 @@ fi
 # Use SUDO_USER if available (when running with sudo), otherwise use HOME
 if [ -n "${SUDO_USER:-}" ]; then
     ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    SEARXNG_DIR="${ORIGINAL_USER_HOME}/Documents/code/searxng/searxng"
+    _DEFAULT_SEARXNG_DIR="${ORIGINAL_USER_HOME}/Documents/code/searxng/searxng"
 else
-    SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
+    _DEFAULT_SEARXNG_DIR="$HOME/Documents/code/searxng/searxng"
 fi
+SEARXNG_DIR="${SEARXNG_DIR:-$_DEFAULT_SEARXNG_DIR}"
 
 # ===== Dependency Check =====
 # Verify required tools are available

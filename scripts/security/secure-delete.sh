@@ -53,6 +53,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -179,6 +190,15 @@ print_operation_end() {
     echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
 }
 
+# --- Script Initialization ---
+readonly SCRIPT_VERSION="1.0.0"
+
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Dependency Check =====
 # Verify that the required 'shred' command is available on the system
 if ! command -v shred &> /dev/null; then
@@ -223,7 +243,16 @@ for target in "$@"; do
         #   -z:   Final pass with zeros to hide shredding
         #   -v:   Verbose output to show progress
         print_command_output
-        find "$target" -type f -exec shred -n 3 -z -v {} \;
+        local shred_errors=0
+        while IFS= read -r -d '' file; do
+            if ! shred -n 3 -z -v "$file"; then
+                error "Failed to shred: $file"
+                ((shred_errors++))
+            fi
+        done < <(find "$target" -type f -print0)
+        if [ "$shred_errors" -gt 0 ]; then
+            warning "$shred_errors file(s) could not be shredded."
+        fi
         # Remove the now-empty directory structure
         rm -rf "$target"
         success "Directory '$target' securely deleted."

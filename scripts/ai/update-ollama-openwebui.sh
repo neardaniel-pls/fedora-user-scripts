@@ -56,6 +56,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -185,6 +196,12 @@ print_operation_end() {
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Configuration =====
 # Override with BACKUP_BASE_DIR and OLLAMA_DATA_DIR environment variables if needed
 # Use SUDO_USER if available (when running with sudo), otherwise use HOME
@@ -230,6 +247,7 @@ OPTIONS:
     --restore-date DATE  Specify backup date (YYYYMMDD-HHMMSS) for restore
     --no-backup          Skip backup before update (not recommended)
     --help               Display this help message
+    --version, -V        Display script version
 
 EXAMPLES:
     # Update both Ollama and Open Web UI with backup
@@ -682,6 +700,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help)
             show_help
+            exit 0
+            ;;
+        --version|-V)
+            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
             exit 0
             ;;
         *)

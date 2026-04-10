@@ -64,6 +64,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -172,6 +183,12 @@ print_operation_end() {
 
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
+
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
 
 # ===== Log file =====
 LOG_FILE="/var/log/security-sweep-$(date +%Y%m%d-%H%M%S).log"
@@ -532,6 +549,7 @@ usage() {
     echo "  -p: Run Package check (dnf check)"
     echo "  -e: Exclude home directories from scans (Privacy option)"
     echo "  -h: Display this help message"
+    echo "  -V: Display script version"
     echo "If no options are specified, all scans will be performed."
     exit 1
 }
@@ -553,7 +571,7 @@ main() {
     local run_integrity=0 run_rootkit=0 run_malware=0 run_audit=0 run_package=0
     local all_scans=1
 
-    while getopts "irmaphe" opt; do
+    while getopts "irmapheV" opt; do
         all_scans=0
         case "$opt" in
             i) run_integrity=1 ;;
@@ -563,6 +581,7 @@ main() {
             p) run_package=1 ;;
             e) exclude_home=1 ;;
             h) usage ;;
+            V) echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"; exit 0 ;;
             *) usage ;;
         esac
     done
@@ -615,6 +634,12 @@ print_summary() {
 }
 
 # ===== Script Execution =====
+# Allow --help and --version without root
+case "${1:-}" in
+    -h|--help) usage ;;
+    -V|--version) echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"; exit 0 ;;
+esac
+
 # Ensure the script is run with root privileges
 if [ "$EUID" -ne 0 ]; then
   error "This script must be run as root. Please use sudo."

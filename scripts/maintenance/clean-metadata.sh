@@ -73,6 +73,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -202,6 +213,12 @@ print_operation_end() {
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # --- Configuration ---
 # Set quality and optimization parameters with environment variable overrides
 # These values balance file size reduction with acceptable quality for most use cases
@@ -256,6 +273,7 @@ Remove metadata and optimize PDF, PNG, and JPEG files.
 
 Options:
   --help, -h        Show this help message
+  --version, -V     Display script version
   --replace         Replace original files instead of creating copies (use with caution)
   --verbose         Show metadata before cleaning
   --clean           Only remove metadata without optimization
@@ -270,6 +288,10 @@ Examples:
 
 For more information, see clean-metadata-guide.md
 EOF
+        return 0
+        ;;
+      --version|-V)
+        echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
         return 0
         ;;
       --replace)

@@ -43,6 +43,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -106,6 +117,12 @@ fi
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # --- Helper Functions ---
 show_help() {
     # Use printf to properly handle escape codes
@@ -116,6 +133,7 @@ show_help() {
     printf '\n'
     printf '%b' "${BOLD}OPTIONS:${RESET}\n"
     printf '    %b--help, -h%b       Show this help message and exit\n' "${BOLD}" "${RESET}"
+    printf '    %b--version, -V%b    Display script version\n' "${BOLD}" "${RESET}"
     printf '    %b--auto%b           Automatically flush DNS cache after updating hosts file\n' "${BOLD}" "${RESET}"
     printf '\n'
     printf '%b' "${BOLD}DESCRIPTION:${RESET}\n"
@@ -244,6 +262,10 @@ while [[ $# -gt 0 ]]; do
         --auto)
             AUTO_FLUSH_DNS=1
             shift
+            ;;
+        --version|-V)
+            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+            exit 0
             ;;
         *)
             error "Unknown option: $1"

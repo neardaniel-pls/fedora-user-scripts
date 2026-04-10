@@ -42,6 +42,17 @@ set -e
 set -u
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
     COLORS_ENABLED=1
 else
@@ -158,6 +169,12 @@ print_operation_end() {
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 print_kv() {
     local key="$1"
     local value="$2"
@@ -176,6 +193,7 @@ Arguments:
 Options:
   --health                Show extended SMART health attributes
   --help, -h              Show this help message
+  --version, -V           Display script version
 
 Examples:
   sudo drive-check.sh /dev/sdb
@@ -603,6 +621,10 @@ main() {
                 ;;
             --help|-h)
                 usage
+                ;;
+            --version|-V)
+                echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+                exit 0
                 ;;
             *)
                 if [[ -z "$device" ]]; then

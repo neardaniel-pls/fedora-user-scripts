@@ -63,6 +63,17 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
+# --- User Configuration ---
+# Load user config if available (sets env vars that override defaults)
+if [ -n "${SUDO_USER:-}" ]; then
+    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
+else
+    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
+fi
+if [ -f "$_USER_CONFIG" ]; then
+    source "$_USER_CONFIG"
+fi
+
 # --- Color Detection ---
 # Detect if colors should be enabled
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
@@ -192,6 +203,12 @@ print_operation_end() {
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 
+# Quick version check before any heavy initialization
+if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
+    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+    exit 0
+fi
+
 # ===== Configuration =====
 # Base directory for SearxNG installation
 # Override with SEARXNG_BASE environment variable if installed elsewhere
@@ -216,6 +233,7 @@ Usage: $0 [OPTIONS]
 OPTIONS:
   -v, --verbose  Show all SearxNG output including non-critical warnings
   -h, --help     Display this help message
+  -V, --version  Display script version
 
 ENVIRONMENT VARIABLES:
   SEARXNG_BASE   Base directory for SearxNG installation (default: $HOME/Documents/code/searxng)
@@ -249,6 +267,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             usage
+            ;;
+        -V|--version)
+            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+            exit 0
             ;;
         *)
             error "Unknown option: $1"

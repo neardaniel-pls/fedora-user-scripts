@@ -243,7 +243,7 @@ for target in "$@"; do
         #   -z:   Final pass with zeros to hide shredding
         #   -v:   Verbose output to show progress
         print_command_output
-        local shred_errors=0
+        shred_errors=0
         while IFS= read -r -d '' file; do
             if ! shred -n 3 -z -v "$file"; then
                 error "Failed to shred: $file"

@@ -393,5 +393,5 @@ print_separator
 
 # Keep script running
 while true; do
-    sleep 1 || true
+    sleep 86400 || true
 done

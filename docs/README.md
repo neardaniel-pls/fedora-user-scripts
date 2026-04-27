@@ -12,15 +12,9 @@ Detailed step-by-step guides for each script and tool:
 - **[SearXNG Guide](guides/searxng-guide.md)** - Privacy-respecting search engine setup
 - **[Security Sweep Guide](guides/security-sweep-guide.md)** - Comprehensive security scanning
 - **[Update Hosts Guide](guides/update-hosts-guide.md)** - StevenBlack hosts repository management
+- **[Ollama and Open Web UI Update Guide](guides/update-ollama-openwebui-guide.md)** - Ollama and Open Web UI update management
+- **[Ollama and Open Web UI Start Guide](guides/start-ollama-openwebui-guide.md)** - Starting Ollama and Open Web UI services
 - **[Drive Check Guide](guides/drive-check-guide.md)** - Storage drive inspection and diagnostics
-
-### [API Reference](api/)
-Technical documentation for script interfaces and usage patterns:
-- Coming soon - Function references and examples
-
-### [Examples](examples/)
-Real-world usage examples and configurations:
-- Coming soon - Common workflows and automation patterns
 
 ## 🚀 Quick Start
 
@@ -40,6 +34,7 @@ Real-world usage examples and configurations:
 - **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md), [Update Hosts](guides/update-hosts-guide.md)
 - **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md)
 - **Hardware**: [Drive Check](guides/drive-check-guide.md)
+- **AI Tools**: [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md), [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
 
 ### By Skill Level
@@ -65,9 +60,11 @@ Found something unclear or missing? Please:
 |--------|---------|------------|-------------|
 | [Clean Metadata](guides/clean-metadata-guide.md) | Remove metadata and optimize files | Intermediate | exiftool, gs, pngquant, jpegoptim |
 | [Fedora Update](guides/fedora-update-guide.md) | System maintenance | Beginner | dnf |
-| [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Docker, Python |
+| [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Python, virtualenv |
 | [Security Sweep](guides/security-sweep-guide.md) | Security scanning | Advanced | chkrootkit, clamav, lynis |
 | [Update Hosts](guides/update-hosts-guide.md) | StevenBlack hosts management | Beginner | git, python3 |
+| [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md) | AI tool updates with backup | Intermediate | podman, curl, systemctl |
+| [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md) | Start AI services | Beginner | podman, systemctl |
 | [Drive Check](guides/drive-check-guide.md) | Storage drive inspection | Beginner | lsblk, smartctl |
 
 ## 🔄 Keeping Updated

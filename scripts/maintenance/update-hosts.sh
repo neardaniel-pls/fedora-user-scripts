@@ -123,6 +123,59 @@ if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
     exit 0
 fi
 
+# --- Output Functions ---
+info() {
+    local message="$1"
+    echo -e "${BOLD}${BLUE}${INFO_ICON}  ${message}${RESET}"
+}
+
+success() {
+    local message="$1"
+    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} ${message}${RESET}"
+}
+
+warning() {
+    local message="$1"
+    echo -e "${BOLD}${YELLOW}${WARNING_ICON} ${message}${RESET}"
+}
+
+error() {
+    local message="$1"
+    echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
+}
+
+print_header() {
+    local text="$1"
+    echo
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${SECTION_ICON} ${text}${RESET}"
+    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_section_header() {
+    local text="$1"
+    local icon="$2"
+    echo
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
+    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
+    echo
+}
+
+print_separator() {
+    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
+}
+
+print_operation_start() {
+    local operation="$1"
+    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
+}
+
+print_operation_end() {
+    local operation="$1"
+    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
+}
+
 # --- Helper Functions ---
 show_help() {
     # Use printf to properly handle escape codes
@@ -227,27 +280,6 @@ flush_dns_cache() {
     print_separator
 }
 
-# --- Output Functions ---
-info() {
-    local message="$1"
-    echo -e "${BOLD}${BLUE}${INFO_ICON}  ${message}${RESET}"
-}
-
-success() {
-    local message="$1"
-    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} ${message}${RESET}"
-}
-
-warning() {
-    local message="$1"
-    echo -e "${BOLD}${YELLOW}${WARNING_ICON} ${message}${RESET}"
-}
-
-error() {
-    local message="$1"
-    echo -e "${BOLD}${RED}${ERROR_ICON} ${message}${RESET}" >&2
-}
-
 # --- Argument Parsing ---
 # Default values
 AUTO_FLUSH_DNS=0
@@ -290,38 +322,6 @@ if [ -z "${SUDO_USER:-}" ]; then
     # but the script will likely still work, just with root-owned git files.
     SUDO_USER="root"
 fi
-
-print_header() {
-    local text="$1"
-    echo
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}${SECTION_ICON} ${text}${RESET}"
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-}
-
-print_section_header() {
-    local text="$1"
-    local icon="$2"
-    echo
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo
-}
-
-print_separator() {
-    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
-}
-
-print_operation_start() {
-    local operation="$1"
-    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
-}
-
-print_operation_end() {
-    local operation="$1"
-    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
-}
 
 # ===== Configuration =====
 # Path to the StevenBlack hosts repository

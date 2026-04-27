@@ -16,13 +16,12 @@
 
 ### Q: Do I need to be root to run these scripts?
 **A:** It depends on the script:
-- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh, secure-delete.sh
-- **Root required**: security-sweep.sh, fedora-update.sh (for system updates)
+- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh
+- **Root required**: security-sweep.sh, fedora-update.sh (for system updates), secure-delete.sh (for protected files/directories)
 
 ### Q: How do I report security vulnerabilities?
 **A:** Please report security issues privately:
-- Email: [create a security email address]
-- Or use GitHub's private vulnerability reporting
+- Use GitHub's private vulnerability reporting: https://github.com/neardaniel-pls/fedora-user-scripts/security/advisories/new
 - Don't open public issues for security vulnerabilities
 
 ## Script-Specific Questions
@@ -43,7 +42,7 @@
 
 ### SearXNG Scripts
 **Q: Do I need Docker installed?**
-**A:** Yes, the scripts expect SearXNG to be installed in a Docker environment.
+**A:** No. The SearXNG scripts use a Python virtual environment. You need `python3` and a pre-configured SearxNG installation (see the script docs for details).
 
 **Q: Can I change the default port?**
 **A:** Yes, set `SEARXNG_PORT=8080` (or any port) before running:

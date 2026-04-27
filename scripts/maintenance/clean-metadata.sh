@@ -355,7 +355,7 @@ EOF
   for target in "$@"; do
     # Skip if target is not a regular file or directory, or is a symlink
     # This prevents processing of special files and potential security issues
-    if [[ ! -f "$target" && ! -d "$target" || -L "$target" ]]; then
+    if [[ (! -f "$target" && ! -d "$target") || -L "$target" ]]; then
         warning "Skipping invalid or non-regular file/directory: $target"
         continue
     fi

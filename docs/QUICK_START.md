@@ -21,7 +21,7 @@ cd fedora-user-scripts
 sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit git python3
 
 # For SearXNG (if using)
-sudo dnf install python3 python3-pip python3-virtualenv docker
+sudo dnf install python3 python3-pip python3-virtualenv
 
 # For update-hosts script, also clone the StevenBlack hosts repository:
 git clone https://github.com/StevenBlack/hosts.git ~/Documents/code/hosts

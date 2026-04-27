@@ -562,7 +562,11 @@ cleanup() {
 
 rotate_logs() {
     # Keep the 7 most recent logs, excluding the current one
-    ls -t /var/log/security-sweep-*.log | grep -v "$(basename "$LOG_FILE")" | tail -n +7 | xargs -r rm 2>/dev/null || true
+    find /var/log -maxdepth 1 -name 'security-sweep-*.log' -print0 2>/dev/null \
+        | grep -zv "$(basename "$LOG_FILE")" \
+        | xargs -0 ls -t 2>/dev/null \
+        | tail -n +7 \
+        | xargs -r rm 2>/dev/null || true
 }
 
 main() {

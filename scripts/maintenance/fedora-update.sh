@@ -265,8 +265,7 @@ if $PKG -y makecache --refresh; then
     print_operation_end "Repository cache updated"
     success "Repository cache updated successfully"
 else
-    # Non-fatal error - continue with potentially stale cache
-    warning "Repository cache update encountered issues (status: $?)"
+    warning "Repository cache update encountered issues"
 fi
 print_separator
 
@@ -279,8 +278,7 @@ if $PKG -y upgrade; then
     print_operation_end "Package upgrade completed"
     success "All packages upgraded successfully"
 else
-    # Non-fatal error - report but continue with other maintenance tasks
-    warning "Package upgrade encountered issues (status: $?)"
+    warning "Package upgrade encountered issues"
 fi
 print_separator
 
@@ -294,7 +292,7 @@ if $PKG -y autoremove; then
     success "Unnecessary packages removed successfully"
 else
     # Non-fatal error - report but continue
-    warning "Autoremove encountered issues (status: $?)"
+    warning "Autoremove encountered issues"
 fi
 
 # ===== Clean cache =====
@@ -306,7 +304,7 @@ if $PKG -y clean all; then
     success "Package cache cleaned successfully"
 else
     # Non-fatal error - report but continue
-    warning "Cache cleaning encountered issues (status: $?)"
+    warning "Cache cleaning encountered issues"
 fi
 print_separator
 
@@ -386,7 +384,7 @@ if [ -f "$SEARXNG_UPDATE_SCRIPT" ] && [ "$OWNERSHIP_CHECK_PASSED" = "true" ]; th
                 success "SearxNG updated successfully"
             else
                 # Non-fatal error - report but continue
-                warning "SearxNG update encountered issues (status: $?)"
+                warning "SearxNG update encountered issues"
             fi
         else
             # Security warning - file permissions are too permissive

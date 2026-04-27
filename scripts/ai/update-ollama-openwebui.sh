@@ -216,6 +216,8 @@ fi
 BACKUP_BASE_DIR="${BACKUP_BASE_DIR:-$_DEFAULT_BACKUP_BASE}"
 OLLAMA_DATA_DIR="${OLLAMA_DATA_DIR:-$_DEFAULT_OLLAMA_DATA}"
 
+readonly MAX_BACKUPS="${MAX_BACKUPS:-5}"
+
 # Backup directories
 OPENWEBUI_BACKUP_DIR="${BACKUP_BASE_DIR}/open-webui"
 OLLAMA_BACKUP_DIR="${BACKUP_BASE_DIR}/ollama"
@@ -329,6 +331,7 @@ backup_openwebui() {
 
     success "Open Web UI backed up to: ${backup_file}"
     print_operation_end "Open Web UI backup"
+    rotate_backups "${OPENWEBUI_BACKUP_DIR}" "open-webui-backup"
 
     return 0
 }
@@ -382,8 +385,35 @@ backup_ollama() {
 
     success "Ollama backed up to: ${backup_file}"
     print_operation_end "Ollama backup"
+    rotate_backups "${OLLAMA_BACKUP_DIR}" "ollama-backup"
 
     return 0
+}
+
+# ===== Backup Rotation =====
+rotate_backups() {
+    local backup_dir="$1"
+    local prefix="$2"
+
+    if [ ! -d "$backup_dir" ]; then
+        return 0
+    fi
+
+    local count
+    count=$(find "$backup_dir" -maxdepth 1 -name "${prefix}-*.tar.gz" 2>/dev/null | wc -l)
+
+    if [ "$count" -le "$MAX_BACKUPS" ]; then
+        return 0
+    fi
+
+    local to_remove
+    to_remove=$((count - MAX_BACKUPS))
+    info "Rotating backups: keeping ${MAX_BACKUPS} most recent in ${backup_dir}"
+
+    find "$backup_dir" -maxdepth 1 -name "${prefix}-*.tar.gz" 2>/dev/null \
+        | sort \
+        | head -n "$to_remove" \
+        | xargs -r rm -f 2>/dev/null || true
 }
 
 # ===== Update Functions =====
@@ -639,12 +669,20 @@ restore_ollama() {
         }
     fi
 
-    # Restore backup
+    # Restore backup - extract to parent directory (tar stores full path)
     print_command_output
-    tar xzf "${backup_file}" -C / || {
+    local ollama_parent
+    ollama_parent=$(dirname "${OLLAMA_DATA_DIR}")
+    mkdir -p "$ollama_parent"
+    if ! tar xzf "${backup_file}" -C "$ollama_parent"; then
         error "Failed to restore Ollama backup"
         return 1
-    }
+    fi
+
+    if [ ! -d "${OLLAMA_DATA_DIR}" ]; then
+        error "Restored data not found at expected path: ${OLLAMA_DATA_DIR}"
+        return 1
+    fi
 
     # Start service
     print_command_output

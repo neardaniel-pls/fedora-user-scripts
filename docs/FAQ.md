@@ -6,6 +6,7 @@
 **A:** Scripts are tested and confirmed working on:
 - ✅ Fedora 42
 - ✅ Fedora 43
+- ✅ Fedora 44
 - ❓ Other versions (untested but may work)
 
 ### Q: Can I use these scripts on other Linux distributions?
@@ -16,7 +17,7 @@
 
 ### Q: Do I need to be root to run these scripts?
 **A:** It depends on the script:
-- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh
+- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh, clean-downloads.sh
 - **Root required**: security-sweep.sh, fedora-update.sh (for system updates), secure-delete.sh (for protected files/directories)
 
 ### Q: How do I report security vulnerabilities?

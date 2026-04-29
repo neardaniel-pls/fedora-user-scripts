@@ -8,6 +8,7 @@ Welcome to the Fedora User Scripts Collection documentation. This section provid
 Detailed step-by-step guides for each script and tool:
 
 - **[Clean Metadata Guide](guides/clean-metadata-guide.md)** - Privacy-focused metadata removal and file optimization
+- **[Clean Downloads Guide](guides/clean-downloads-guide.md)** - Downloads directory organizer and cleanup
 - **[Fedora Update Guide](guides/fedora-update-guide.md)** - System maintenance and updates
 - **[SearXNG Guide](guides/searxng-guide.md)** - Privacy-respecting search engine setup
 - **[Security Sweep Guide](guides/security-sweep-guide.md)** - Comprehensive security scanning
@@ -32,13 +33,13 @@ Detailed step-by-step guides for each script and tool:
 
 ### By Use Case
 - **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md), [Update Hosts](guides/update-hosts-guide.md)
-- **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md)
+- **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md), [Clean Downloads](guides/clean-downloads-guide.md)
 - **Hardware**: [Drive Check](guides/drive-check-guide.md)
 - **AI Tools**: [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md), [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
 
 ### By Skill Level
-- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md)
+- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md), [Clean Downloads Guide](guides/clean-downloads-guide.md)
 - **Intermediate**: [Clean Metadata Guide](guides/clean-metadata-guide.md), [SearXNG Guide](guides/searxng-guide.md)
 - **Advanced**: [Security Sweep Guide](guides/security-sweep-guide.md)
 
@@ -59,6 +60,7 @@ Found something unclear or missing? Please:
 | Guide | Purpose | Complexity | Dependencies |
 |--------|---------|------------|-------------|
 | [Clean Metadata](guides/clean-metadata-guide.md) | Remove metadata and optimize files | Intermediate | exiftool, gs, pngquant, jpegoptim |
+| [Clean Downloads](guides/clean-downloads-guide.md) | Organize and purge downloads | Beginner | file |
 | [Fedora Update](guides/fedora-update-guide.md) | System maintenance | Beginner | dnf |
 | [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Python, virtualenv |
 | [Security Sweep](guides/security-sweep-guide.md) | Security scanning | Advanced | chkrootkit, clamav, lynis |

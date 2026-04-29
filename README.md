@@ -78,6 +78,13 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Note:** Read-only; requires root privileges for full device access
 - **Screenshot:** ![](assets/img/drivecheck.png)
 
+### clean-downloads.sh
+- **Purpose:** Sorts files in Downloads into categorized subdirectories by type, with optional age-based purge
+- **Usage:** `scripts/maintenance/clean-downloads.sh [OPTIONS] [directory]`
+- **Dependencies:** `file`
+- **Options:** `--organize`, `--purge <days>`, `--dry-run`, `--help`
+- **Note:** Default target is `~/Downloads`; use `--dry-run` to preview changes
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -89,6 +96,7 @@ Get up and running in 5 minutes!
 ### 📖 [Guides](docs/guides/)
 Detailed documentation for each script:
 - [Clean Metadata Guide](docs/guides/clean-metadata-guide.md)
+- [Clean Downloads Guide](docs/guides/clean-downloads-guide.md)
 - [Fedora Update Guide](docs/guides/fedora-update-guide.md)
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
@@ -109,6 +117,7 @@ These scripts are designed for **Fedora Linux** distributions. While some script
 
 - ✅ Fedora 42
 - ✅ Fedora 43
+- ✅ Fedora 44
 - ❓ Other versions (untested)
 
 ## Installation
@@ -147,6 +156,7 @@ alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/secu
 alias ai_update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/update-ollama-openwebui.sh"'
 alias ai_start='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/start-ollama-openwebui.sh"'
 alias drivecheck='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/hardware/drive-check.sh"'
+alias cleandl='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-downloads.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

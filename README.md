@@ -117,6 +117,7 @@ These scripts are designed for **Fedora Linux** distributions. While some script
 
 - ✅ Fedora 42
 - ✅ Fedora 43
+- ✅ Fedora 44
 - ❓ Other versions (untested)
 
 ## Installation

@@ -5,7 +5,7 @@ Get up and running with Fedora User Scripts Collection in 5 minutes!
 ## 🚀 5-Minute Setup
 
 ### Prerequisites
-- Fedora 42 or 43 (other versions untested)
+- Fedora 42, 43, or 44 (other versions untested)
 - Git installed
 - sudo access (for some scripts)
 

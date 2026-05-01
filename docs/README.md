@@ -16,6 +16,7 @@ Detailed step-by-step guides for each script and tool:
 - **[Ollama and Open Web UI Update Guide](guides/update-ollama-openwebui-guide.md)** - Ollama and Open Web UI update management
 - **[Ollama and Open Web UI Start Guide](guides/start-ollama-openwebui-guide.md)** - Starting Ollama and Open Web UI services
 - **[Drive Check Guide](guides/drive-check-guide.md)** - Storage drive inspection and diagnostics
+- **[GUI & Desktop Integration Guide](guides/gui-desktop-integration-guide.md)** - GTK4 GUI app and Nautilus context menu setup
 
 ## 🚀 Quick Start
 
@@ -37,6 +38,7 @@ Detailed step-by-step guides for each script and tool:
 - **Hardware**: [Drive Check](guides/drive-check-guide.md)
 - **AI Tools**: [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md), [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
+- **Desktop Integration**: [GUI & Nautilus Guide](guides/gui-desktop-integration-guide.md)
 
 ### By Skill Level
 - **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md), [Clean Downloads Guide](guides/clean-downloads-guide.md)
@@ -68,6 +70,7 @@ Found something unclear or missing? Please:
 | [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md) | AI tool updates with backup | Intermediate | podman, curl, systemctl |
 | [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md) | Start AI services | Beginner | podman, systemctl |
 | [Drive Check](guides/drive-check-guide.md) | Storage drive inspection | Beginner | lsblk, smartctl |
+| [GUI & Desktop Integration](guides/gui-desktop-integration-guide.md) | GTK4 GUI and Nautilus context menu | Beginner | nautilus-python, gtk4, libadwaita |
 
 ## 🔄 Keeping Updated
 
@@ -77,6 +80,6 @@ Documentation is updated with each release. To stay informed:
 
 ---
 
-**Last Updated**: 2025-11-04  
-**Version**: 1.0.0  
+**Last Updated**: 2026-04-29  
+**Version**: 1.1.0
 **Repository**: https://github.com/neardaniel-pls/fedora-user-scripts

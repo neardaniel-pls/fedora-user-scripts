@@ -125,6 +125,7 @@ source ~/.bashrc
 
 You now have Fedora User Scripts Collection installed and ready to use. Try these common commands:
 
+### Terminal
 ```bash
 # Clean metadata
 cleanmeta ~/Downloads/sensitive.pdf
@@ -142,10 +143,18 @@ secscan
 updatehosts
 ```
 
+### GUI App
+```bash
+python3 ~/.local/share/fedora-scripts-manager/run.py
+```
+
+### Nautilus (File Manager)
+Right-click any PDF, PNG, or JPEG file → **"Clean Metadata"**
+
 **Happy scripting!** 🎉
 
 ---
 
 **Time Estimate**: Based on typical system and network speeds  
-**Last Updated**: 2025-11-04  
-**Version**: 1.0.0
+**Last Updated**: 2026-04-29  
+**Version**: 1.1.0

@@ -34,6 +34,10 @@ temp/
 # User config (copy from config.example.sh)
 config.sh
 
+# Python
+__pycache__/
+*.pyc
+
 # Kilo
 .kilo/
 

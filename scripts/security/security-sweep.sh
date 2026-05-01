@@ -323,25 +323,26 @@ run_integrity_check() {
     print_section_header "SYSTEM FILE INTEGRITY CHECK" "${SECURITY_ICON}"
     print_operation_start "Verifying package integrity (rpm -Va)"
     
-    # Run RPM verification and capture output
-    if output=$(rpm -Va 2>&1); then
+    local tmp_output
+    tmp_output=$(mktemp)
+    set +e
+    rpm -Va 2>&1 | tee "$tmp_output"
+    local pipe_exit=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$tmp_output")
+    rm -f "$tmp_output"
+
+    if [ $pipe_exit -eq 0 ]; then
         if [ -z "$output" ]; then
-            # No output means all files passed verification
             success "System file integrity check passed. No issues found."
             integrity_status="${GREEN}Passed${RESET}"
         else
-            # Output indicates some files have issues
             warning "System file integrity check completed with findings. See log for details."
-            print_command_output
-            echo "$output"
             log_message "FINDINGS" "rpm -Va found issues:\n---\n$output\n---"
             integrity_status="${YELLOW}Findings${RESET}"
         fi
     else
-        # Command failed to execute
         error "System file integrity check failed to run."
-        print_command_output
-        echo "$output"
         log_message "ERROR" "rpm -Va failed:\n---\n$output\n---"
         integrity_status="${RED}Error${RESET}"
     fi
@@ -364,9 +365,16 @@ run_rootkit_scan() {
     print_section_header "ROOTKIT DETECTION" "${SCAN_ICON}"
     print_operation_start "Scanning for rootkits (chkrootkit)"
     
-    # Run chkrootkit and capture output
-    if output=$(chkrootkit 2>&1); then
-        # Check if any infections were reported
+    local tmp_output
+    tmp_output=$(mktemp)
+    set +e
+    chkrootkit 2>&1 | tee "$tmp_output"
+    local pipe_exit=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$tmp_output")
+    rm -f "$tmp_output"
+
+    if [ $pipe_exit -eq 0 ]; then
         if echo "$output" | grep -q "INFECTED"; then
             warning "chkrootkit found potential issues. See log for details."
             rootkit_status="${YELLOW}Findings${RESET}"
@@ -374,14 +382,9 @@ run_rootkit_scan() {
             success "chkrootkit scan completed. No rootkits found."
             rootkit_status="${GREEN}Passed${RESET}"
         fi
-        print_command_output
-        echo "$output"
         log_message "SCAN_OUTPUT" "chkrootkit output:\n---\n$output\n---"
     else
-        # Command failed to execute
         error "chkrootkit failed to run."
-        print_command_output
-        echo "$output"
         log_message "ERROR" "chkrootkit failed:\n---\n$output\n---"
         rootkit_status="${RED}Error${RESET}"
     fi
@@ -404,28 +407,29 @@ run_malware_scan() {
     print_section_header "MALWARE DETECTION" "${CLEAN_ICON}"
     print_operation_start "Updating virus definitions (freshclam)"
     
-    # Update virus definitions for maximum protection
-    if freshclam; then
-        success "ClamAV definitions updated successfully."
-    else
-        warning "Could not update ClamAV definitions. Scanning with existing database."
-    fi
+    freshclam || warning "Could not update ClamAV definitions. Scanning with existing database."
+    success "ClamAV definitions updated."
 
     print_operation_start "Scanning for malware (clamscan)"
     info "This may take a long time depending on system size..."
     
-    # Configure scan options
-    local clam_opts=(-r -i --exclude-dir="^/sys" --exclude-dir="^/proc" --exclude-dir="^/dev")
+    local clam_opts=(-r --exclude-dir="^/sys" --exclude-dir="^/proc" --exclude-dir="^/dev")
     
-    # Add home directory exclusion if requested
     if [ "$exclude_home" -eq 1 ]; then
         info "Excluding home directories from malware scan for privacy."
         clam_opts+=(--exclude-dir="^/home")
     fi
 
-    # Run the malware scan
-    if output=$(clamscan "${clam_opts[@]}" / 2>&1); then
-        # Check if any infected files were found
+    local tmp_output
+    tmp_output=$(mktemp)
+    set +e
+    clamscan "${clam_opts[@]}" / 2>&1 | grep -v "^Scanning " | tee "$tmp_output"
+    local pipe_exit=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$tmp_output")
+    rm -f "$tmp_output"
+
+    if [ $pipe_exit -eq 0 ]; then
         if echo "$output" | grep -q "Infected files: 0"; then
             success "ClamAV scan completed. No malware found."
             malware_status="${GREEN}Passed${RESET}"
@@ -433,14 +437,9 @@ run_malware_scan() {
             warning "ClamAV found potential malware. See log for details."
             malware_status="${YELLOW}Findings${RESET}"
         fi
-        print_command_output
-        echo "$output"
         log_message "SCAN_OUTPUT" "ClamAV output:\n---\n$output\n---"
     else
-        # Command failed to execute
         error "ClamAV scan failed to run."
-        print_command_output
-        echo "$output"
         log_message "ERROR" "ClamAV failed:\n---\n$output\n---"
         malware_status="${RED}Error${RESET}"
     fi
@@ -464,19 +463,21 @@ run_security_audit() {
     print_operation_start "Performing comprehensive security audit (Lynis)"
     info "The full Lynis report can be found in /var/log/lynis.log"
     
-    # Run Lynis audit system
-    if output=$(lynis audit system --quiet 2>&1); then
+    local tmp_output
+    tmp_output=$(mktemp)
+    set +e
+    lynis audit system 2>&1 | tee "$tmp_output"
+    local pipe_exit=${PIPESTATUS[0]}
+    set -e
+    output=$(<"$tmp_output")
+    rm -f "$tmp_output"
+
+    if [ $pipe_exit -eq 0 ]; then
         success "Lynis security audit completed."
         audit_status="${GREEN}Completed${RESET}"
-        # Lynis provides a summary, which is good to have in our log
-        print_command_output
-        echo "$output"
         log_message "SCAN_OUTPUT" "Lynis output:\n---\n$output\n---"
     else
-        # Command failed to execute
         error "Lynis security audit failed to run."
-        print_command_output
-        echo "$output"
         log_message "ERROR" "Lynis failed:\n---\n$output\n---"
         audit_status="${RED}Error${RESET}"
     fi
@@ -499,7 +500,6 @@ run_package_check() {
     print_section_header "PACKAGE VERIFICATION" "${PACKAGE_ICON}"
     print_operation_start "Verifying package dependencies and consistency"
     
-    # Detect which package manager is available
     local DNF
     if command -v dnf5 >/dev/null 2>&1; then
       DNF="dnf5"
@@ -508,29 +508,24 @@ run_package_check() {
     fi
     success "Using ${DNF} for package check."
 
-    # Temporarily disable exit on error to handle dnf's exit code 100
-    # DNF returns 100 when issues are found, which is not a command failure
+    local tmp_output
+    tmp_output=$(mktemp)
     set +e
-    output=$("${DNF}" check 2>&1)
-    exit_code=$?
+    "${DNF}" check 2>&1 | tee "$tmp_output"
+    exit_code=${PIPESTATUS[0]}
     set -e
+    output=$(<"$tmp_output")
+    rm -f "$tmp_output"
 
-    # Interpret the exit code
     if [ $exit_code -eq 0 ]; then
         success "Package dependency check passed. No issues found."
         package_status="${GREEN}Passed${RESET}"
     elif [ $exit_code -eq 100 ]; then
-        # DNF found issues but command executed successfully
         warning "Package dependency check found issues. See log for details."
-        print_command_output
-        echo "$output"
         log_message "FINDINGS" "DNF Check found issues:\n---\n$output\n---"
         package_status="${YELLOW}Findings${RESET}"
     else
-        # Command failed to execute
         error "Package dependency check failed to run (Exit code: $exit_code)."
-        print_command_output
-        echo "$output"
         log_message "ERROR" "DNF Check failed:\n---\n$output\n---"
         package_status="${RED}Error${RESET}"
     fi
@@ -594,7 +589,9 @@ main() {
         run_integrity=1; run_rootkit=1; run_malware=1; run_audit=1; run_package=1
     fi
 
-    clear
+    if [ -t 1 ]; then
+        clear
+    fi
     echo -e "${BOLD}${BLUE}${INFO_ICON} Starting Fedora Security Sweep...${RESET}"
 
     # --- Log File Setup ---

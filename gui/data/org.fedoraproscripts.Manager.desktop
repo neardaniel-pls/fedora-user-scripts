@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Fedora Scripts Manager
+Comment=GUI for managing and running fedora-user-scripts
+Exec=python3 /usr/share/fedora-scripts-manager/run.py
+Icon=system-run-symbolic
+Terminal=false
+Categories=System;Utility;
+Keywords=fedora;scripts;maintenance;security;
+StartupNotify=true

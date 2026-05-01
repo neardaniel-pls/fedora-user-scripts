@@ -85,6 +85,52 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Options:** `--organize`, `--purge <days>`, `--dry-run`, `--help`
 - **Note:** Default target is `~/Downloads`; use `--dry-run` to preview changes
 
+## GUI & Desktop Integration
+
+In addition to running scripts from the terminal, you can use the **Fedora Scripts Manager** GUI and **Nautilus context menu** integration.
+
+### GUI App
+
+A native GNOME (GTK4/Libadwaita) application that lets you browse, configure, and run all scripts from a graphical interface.
+
+![](assets/img/gui.png)
+
+```bash
+python3 ~/.local/share/fedora-scripts-manager/run.py
+```
+
+Features:
+- Browse all scripts by category (Maintenance, Security, AI, Hardware, SearXNG)
+- Configure script options with toggles, spin buttons, and file pickers
+- View real-time script output in the built-in terminal
+- Start/stop long-running services (SearXNG, Ollama)
+- Interactive scripts (Fedora Update, Update Hosts) run in an embedded terminal
+
+### Nautilus Context Menu
+
+Right-click PDF, PNG, or JPEG files in Nautilus (the file manager) and select **"Clean Metadata"** to process them immediately without opening a terminal.
+
+### Installation
+
+```bash
+# Install dependencies
+sudo dnf install nautilus-python python3-gobject gtk4 libadwaita zenity
+
+# Optional: for interactive script support in the GUI
+sudo dnf install vte291
+
+# Install the GUI app, Nautilus extension, and desktop entry
+./setup.sh install
+
+# Update after pulling new changes
+./setup.sh update
+
+# Uninstall
+./setup.sh uninstall
+```
+
+See [GUI & Desktop Integration Guide](docs/guides/gui-desktop-integration-guide.md) for detailed instructions.
+
 ## Documentation
 
 ### 📚 [Documentation Hub](docs/README.md)
@@ -104,6 +150,7 @@ Detailed documentation for each script:
 - [Ollama and Open Web UI Update Guide](docs/guides/ollama-openwebui-guide.md)
 - [Ollama and Open Web UI Start Guide](docs/guides/start-ollama-openwebui-guide.md)
 - [Drive Check Guide](docs/guides/drive-check-guide.md)
+- [GUI & Desktop Integration Guide](docs/guides/gui-desktop-integration-guide.md)
 
 ### ❓ [FAQ](docs/FAQ.md)
 Frequently asked questions and troubleshooting

@@ -41,6 +41,9 @@ __pycache__/
 # Kilo
 .kilo/
 
+# Development guidelines (internal only)
+DEV_GUIDELINES.md
+
 # SearXNG virtual environment
 searxng-venv/
 venv/

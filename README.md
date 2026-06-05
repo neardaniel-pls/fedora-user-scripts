@@ -38,6 +38,13 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Note:** Requires root privileges; creates logs in `/var/log/`
 - **Screenshot:** ![](assets/img/security-sweep.png)
 
+### lynis-harden.sh
+- **Purpose:** Applies Lynis security audit hardening recommendations with interactive menu, backup/undo, and dry-run support
+- **Usage:** `sudo scripts/security/lynis-harden.sh [OPTIONS]`
+- **Dependencies:** `lynis` (optional, for re-running audit)
+- **Options:** `--all` (apply Tier 1 defaults), `--dry-run` (preview), `--undo` (revert), `-h` (help)
+- **Note:** Works as a companion to `security-sweep.sh` — scan first, then harden
+
 ### run-searxng.sh
 - **Purpose:** Runs SearXNG instance using Python virtual environment
 - **Usage:** `scripts/searxng/run-searxng.sh`
@@ -146,6 +153,7 @@ Detailed documentation for each script:
 - [Fedora Update Guide](docs/guides/fedora-update-guide.md)
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
+- [Lynis Hardening Guide](docs/guides/lynis-harden-guide.md)
 - [Update Hosts Guide](docs/guides/update-hosts-guide.md)
 - [Ollama and Open Web UI Update Guide](docs/guides/ollama-openwebui-guide.md)
 - [Ollama and Open Web UI Start Guide](docs/guides/start-ollama-openwebui-guide.md)
@@ -200,6 +208,7 @@ alias updatehosts='bash "$HOME/Documents/code/fedora-user-scripts/scripts/mainte
 alias searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/run-searxng.sh"'
 alias update_searxng='bash "$HOME/Documents/code/fedora-user-scripts/scripts/searxng/update-searxng.sh"'
 alias security='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/security-sweep.sh"'
+alias harden='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/security/lynis-harden.sh"'
 alias ai_update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/update-ollama-openwebui.sh"'
 alias ai_start='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/start-ollama-openwebui.sh"'
 alias drivecheck='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/hardware/drive-check.sh"'

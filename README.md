@@ -92,6 +92,13 @@ This repository contains shell scripts designed specifically for Fedora environm
 - **Options:** `--organize`, `--purge <days>`, `--dry-run`, `--help`
 - **Note:** Default target is `~/Downloads`; use `--dry-run` to preview changes
 
+### clean-system.sh
+- **Purpose:** Cleans disposable files system-wide: user cache, thumbnails, trash, temp files, DNF cache, systemd journal, and container data (podman/docker)
+- **Usage:** `sudo scripts/maintenance/clean-system.sh [OPTIONS]`
+- **Dependencies:** `coreutils`, `findutils`, `dnf` (optional), `podman` or `docker` (optional)
+- **Options:** `--all`, `--cache`, `--thumbnails`, `--trash`, `--temp`, `--dnf`, `--journal`, `--containers`, `--dry-run`
+- **Note:** Auto-detects podman (preferred) or docker; user-space targets run without sudo
+
 ## GUI & Desktop Integration
 
 In addition to running scripts from the terminal, you can use the **Fedora Scripts Manager** GUI and **Nautilus context menu** integration.
@@ -150,6 +157,7 @@ Get up and running in 5 minutes!
 Detailed documentation for each script:
 - [Clean Metadata Guide](docs/guides/clean-metadata-guide.md)
 - [Clean Downloads Guide](docs/guides/clean-downloads-guide.md)
+- [Clean System Guide](docs/guides/clean-system-guide.md)
 - [Fedora Update Guide](docs/guides/fedora-update-guide.md)
 - [SearXNG Guide](docs/guides/searxng-guide.md)
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
@@ -213,6 +221,7 @@ alias ai_update='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/updat
 alias ai_start='bash "$HOME/Documents/code/fedora-user-scripts/scripts/ai/start-ollama-openwebui.sh"'
 alias drivecheck='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/hardware/drive-check.sh"'
 alias cleandl='bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-downloads.sh"'
+alias cleansys='sudo bash "$HOME/Documents/code/fedora-user-scripts/scripts/maintenance/clean-system.sh"'
 ```
 
 After adding these aliases, reload your shell with `source ~/.bashrc` or restart your terminal.

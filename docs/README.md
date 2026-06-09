@@ -9,6 +9,7 @@ Detailed step-by-step guides for each script and tool:
 
 - **[Clean Metadata Guide](guides/clean-metadata-guide.md)** - Privacy-focused metadata removal and file optimization
 - **[Clean Downloads Guide](guides/clean-downloads-guide.md)** - Downloads directory organizer and cleanup
+- **[Clean System Guide](guides/clean-system-guide.md)** - System-wide cache, temp, and junk file cleanup (podman/docker support)
 - **[Fedora Update Guide](guides/fedora-update-guide.md)** - System maintenance and updates
 - **[SearXNG Guide](guides/searxng-guide.md)** - Privacy-respecting search engine setup
 - **[Security Sweep Guide](guides/security-sweep-guide.md)** - Comprehensive security scanning
@@ -35,14 +36,14 @@ Detailed step-by-step guides for each script and tool:
 
 ### By Use Case
 - **Privacy & Security**: [Clean Metadata](guides/clean-metadata-guide.md), [Security Sweep](guides/security-sweep-guide.md), [Lynis Hardening](guides/lynis-harden-guide.md), [Update Hosts](guides/update-hosts-guide.md)
-- **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md), [Clean Downloads](guides/clean-downloads-guide.md)
+- **System Maintenance**: [Fedora Update](guides/fedora-update-guide.md), [Clean Downloads](guides/clean-downloads-guide.md), [Clean System](guides/clean-system-guide.md)
 - **Hardware**: [Drive Check](guides/drive-check-guide.md)
 - **AI Tools**: [Ollama/Open Web UI Update](guides/update-ollama-openwebui-guide.md), [Ollama/Open Web UI Start](guides/start-ollama-openwebui-guide.md)
 - **Services**: [SearXNG Guide](guides/searxng-guide.md)
 - **Desktop Integration**: [GUI & Nautilus Guide](guides/gui-desktop-integration-guide.md)
 
 ### By Skill Level
-- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md), [Clean Downloads Guide](guides/clean-downloads-guide.md)
+- **Beginner**: [Fedora Update Guide](guides/fedora-update-guide.md), [Update Hosts Guide](guides/update-hosts-guide.md), [Clean Downloads Guide](guides/clean-downloads-guide.md), [Clean System Guide](guides/clean-system-guide.md)
 - **Intermediate**: [Clean Metadata Guide](guides/clean-metadata-guide.md), [SearXNG Guide](guides/searxng-guide.md)
 - **Advanced**: [Security Sweep Guide](guides/security-sweep-guide.md), [Lynis Hardening Guide](guides/lynis-harden-guide.md)
 
@@ -64,6 +65,7 @@ Found something unclear or missing? Please:
 |--------|---------|------------|-------------|
 | [Clean Metadata](guides/clean-metadata-guide.md) | Remove metadata and optimize files | Intermediate | exiftool, gs, pngquant, jpegoptim |
 | [Clean Downloads](guides/clean-downloads-guide.md) | Organize and purge downloads | Beginner | file |
+| [Clean System](guides/clean-system-guide.md) | System-wide cache and temp cleanup | Beginner | coreutils, findutils |
 | [Fedora Update](guides/fedora-update-guide.md) | System maintenance | Beginner | dnf |
 | [SearXNG](guides/searxng-guide.md) | Privacy search engine | Intermediate | Python, virtualenv |
 | [Security Sweep](guides/security-sweep-guide.md) | Security scanning | Advanced | chkrootkit, clamav, lynis |
@@ -82,6 +84,6 @@ Documentation is updated with each release. To stay informed:
 
 ---
 
-**Last Updated**: 2026-06-06  
-**Version**: 1.2.1
+**Last Updated**: 2026-06-08  
+**Version**: 1.3.0
 **Repository**: https://github.com/neardaniel-pls/fedora-user-scripts

@@ -379,7 +379,7 @@ if [ -f "$SEARXNG_UPDATE_SCRIPT" ] && [ "$OWNERSHIP_CHECK_PASSED" = "true" ]; th
         if [[ "$file_perms" =~ ^7[0-5][0-5]$ ]]; then
             # Execute the SearxNG update script with minimal output to avoid conflicts
             print_command_output
-            if QUIET=1 bash "$SEARXNG_UPDATE_SCRIPT" 2>/dev/null; then
+            if QUIET=1 bash "$SEARXNG_UPDATE_SCRIPT"; then
                 print_operation_end "SearxNG updated"
                 success "SearxNG updated successfully"
             else

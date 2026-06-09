@@ -244,21 +244,38 @@ if [[ ! "$REMOTE_URL" =~ ^https?://github\.com[:/]searxng/searxng(\.git)?$ ]]; t
 fi
 
 # ===== Working Directory Validation =====
-# Check for uncommitted changes that could be lost during update
+# Stash uncommitted changes to allow a clean pull, then restore them after
+STASHED=false
+_stash_count_before=$(git stash list 2>/dev/null | wc -l)
 if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-  error "You have uncommitted changes. Please commit or stash them first."
-  echo "Use 'git commit' to save changes or 'git stash' to temporarily save them."
-  exit 1
+  echo "  Uncommitted changes detected — stashing before update..."
+  git stash push -m "auto-stash by update-searxng.sh" 2>/dev/null || true
+  _stash_count_after=$(git stash list 2>/dev/null | wc -l)
+  if [ "$_stash_count_after" -gt "$_stash_count_before" ]; then
+    STASHED=true
+  fi
 fi
 
 # ===== Repository Update =====
 # Pull the latest changes from the official repository
 echo "  Checking for updates..."
 
-# Try to update from main branch first, then fall back to master
-# Use --ff-only to ensure only fast-forward updates are applied
+PULL_SUCCESS=false
 if git pull origin main --ff-only 2>/dev/null || git pull origin master --ff-only 2>/dev/null; then
-  # Check if any actual changes were downloaded
+  PULL_SUCCESS=true
+fi
+
+# Restore stashed changes if we stashed them
+if [ "$STASHED" = true ]; then
+  echo "  Restoring stashed changes..."
+  if ! git stash pop 2>/dev/null; then
+    PULL_SUCCESS=false
+    warning "Could not restore stashed changes cleanly."
+    warning "Resolve conflicts, then run 'git stash drop' to clean up."
+  fi
+fi
+
+if [ "$PULL_SUCCESS" = true ]; then
   if git diff --quiet HEAD@{1} HEAD 2>/dev/null; then
     echo "Already up to date."
     if [[ "${QUIET:-}" != "1" ]]; then

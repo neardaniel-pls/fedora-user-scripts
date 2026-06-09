@@ -218,6 +218,36 @@ SCRIPTS: list[ScriptEntry] = [
         ],
     ),
     ScriptEntry(
+        id="lynis-harden",
+        name="Lynis Hardening",
+        description="Apply Lynis security audit hardening recommendations with interactive menu, backup/undo, and dry-run",
+        category="security",
+        icon_name="system-hardened-symbolic",
+        script_path="scripts/security/lynis-harden.sh",
+        script_type=ScriptType.INTERACTIVE,
+        sudo_mode=SudoMode.ENFORCED,
+        options=[
+            ScriptOption(
+                id="all_tier1",
+                label="Apply All Tier 1",
+                cli_flag="--all",
+                description="Non-interactive: apply all Tier 1 defaults without menu",
+            ),
+            ScriptOption(
+                id="dry_run",
+                label="Dry Run",
+                cli_flag="--dry-run",
+                description="Preview changes without applying them",
+            ),
+            ScriptOption(
+                id="undo",
+                label="Undo Last Changes",
+                cli_flag="--undo",
+                description="Revert last set of changes from backups",
+            ),
+        ],
+    ),
+    ScriptEntry(
         id="secure-delete",
         name="Secure Delete",
         description="Securely delete files by overwriting with random data (3-pass shred)",

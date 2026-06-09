@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-06-06
+
+### Added
+- **GUI**: Lynis Hardening script card in the Scripts Manager GUI (`scripts_registry.py`)
+
+### Fixed
+- **lynis-harden.sh**: Fix `sed` delimiter conflict causing core dump disable to fail when `kernel.core_pattern` already existed
+- **lynis-harden.sh**: Fix skipped items appearing inline without section headers — now grouped under a "SKIPPED ITEMS" section
+
 ## [1.2.0] - 2026-06-05
 
 ### Added

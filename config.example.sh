@@ -18,6 +18,15 @@
 
 # --- run-searxng.sh ---
 # SEARXNG_PORT="8888"
+# SEARXNG_VENV="$HOME/Documents/code/searxng/searxng-venv"
+# SEARXNG_APP="$HOME/Documents/code/searxng/searxng"
+# WEBAPP_SCRIPT="$HOME/Documents/code/searxng/searxng/utils/run_webapp.py"
+
+# --- update-ollama-openwebui.sh ---
+# MAX_BACKUPS="5"
+
+# --- clean-downloads.sh ---
+# CLEAN_DL_DIR="$HOME/Downloads"
 
 # --- Output ---
 # NO_COLOR=1

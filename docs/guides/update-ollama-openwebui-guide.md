@@ -567,8 +567,8 @@ crontab -e
 
 ### Related Guides
 - [Ollama and Open Web UI Start Guide](start-ollama-openwebui-guide.md)
-- [Fedora Update Guide](../guides/fedora-update-guide.md)
-- [Security Sweep Guide](../guides/security-sweep-guide.md)
+- [Fedora Update Guide](fedora-update-guide.md)
+- [Security Sweep Guide](security-sweep-guide.md)
 
 ### Community Support
 - [Ollama GitHub Issues](https://github.com/ollama/ollama/issues)

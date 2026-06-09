@@ -84,6 +84,6 @@ Documentation is updated with each release. To stay informed:
 
 ---
 
-**Last Updated**: 2026-06-08  
-**Version**: 1.3.0
+**Last Updated**: 2026-06-09  
+**Version**: 1.3.2
 **Repository**: https://github.com/neardaniel-pls/fedora-user-scripts

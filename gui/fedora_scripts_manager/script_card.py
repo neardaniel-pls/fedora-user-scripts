@@ -6,7 +6,7 @@ import re
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gtk, Adw, GObject
+from gi.repository import GLib, Gtk, Adw, GObject
 
 from .scripts_registry import ScriptEntry, ScriptType, SudoMode
 
@@ -118,26 +118,24 @@ class ScriptCard(Adw.ExpanderRow):
     def _on_browse(self, _btn):
         if self._entry.id == "drive-check":
             dialog = self._create_device_dialog()
+            parent = self.get_root()
+            if parent:
+                dialog.present(parent)
         else:
-            dialog = self._create_file_dialog()
-
-        parent = self.get_root()
-        if parent:
-            dialog.present(parent)
+            self._create_file_dialog()
 
     def _create_file_dialog(self):
+        parent = self.get_root()
         if self._entry.id in ("secure-delete",):
             dialog = Gtk.FileDialog()
             dialog.set_title(self._entry.file_arg_label)
             dialog.set_modal(True)
-            dialog.open_multiple(None, None, self._on_files_selected, None)
-            return None
+            dialog.open_multiple(parent, None, self._on_files_selected, None)
         else:
             dialog = Gtk.FileDialog()
             dialog.set_title(self._entry.file_arg_label)
             dialog.set_modal(True)
-            dialog.open(None, None, self._on_file_selected, None)
-            return None
+            dialog.open(parent, None, self._on_file_selected, None)
 
     def _create_device_dialog(self):
         row = Adw.EntryRow(title="Block device path (e.g. /dev/sdb)")
@@ -186,7 +184,7 @@ class ScriptCard(Adw.ExpanderRow):
             path = row.get_text().strip()
             if not path:
                 return
-            if not re.match(r'^/dev/[a-zA-Z0-9/]+$', path):
+            if not re.match(r'^/dev/[a-zA-Z0-9/_.-]+$', path):
                 self._file_label.set_label("Invalid device path")
                 self._file_paths = []
                 return

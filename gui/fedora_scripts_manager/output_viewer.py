@@ -112,6 +112,7 @@ class OutputViewer(Gtk.Box):
     def _build_vte_terminal(self):
         self._vte_terminal = Vte.Terminal()
         self._vte_terminal.set_vexpand(True)
+        self._vte_terminal.connect("child-exited", self._on_vte_child_exited)
         self._stack.add_named(self._vte_terminal, "vte")
 
     def _on_toggle(self, _btn):
@@ -213,7 +214,6 @@ class OutputViewer(Gtk.Box):
             None,
             None,
         )
-        self._vte_terminal.connect("child-exited", self._on_vte_child_exited)
 
     def _on_vte_child_exited(self, terminal, status):
         self.set_status(f"Finished (exit code: {status})")

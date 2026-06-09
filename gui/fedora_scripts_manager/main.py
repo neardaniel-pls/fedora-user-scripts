@@ -46,7 +46,7 @@ class FedoraScriptsManagerApp(Adw.Application):
             comments="A GUI for managing and running fedora-user-scripts",
             website="https://github.com/near-whisper/fedora-user-scripts",
             license_type=Gtk.License.MIT_X11,
-            copyright="© 2025 fedora-user-scripts contributors",
+            copyright="© 2025-2026 fedora-user-scripts contributors",
         )
         about.present()
 

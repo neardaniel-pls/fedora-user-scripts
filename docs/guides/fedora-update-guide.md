@@ -101,4 +101,4 @@ If no option is chosen within 30 seconds, the script exits automatically.
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: June 2026

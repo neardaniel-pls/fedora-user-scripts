@@ -135,4 +135,4 @@ Script keeps the 7 most recent `security-sweep` logs and deletes older ones.
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: June 2026

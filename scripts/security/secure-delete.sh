@@ -54,6 +54,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -63,13 +64,8 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.3"
+version_check "$SCRIPT_VERSION"
 
 # ===== Dependency Check =====
 # Verify that the required 'shred' command is available on the system

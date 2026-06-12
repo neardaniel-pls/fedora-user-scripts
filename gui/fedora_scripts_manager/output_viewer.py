@@ -35,6 +35,7 @@ class OutputViewer(Gtk.Box):
         self._process = None
         self._io_watch_id = None
         self._vte_terminal = None
+        self._vte_pid = -1
 
         self._revealer = Gtk.Revealer()
         self._revealer.set_reveal_child(False)
@@ -205,7 +206,7 @@ class OutputViewer(Gtk.Box):
         if env:
             run_env = [f"{k}={v}" for k, v in {**os.environ, **env}.items()]
 
-        self._vte_terminal.spawn_sync(
+        _, pid = self._vte_terminal.spawn_sync(
             Vte.PtyFlags.DEFAULT,
             cwd or os.getcwd(),
             argv,
@@ -214,6 +215,7 @@ class OutputViewer(Gtk.Box):
             None,
             None,
         )
+        self._vte_pid = pid
 
     def _on_vte_child_exited(self, terminal, status):
         self.set_status(f"Finished (exit code: {status})")
@@ -233,12 +235,20 @@ class OutputViewer(Gtk.Box):
         self.set_status(f"Launched in external terminal: {os.path.basename(argv[0])}")
 
     def stop_process(self):
-        """Stop the running subprocess (for service scripts)."""
+        """Stop the running subprocess or VTE process."""
         if self._process is not None:
             try:
                 self._process.terminate()
             except ProcessLookupError:
                 pass
+            self._process = None
+            self.set_status("Stopped by user")
+        elif self._vte_pid > 0:
+            try:
+                os.kill(self._vte_pid, signal.SIGTERM)
+            except (ProcessLookupError, OSError):
+                pass
+            self._vte_pid = -1
             self.set_status("Stopped by user")
 
     def is_running(self) -> bool:

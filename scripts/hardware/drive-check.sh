@@ -43,6 +43,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -60,19 +61,8 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
-
-print_kv() {
-    local key="$1"
-    local value="$2"
-    printf "  ${BOLD}%-22s${RESET} %s\n" "$key" "$value"
-}
+readonly SCRIPT_VERSION="1.3.3"
+version_check "$SCRIPT_VERSION"
 
 usage() {
     cat << 'EOF'
@@ -93,15 +83,6 @@ Examples:
   sudo drive-check.sh --health /dev/sdb
 EOF
     exit 0
-}
-
-format_bytes_human() {
-    local bytes="$1"
-    if command -v numfmt &>/dev/null; then
-        numfmt --to=iec --suffix=B "$bytes"
-    else
-        echo "${bytes} B"
-    fi
 }
 
 validate_device() {
@@ -143,21 +124,6 @@ validate_device() {
         error "'$dev' appears to contain the boot partition. Refusing to operate on it."
         exit 1
     fi
-}
-
-check_dependencies() {
-    local missing=()
-    for cmd in lsblk fdisk blockdev lsusb; do
-        if ! command -v "$cmd" &>/dev/null; then
-            missing+=("$cmd")
-        fi
-    done
-
-    if (( ${#missing[@]} > 0 )); then
-        error "Missing required dependencies: ${missing[*]}"
-        exit 1
-    fi
-    success "Core dependencies available"
 }
 
 show_device_info() {
@@ -213,7 +179,7 @@ show_capacity_verification() {
 
     local size_bytes size_human
     size_bytes=$(blockdev --getsize64 "$dev")
-    size_human=$(format_bytes_human "$size_bytes")
+    size_human=$(human_size "$size_bytes")
 
     print_kv "Reported Size" "$size_human ($size_bytes bytes)"
 
@@ -224,7 +190,7 @@ show_capacity_verification() {
         sys_size=$(cat "/sys/block/${devname}/size")
         local sys_bytes=$((sys_size * 512))
         local sys_human
-        sys_human=$(format_bytes_human "$sys_bytes")
+        sys_human=$(human_size "$sys_bytes")
         print_kv "Sysfs Size" "$sys_human ($sys_bytes bytes)"
     fi
 
@@ -548,7 +514,8 @@ main() {
     echo -e "${BOLD}${GREEN}${START_ICON} Inspecting drive: ${BOLD}${CYAN}${device}${RESET}"
     echo
 
-    check_dependencies
+    check_dependencies lsblk fdisk blockdev lsusb
+    success "Core dependencies available"
     print_separator
 
     DEVICE="$device"

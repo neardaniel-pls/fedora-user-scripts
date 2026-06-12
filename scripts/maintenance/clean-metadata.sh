@@ -74,16 +74,12 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.3"
+version_check "$SCRIPT_VERSION"
 
 # --- Configuration ---
 # Set quality and optimization parameters with environment variable overrides
@@ -202,17 +198,8 @@ EOF
   fi
 
   # Verify all required tools are available before proceeding
-  print_section_header "DEPENDENCY VERIFICATION" "${PACKAGE_ICON}"
-  print_operation_start "Checking required dependencies"
-  for cmd in exiftool gs pngquant jpegoptim numfmt; do
-    if ! command -v "$cmd" &> /dev/null; then
-      error "Dependency '$cmd' is not installed."
-      return 1
-    fi
-  done
-  print_operation_end "Dependency verification completed"
+  check_dependencies exiftool gs pngquant jpegoptim numfmt
   success "All required dependencies are available"
-  print_separator
 
   # Initialize error counter for batch operations
   local error_count=0
@@ -350,8 +337,8 @@ cleanmetadata_file() {
   esac
 
   # Sanitize filename for temp files
-  local safe_base="${base//\//_}"
-  safe_base="${safe_base//../_}"
+  local safe_base
+  safe_base=$(echo "$base" | tr -c -d 'a-zA-Z0-9._-')
   
   local tmp_cleaned="$TMP_DIR/${safe_base}_cleaned.tmp"
   local tmp_optimized="$TMP_DIR/${safe_base}_optimized.tmp"

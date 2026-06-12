@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-06-12
+
+### Added
+- **scripts/lib/ui.sh**: `check_dependencies()` — centralized dependency checking, replacing local copies in 4 scripts
+- **scripts/lib/ui.sh**: `human_size()` and `print_kv()` — shared formatting helpers, replacing local copies in drive-check.sh and clean-downloads.sh
+- **scripts/lib/ui.sh**: `version_check()` — unified version display for 12 scripts
+- **scripts/lib/ui.sh**: `enable_logging()` and `_log()` — opt-in file logging, replacing local overrides in security-sweep.sh and lynis-harden.sh
+- **scripts/lib/ui.sh**: `fix_ownership()` — shared ownership fix for container volume mounts, replacing local copies in both SearXNG scripts
+- **gui/fedora_scripts_manager/config.py**: Shared Python module with `is_config_safe()` and `resolve_scripts_dir()`, eliminating duplication between window.py and the Nautilus extension
+
+### Changed
+- **clean-system.sh**: Refactored with `_clean_scan()`/`_clean_report()` helpers, eliminating ~120 lines of repeated cleanup logic
+- **update-hosts.sh**: Deduplicated git operations with `git_cmd()` wrapper; converted help from printf to heredoc
+- **window.py**: Import `resolve_scripts_dir` from shared config.py instead of local implementation
+- **nautilus extension**: Import from shared config.py instead of local `_is_config_safe`/`_get_scripts_dir`
+
+### Fixed
+- **ui.sh**: Fix `print_header()` using hardcoded emoji instead of `${SECTION_ICON}`
+
+### Documentation
+- Document `QUIET` env var in `config.example.sh`
+- Document shared ui.sh functions and Python config module in `DEV_GUIDELINES.md`
+
 ## [1.3.2] - 2026-06-09
 
 ### Added

@@ -31,3 +31,6 @@
 # --- Output ---
 # NO_COLOR=1
 # USE_ICONS=0
+
+# --- Internal ---
+# QUIET=1          Suppress output when called from other scripts (e.g. fedora-update.sh)

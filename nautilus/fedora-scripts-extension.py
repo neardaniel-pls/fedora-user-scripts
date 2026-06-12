@@ -6,12 +6,20 @@ PDF, PNG, or JPEG files are selected in Nautilus.
 """
 
 import os
-import stat
 import subprocess
+import sys
 import tempfile
 import threading
 
 from gi.repository import Nautilus, GObject, GLib
+
+GUI_INSTALL_DIR = os.path.join(
+    os.path.expanduser("~"), ".local", "share", "fedora-scripts-manager"
+)
+if os.path.isdir(GUI_INSTALL_DIR):
+    sys.path.insert(0, GUI_INSTALL_DIR)
+
+from fedora_scripts_manager.config import resolve_scripts_dir
 
 SUPPORTED_MIMES = {
     "application/pdf",
@@ -19,53 +27,11 @@ SUPPORTED_MIMES = {
     "image/jpeg",
 }
 
-CONFIG_PATH = os.path.join(
-    os.path.expanduser("~"), ".config", "fedora-user-scripts", "config.sh"
-)
-
-
-def _is_config_safe(path):
-    try:
-        st = os.stat(path)
-        if st.st_mode & stat.S_IWOTH or st.st_mode & stat.S_IWGRP:
-            return False
-        if st.st_uid != os.getuid():
-            return False
-        return True
-    except OSError:
-        return False
-
-
-def _get_scripts_dir():
-    env_val = os.environ.get("FEDORA_SCRIPTS_DIR", "")
-    if env_val and os.path.isdir(env_val):
-        return env_val
-    config_path = os.path.join(
-        os.path.expanduser("~"), ".config", "fedora-user-scripts", "config.sh"
-    )
-    if os.path.isfile(config_path) and _is_config_safe(config_path):
-        try:
-            result = subprocess.run(
-                ["bash", "-c", f"source '{config_path}' && echo \"$FEDORA_SCRIPTS_DIR\""],
-                capture_output=True, text=True, timeout=5,
-            )
-            val = result.stdout.strip()
-            if val and os.path.isdir(val):
-                return val
-        except Exception:
-            pass
-    home = os.path.expanduser("~")
-    candidates = [
-        os.path.join(home, ".local", "share", "fedora-scripts-manager"),
-    ]
-    for c in candidates:
-        if os.path.isdir(c):
-            return c
-    return os.path.join(home, "Documents", "code", "fedora-user-scripts")
+_SCRIPTS_DIR = resolve_scripts_dir()
 
 
 def _get_script_path():
-    return os.path.join(_get_scripts_dir(), "scripts", "maintenance", "clean-metadata.sh")
+    return os.path.join(_SCRIPTS_DIR, "scripts", "maintenance", "clean-metadata.sh")
 
 
 class CleanMetadataExtension(GObject.GObject, Nautilus.MenuProvider):

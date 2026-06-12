@@ -69,6 +69,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if [ -n "${SUDO_USER:-}" ]; then
@@ -88,12 +89,8 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.3"
+version_check "$SCRIPT_VERSION"
 
 # --- Configuration ---
 readonly CACHE_DIR="${_ACTUAL_HOME}/.cache"
@@ -105,15 +102,8 @@ readonly JOURNAL_DAYS="${CLEAN_JOURNAL_DAYS:-7}"
 
 # --- State ---
 TOTAL_FREED=0
-
-human_size() {
-    local bytes="$1"
-    if command -v numfmt &>/dev/null; then
-        numfmt --to=iec --suffix=B "$bytes"
-    else
-        echo "${bytes} B"
-    fi
-}
+_CLEAN_FREED=0
+_CLEAN_COUNT=0
 
 add_freed() {
     local bytes="$1"
@@ -122,6 +112,49 @@ add_freed() {
 
 has_root() {
     [[ $EUID -eq 0 ]]
+}
+
+_clean_scan() {
+    local dir="$1"
+    local rm_flags="$2"
+    local strip_prefix="$3"
+    shift 3
+    local find_args=("$@")
+
+    while IFS= read -r -d '' file; do
+        local size
+        size=$(stat -c%s "$file" 2>/dev/null || echo 0)
+        if [[ "$DRY_RUN" == "true" ]]; then
+            echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file#"$strip_prefix"}"
+            _CLEAN_FREED=$((_CLEAN_FREED + size))
+            _CLEAN_COUNT=$((_CLEAN_COUNT + 1))
+        else
+            if rm $rm_flags "$file" 2>/dev/null; then
+                _CLEAN_FREED=$((_CLEAN_FREED + size))
+                _CLEAN_COUNT=$((_CLEAN_COUNT + 1))
+            fi
+        fi
+    done < <(find "$dir" -type f "${find_args[@]}" -print0 2>/dev/null)
+}
+
+_clean_report() {
+    local label="$1"
+    local nothing_msg="$2"
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        if [[ "$_CLEAN_COUNT" -gt 0 ]]; then
+            info "Would remove ${_CLEAN_COUNT} ${label}, freeing $(human_size "$_CLEAN_FREED")"
+        else
+            info "$nothing_msg"
+        fi
+    else
+        add_freed "$_CLEAN_FREED"
+        if [[ "$_CLEAN_COUNT" -gt 0 ]]; then
+            success "Removed ${_CLEAN_COUNT} ${label}, freed $(human_size "$_CLEAN_FREED")"
+        else
+            info "$nothing_msg"
+        fi
+    fi
 }
 
 # --- Cleanup Targets ---
@@ -136,43 +169,17 @@ clean_cache() {
         return
     fi
 
-    local freed=0
-    local count=0
+    _CLEAN_FREED=0
+    _CLEAN_COUNT=0
+
     local find_excludes=()
     if [[ "$DO_THUMBNAILS" == "true" && -d "$THUMBNAIL_DIR" ]]; then
         find_excludes=(-not -path "${THUMBNAIL_DIR}/*")
     fi
 
-    while IFS= read -r -d '' file; do
-        local size
-        size=$(stat -c%s "$file" 2>/dev/null || echo 0)
+    _clean_scan "$CACHE_DIR" "-f" "${_ACTUAL_HOME}/" -mtime "+${CACHE_DAYS}" "${find_excludes[@]}"
 
-        if [[ "$DRY_RUN" == "true" ]]; then
-            echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file#"${_ACTUAL_HOME}"/}"
-            freed=$((freed + size))
-            count=$((count + 1))
-        else
-            if rm -f "$file" 2>/dev/null; then
-                freed=$((freed + size))
-                count=$((count + 1))
-            fi
-        fi
-    done < <(find "$CACHE_DIR" -type f -mtime "+${CACHE_DAYS}" "${find_excludes[@]}" -print0 2>/dev/null)
-
-    if [[ "$DRY_RUN" == "true" ]]; then
-        if [[ "$count" -gt 0 ]]; then
-            info "Would remove ${count} cache file(s), freeing $(human_size "$freed")"
-        else
-            info "No cache files older than ${CACHE_DAYS} days found"
-        fi
-    else
-        add_freed "$freed"
-        if [[ "$count" -gt 0 ]]; then
-            success "Removed ${count} cache file(s), freed $(human_size "$freed")"
-        else
-            info "No cache files older than ${CACHE_DAYS} days found"
-        fi
-    fi
+    _clean_report "cache file(s)" "No cache files older than ${CACHE_DAYS} days found"
 
     print_operation_end "User cache cleanup"
     print_separator
@@ -188,35 +195,12 @@ clean_thumbnails() {
         return
     fi
 
-    local freed=0
-    local count=0
+    _CLEAN_FREED=0
+    _CLEAN_COUNT=0
 
-    while IFS= read -r -d '' file; do
-        local size
-        size=$(stat -c%s "$file" 2>/dev/null || echo 0)
+    _clean_scan "$THUMBNAIL_DIR" "-f" "${_ACTUAL_HOME}/"
 
-        if [[ "$DRY_RUN" == "true" ]]; then
-            echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file#"${_ACTUAL_HOME}"/}"
-            count=$((count + 1))
-            freed=$((freed + size))
-        else
-            if rm -f "$file" 2>/dev/null; then
-                freed=$((freed + size))
-                count=$((count + 1))
-            fi
-        fi
-    done < <(find "$THUMBNAIL_DIR" -type f -print0 2>/dev/null)
-
-    if [[ "$DRY_RUN" == "true" ]]; then
-        info "Would remove ${count} thumbnail(s), freeing $(human_size "$freed")"
-    else
-        add_freed "$freed"
-        if [[ "$count" -gt 0 ]]; then
-            success "Removed ${count} thumbnail(s), freed $(human_size "$freed")"
-        else
-            info "No thumbnails found"
-        fi
-    fi
+    _clean_report "thumbnail(s)" "No thumbnails found"
 
     print_operation_end "Thumbnail cache cleanup"
     print_separator
@@ -232,35 +216,12 @@ clean_trash() {
         return
     fi
 
-    local freed=0
-    local count=0
+    _CLEAN_FREED=0
+    _CLEAN_COUNT=0
 
-    while IFS= read -r -d '' file; do
-        local size
-        size=$(stat -c%s "$file" 2>/dev/null || echo 0)
+    _clean_scan "$TRASH_DIR" "-rf" "${_ACTUAL_HOME}/"
 
-        if [[ "$DRY_RUN" == "true" ]]; then
-            echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file#"${_ACTUAL_HOME}"/}"
-            count=$((count + 1))
-            freed=$((freed + size))
-        else
-            if rm -rf "$file" 2>/dev/null; then
-                freed=$((freed + size))
-                count=$((count + 1))
-            fi
-        fi
-    done < <(find "$TRASH_DIR" -type f -print0 2>/dev/null)
-
-    if [[ "$DRY_RUN" == "true" ]]; then
-        info "Would remove ${count} trash item(s), freeing $(human_size "$freed")"
-    else
-        add_freed "$freed"
-        if [[ "$count" -gt 0 ]]; then
-            success "Removed ${count} trash item(s), freed $(human_size "$freed")"
-        else
-            info "Trash is already empty"
-        fi
-    fi
+    _clean_report "trash item(s)" "Trash is already empty"
 
     print_operation_end "Trash cleanup"
     print_separator
@@ -270,60 +231,19 @@ clean_temp() {
     print_section_header "TEMP FILES" "${CLEAN_ICON}"
     print_operation_start "Scanning temp files (older than ${TEMP_DAYS} days)"
 
-    local freed=0
-    local count=0
+    _CLEAN_FREED=0
+    _CLEAN_COUNT=0
     local user_id
     user_id=$(id -u)
 
-    while IFS= read -r -d '' file; do
-        local size
-        size=$(stat -c%s "$file" 2>/dev/null || echo 0)
-
-        if [[ "$DRY_RUN" == "true" ]]; then
-            echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file}"
-            freed=$((freed + size))
-            count=$((count + 1))
-        else
-            if rm -f "$file" 2>/dev/null; then
-                freed=$((freed + size))
-                count=$((count + 1))
-            fi
-        fi
-    done < <(find /tmp -maxdepth 1 -type f -mtime "+${TEMP_DAYS}" -user "$user_id" -print0 2>/dev/null)
+    _clean_scan "/tmp" "-f" "" -maxdepth 1 -mtime "+${TEMP_DAYS}" -user "$user_id"
 
     local state_tmp="${_ACTUAL_HOME}/.local/state"
     if [[ -d "$state_tmp" ]]; then
-        while IFS= read -r -d '' file; do
-            local size
-            size=$(stat -c%s "$file" 2>/dev/null || echo 0)
-
-            if [[ "$DRY_RUN" == "true" ]]; then
-                echo -e "  ${BOLD}${YELLOW}${DELETE_ICON}  ${RESET}${file#"${_ACTUAL_HOME}"/}"
-                freed=$((freed + size))
-                count=$((count + 1))
-            else
-                if rm -f "$file" 2>/dev/null; then
-                    freed=$((freed + size))
-                    count=$((count + 1))
-                fi
-            fi
-        done < <(find "$state_tmp" -maxdepth 1 -type f -mtime "+${TEMP_DAYS}" -print0 2>/dev/null)
+        _clean_scan "$state_tmp" "-f" "${_ACTUAL_HOME}/" -maxdepth 1 -mtime "+${TEMP_DAYS}"
     fi
 
-    if [[ "$DRY_RUN" == "true" ]]; then
-        if [[ "$count" -gt 0 ]]; then
-            info "Would remove ${count} temp file(s), freeing $(human_size "$freed")"
-        else
-            info "No temp files older than ${TEMP_DAYS} days found"
-        fi
-    else
-        add_freed "$freed"
-        if [[ "$count" -gt 0 ]]; then
-            success "Removed ${count} temp file(s), freed $(human_size "$freed")"
-        else
-            info "No temp files older than ${TEMP_DAYS} days found"
-        fi
-    fi
+    _clean_report "temp file(s)" "No temp files older than ${TEMP_DAYS} days found"
 
     print_operation_end "Temp file cleanup"
     print_separator

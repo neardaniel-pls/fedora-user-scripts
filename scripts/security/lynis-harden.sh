@@ -68,6 +68,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -78,7 +79,7 @@ else
     readonly DRYRUN_ICON=""
 fi
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
+readonly SCRIPT_VERSION="1.3.3"
 readonly BACKUP_DIR="/var/backups/lynis-harden"
 readonly BACKUP_MANIFEST="${BACKUP_DIR}/manifest.txt"
 readonly SYSCTL_CONF="/etc/sysctl.d/60-lynis-harden.conf"
@@ -116,36 +117,9 @@ HARDENING_ITEMS=(
 # Track user selections (indexed by position)
 declare -a SELECTIONS=()
 
-# ===== Logging =====
-log_message() {
-    local level="$1"
-    local message="$2"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - ${level}: ${message}" >> "$LOG_FILE"
-}
-
-info() {
-    echo -e "${BOLD}${BLUE}${INFO_ICON}  $1${RESET}"
-    log_message "INFO" "$1"
-}
-
-success() {
-    echo -e "${BOLD}${GREEN}${SUCCESS_ICON} $1${RESET}"
-    log_message "SUCCESS" "$1"
-}
-
-warning() {
-    echo -e "${BOLD}${YELLOW}${WARNING_ICON} $1${RESET}"
-    log_message "WARNING" "$1"
-}
-
-error() {
-    echo -e "${BOLD}${RED}${ERROR_ICON} $1${RESET}" >&2
-    log_message "ERROR" "$1"
-}
-
 dryrun_info() {
     echo -e "${BOLD}${CYAN}${DRYRUN_ICON} [DRY-RUN] $1${RESET}"
-    log_message "DRY-RUN" "$1"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - DRY-RUN: $1" >> "$LOG_FILE"
 }
 
 # ===== Backup Functions =====
@@ -165,16 +139,16 @@ backup_file() {
     chmod 700 "$BACKUP_DIR"
 
     if grep -q "^${filepath}|" "$BACKUP_MANIFEST" 2>/dev/null; then
-        log_message "BACKUP" "Skipping backup of ${filepath} — already in manifest"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - BACKUP: Skipping backup of ${filepath} — already in manifest" >> "$LOG_FILE"
         return 0
     fi
 
     if [ -f "$filepath" ]; then
         cp -a "$filepath" "${BACKUP_DIR}/${backup_name}"
         echo "${filepath}|${backup_name}" >> "$BACKUP_MANIFEST"
-        log_message "BACKUP" "Backed up ${filepath} -> ${BACKUP_DIR}/${backup_name}"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - BACKUP: Backed up ${filepath} -> ${BACKUP_DIR}/${backup_name}" >> "$LOG_FILE"
     else
-        log_message "BACKUP" "No existing file at ${filepath}, skipping backup"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - BACKUP: No existing file at ${filepath}, skipping backup" >> "$LOG_FILE"
         echo "${filepath}|NONE" >> "$BACKUP_MANIFEST"
     fi
 }
@@ -819,6 +793,7 @@ main() {
     trap cleanup SIGINT SIGTERM
 
     setup_log
+    enable_logging "$LOG_FILE"
 
     echo -e "${BOLD}${BLUE}${INFO_ICON} Starting Lynis Hardening Tool v${SCRIPT_VERSION}...${RESET}"
     info "Log file: ${LOG_FILE}"

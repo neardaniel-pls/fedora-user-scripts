@@ -77,7 +77,7 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.2"
+readonly SCRIPT_VERSION="1.3.3"
 version_check "$SCRIPT_VERSION"
 
 # ===== Log file =====
@@ -423,7 +423,7 @@ usage() {
     echo "  -h: Display this help message"
     echo "  -V: Display script version"
     echo "If no options are specified, all scans will be performed."
-    exit 1
+    exit 0
 }
 
 cleanup() {

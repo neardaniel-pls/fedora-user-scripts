@@ -78,7 +78,7 @@ _CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.2"
+readonly SCRIPT_VERSION="1.3.3"
 version_check "$SCRIPT_VERSION"
 
 # --- Configuration ---
@@ -337,8 +337,8 @@ cleanmetadata_file() {
   esac
 
   # Sanitize filename for temp files
-  local safe_base="${base//\//_}"
-  safe_base="${safe_base//../_}"
+  local safe_base
+  safe_base=$(echo "$base" | tr -c -d 'a-zA-Z0-9._-')
   
   local tmp_cleaned="$TMP_DIR/${safe_base}_cleaned.tmp"
   local tmp_optimized="$TMP_DIR/${safe_base}_optimized.tmp"

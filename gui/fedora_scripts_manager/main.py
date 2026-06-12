@@ -44,7 +44,7 @@ class FedoraScriptsManagerApp(Adw.Application):
             application_icon="system-run-symbolic",
             version=__version__,
             comments="A GUI for managing and running fedora-user-scripts",
-            website="https://github.com/near-whisper/fedora-user-scripts",
+            website="https://github.com/neardaniel-pls/fedora-user-scripts",
             license_type=Gtk.License.MIT_X11,
             copyright="© 2025-2026 fedora-user-scripts contributors",
         )

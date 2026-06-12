@@ -79,7 +79,7 @@ else
     readonly DRYRUN_ICON=""
 fi
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.2"
+readonly SCRIPT_VERSION="1.3.3"
 readonly BACKUP_DIR="/var/backups/lynis-harden"
 readonly BACKUP_MANIFEST="${BACKUP_DIR}/manifest.txt"
 readonly SYSCTL_CONF="/etc/sysctl.d/60-lynis-harden.conf"

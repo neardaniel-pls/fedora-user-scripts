@@ -61,7 +61,7 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.2"
+readonly SCRIPT_VERSION="1.3.3"
 version_check "$SCRIPT_VERSION"
 
 usage() {

@@ -98,7 +98,7 @@ for target in "$@"; do
     # Check if the target exists (file, directory, or other)
     if [ ! -e "$target" ]; then
         warning "'$target' not found. Skipping."
-        ((skipped_count++))
+        skipped_count=$((skipped_count + 1))
         continue
     fi
 
@@ -115,7 +115,7 @@ for target in "$@"; do
         while IFS= read -r -d '' file; do
             if ! shred -n 3 -z -v "$file"; then
                 error "Failed to shred: $file"
-                ((shred_errors++))
+                shred_errors=$((shred_errors + 1))
             fi
         done < <(find "$target" -type f -print0)
         if [ "$shred_errors" -gt 0 ]; then
@@ -124,7 +124,7 @@ for target in "$@"; do
         fi
         rm -rf "$target"
         success "Directory '$target' securely deleted."
-        ((processed_count++))
+        processed_count=$((processed_count + 1))
     # Handle regular file targets
     elif [ -f "$target" ]; then
         print_operation_start "Processing file: $target"
@@ -134,7 +134,7 @@ for target in "$@"; do
         # Remove the shredded file
         rm "$target"
         success "File '$target' securely deleted."
-        ((processed_count++))
+        processed_count=$((processed_count + 1))
     fi
 done
 

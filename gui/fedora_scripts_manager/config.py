@@ -29,7 +29,7 @@ def resolve_scripts_dir() -> str:
     if os.path.isfile(config_path) and is_config_safe(config_path):
         try:
             result = subprocess.run(
-                ["bash", "-c", f"source '{config_path}' && echo \"$FEDORA_SCRIPTS_DIR\""],
+                ["bash", "-c", 'source "$1" && echo "$FEDORA_SCRIPTS_DIR"', "_", config_path],
                 capture_output=True, text=True, timeout=5,
             )
             val = result.stdout.strip()

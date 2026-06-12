@@ -6,7 +6,7 @@ import re
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import GLib, Gtk, Adw, GObject
+from gi.repository import GLib, Gtk, Adw, GObject, Pango
 
 from .scripts_registry import ScriptEntry, ScriptType, SudoMode
 
@@ -62,7 +62,7 @@ class ScriptCard(Adw.ExpanderRow):
             row.set_subtitle(f"Default: {self._entry.file_arg_default}")
 
         self._file_label = Gtk.Label(label="(none selected)")
-        self._file_label.set_ellipsize(3)
+        self._file_label.set_ellipsize(Pango.EllipsizeMode.END)
         self._file_label.set_max_width_chars(30)
         self._file_label.add_css_class("caption")
         row.add_suffix(self._file_label)

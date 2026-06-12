@@ -509,7 +509,9 @@ main() {
         exit 1
     fi
 
-    clear
+    if [ -t 1 ]; then
+        clear
+    fi
     print_header "DRIVE INSPECTOR"
     echo -e "${BOLD}${GREEN}${START_ICON} Inspecting drive: ${BOLD}${CYAN}${device}${RESET}"
     echo

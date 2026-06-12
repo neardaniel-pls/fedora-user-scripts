@@ -18,7 +18,7 @@ cd fedora-user-scripts
 ### Step 2: Install Dependencies (2 minutes)
 ```bash
 # Install all common dependencies at once
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit git python3
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis git python3
 
 # For SearXNG (if using)
 sudo dnf install python3 python3-pip python3-virtualenv
@@ -117,7 +117,7 @@ source ~/.bashrc
 - **Dependencies Missing**: Run Step 2 again
 
 ### Get Support
-- 📖 [Full Documentation](docs/README.md)
+- 📖 [Full Documentation](README.md)
 - 🐛 [Report Issues](https://github.com/neardaniel-pls/fedora-user-scripts/issues)
 - 💡 [Request Features](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new?template=feature_request.md)
 
@@ -156,5 +156,5 @@ Right-click any PDF, PNG, or JPEG file → **"Clean Metadata"**
 ---
 
 **Time Estimate**: Based on typical system and network speeds  
-**Last Updated**: 2026-04-29  
-**Version**: 1.1.0
+**Last Updated**: 2026-06-09  
+**Version**: 1.3.1

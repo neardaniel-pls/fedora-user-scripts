@@ -9,8 +9,9 @@ import os
 import stat
 import subprocess
 import tempfile
+import threading
 
-from gi.repository import Nautilus, GObject
+from gi.repository import Nautilus, GObject, GLib
 
 SUPPORTED_MIMES = {
     "application/pdf",
@@ -36,16 +37,16 @@ def _is_config_safe(path):
 
 
 def _get_scripts_dir():
-    default = os.path.join(
-        os.path.expanduser("~"), "Documents", "code", "fedora-user-scripts"
-    )
     env_val = os.environ.get("FEDORA_SCRIPTS_DIR", "")
     if env_val and os.path.isdir(env_val):
         return env_val
-    if os.path.isfile(CONFIG_PATH) and _is_config_safe(CONFIG_PATH):
+    config_path = os.path.join(
+        os.path.expanduser("~"), ".config", "fedora-user-scripts", "config.sh"
+    )
+    if os.path.isfile(config_path) and _is_config_safe(config_path):
         try:
             result = subprocess.run(
-                ["bash", "-c", f"source '{CONFIG_PATH}' && echo \"$FEDORA_SCRIPTS_DIR\""],
+                ["bash", "-c", f"source '{config_path}' && echo \"$FEDORA_SCRIPTS_DIR\""],
                 capture_output=True, text=True, timeout=5,
             )
             val = result.stdout.strip()
@@ -53,7 +54,14 @@ def _get_scripts_dir():
                 return val
         except Exception:
             pass
-    return default
+    home = os.path.expanduser("~")
+    candidates = [
+        os.path.join(home, ".local", "share", "fedora-scripts-manager"),
+    ]
+    for c in candidates:
+        if os.path.isdir(c):
+            return c
+    return os.path.join(home, "Documents", "code", "fedora-user-scripts")
 
 
 def _get_script_path():
@@ -88,38 +96,38 @@ class CleanMetadataExtension(GObject.GObject, Nautilus.MenuProvider):
 
         argv = [script, "--"] + file_paths
 
-        try:
-            result = subprocess.run(
-                argv,
-                capture_output=True,
-                text=True,
-                env=env,
-                timeout=600,
-            )
-
-            with open(log_file, "w") as lf:
-                lf.write(result.stdout)
-                if result.stderr:
-                    lf.write("\n--- STDERR ---\n")
-                    lf.write(result.stderr)
-
-            if result.returncode == 0:
-                count = len(file_paths)
-                self._notify(
-                    "Clean Metadata",
-                    f"{count} file{'s' if count > 1 else ''} processed successfully.",
-                    "dialog-information",
+        def run():
+            try:
+                result = subprocess.run(
+                    argv,
+                    capture_output=True,
+                    text=True,
+                    env=env,
+                    timeout=600,
                 )
-            else:
-                self._notify(
-                    "Clean Metadata",
-                    f"Errors occurred. See log: {log_file}",
-                    "dialog-error",
-                )
-        except subprocess.TimeoutExpired:
-            self._notify("Clean Metadata", "Operation timed out.", "dialog-error")
-        except Exception as e:
-            self._notify("Clean Metadata", f"Error: {e}", "dialog-error")
+
+                with open(log_file, "w") as lf:
+                    lf.write(result.stdout)
+                    if result.stderr:
+                        lf.write("\n--- STDERR ---\n")
+                        lf.write(result.stderr)
+
+                if result.returncode == 0:
+                    count = len(file_paths)
+                    GLib.idle_add(self._notify, "Clean Metadata",
+                        f"{count} file{'s' if count > 1 else ''} processed successfully.",
+                        "dialog-information")
+                else:
+                    GLib.idle_add(self._notify, "Clean Metadata",
+                        f"Errors occurred. See log: {log_file}",
+                        "dialog-error")
+            except subprocess.TimeoutExpired:
+                GLib.idle_add(self._notify, "Clean Metadata", "Operation timed out.", "dialog-error")
+            except Exception as e:
+                GLib.idle_add(self._notify, "Clean Metadata", f"Error: {e}", "dialog-error")
+
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
 
     def _notify(self, title, body, icon_name="dialog-information"):
         try:

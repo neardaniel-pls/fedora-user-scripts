@@ -64,122 +64,16 @@ set -u
 # Pipes return the exit status of the last command to exit with a non-zero status.
 set -o pipefail
 
-# --- User Configuration ---
-# Load user config if available (sets env vars that override defaults)
-if [ -n "${SUDO_USER:-}" ]; then
-    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
-else
-    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
-fi
-if [ -f "$_USER_CONFIG" ]; then
-    source "$_USER_CONFIG"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/ui.sh"
 
-# --- Color Detection ---
-# Detect if colors should be enabled
-if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-    # Output is to a terminal and NO_COLOR is not set
-    COLORS_ENABLED=1
-else
-    # Output is redirected or NO_COLOR is set
-    COLORS_ENABLED=0
-fi
-
-# --- Icon Configuration ---
-# Allow disabling icons for environments that don't support Unicode
-USE_ICONS="${USE_ICONS:-1}"
-
-# --- Color Definitions ---
-# Define colors only if colors are enabled
-if (( COLORS_ENABLED )); then
-    readonly BOLD="\033[1m"
-    readonly BLUE="\033[34m"
-    readonly GREEN="\033[32m"
-    readonly YELLOW="\033[33m"
-    readonly RED="\033[31m"
-    readonly CYAN="\033[36m"
-    readonly MAGENTA="\033[35m"
-    readonly RESET="\033[0m"
-else
-    # Set to empty strings when colors are disabled
-    readonly BOLD=""
-    readonly BLUE=""
-    readonly GREEN=""
-    readonly YELLOW=""
-    readonly RED=""
-    readonly CYAN=""
-    readonly MAGENTA=""
-    readonly RESET=""
-fi
-
-# --- Icon Definitions ---
-# Define icons only if icons are enabled AND colors are enabled
 if (( USE_ICONS && COLORS_ENABLED )); then
-    readonly INFO_ICON="ℹ️"
-    readonly SUCCESS_ICON="✅"
-    readonly WARNING_ICON="⚠️"
-    readonly ERROR_ICON="❌"
-    readonly SECTION_ICON="🔧"
-    readonly START_ICON="🚀"
-    readonly PACKAGE_ICON="📦"
-    readonly CLEAN_ICON="🧹"
     readonly SECURITY_ICON="🔒"
     readonly SCAN_ICON="🔍"
 else
-    # Set to empty strings when icons or colors are disabled
-    readonly INFO_ICON=""
-    readonly SUCCESS_ICON=""
-    readonly WARNING_ICON=""
-    readonly ERROR_ICON=""
-    readonly SECTION_ICON=""
-    readonly START_ICON=""
-    readonly PACKAGE_ICON=""
-    readonly CLEAN_ICON=""
     readonly SECURITY_ICON=""
     readonly SCAN_ICON=""
 fi
-
-# --- Output Functions ---
-print_header() {
-    local text="$1"
-    echo
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}🔧 ${text}${RESET}"
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-}
-
-print_section_header() {
-    local text="$1"
-    local icon="$2"
-    echo
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo
-}
-
-print_separator() {
-    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
-}
-
-print_subheader() {
-    local text="$1"
-    echo -e "${BOLD}${text}${RESET}"
-}
-
-print_command_output() {
-    echo -e "${BOLD}${BLUE}↳ Command output:${RESET}"
-}
-
-print_operation_start() {
-    local operation="$1"
-    echo -e "${BOLD}${YELLOW}▶ Starting: ${operation}${RESET}"
-}
-
-print_operation_end() {
-    local operation="$1"
-    echo -e "${BOLD}${GREEN}✓ Completed: ${operation}${RESET}"
-}
 
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
@@ -239,6 +133,8 @@ error() {
     echo -e "${BOLD}${RED}${ERROR_ICON} $1${RESET}" >&2
     log_message "ERROR" "$1"
 }
+
+TEMP_FILES=()
 
 # ===== Scan Functions =====
 #
@@ -325,6 +221,7 @@ run_integrity_check() {
     
     local tmp_output
     tmp_output=$(mktemp)
+    TEMP_FILES+=("$tmp_output")
     set +e
     rpm -Va 2>&1 | tee "$tmp_output"
     local pipe_exit=${PIPESTATUS[0]}
@@ -367,6 +264,7 @@ run_rootkit_scan() {
     
     local tmp_output
     tmp_output=$(mktemp)
+    TEMP_FILES+=("$tmp_output")
     set +e
     chkrootkit 2>&1 | tee "$tmp_output"
     local pipe_exit=${PIPESTATUS[0]}
@@ -422,6 +320,7 @@ run_malware_scan() {
 
     local tmp_output
     tmp_output=$(mktemp)
+    TEMP_FILES+=("$tmp_output")
     set +e
     clamscan "${clam_opts[@]}" / 2>&1 | grep -v "^Scanning " | tee "$tmp_output"
     local pipe_exit=${PIPESTATUS[0]}
@@ -465,6 +364,7 @@ run_security_audit() {
     
     local tmp_output
     tmp_output=$(mktemp)
+    TEMP_FILES+=("$tmp_output")
     set +e
     lynis audit system 2>&1 | tee "$tmp_output"
     local pipe_exit=${PIPESTATUS[0]}
@@ -510,6 +410,7 @@ run_package_check() {
 
     local tmp_output
     tmp_output=$(mktemp)
+    TEMP_FILES+=("$tmp_output")
     set +e
     "${DNF}" check 2>&1 | tee "$tmp_output"
     exit_code=${PIPESTATUS[0]}
@@ -550,8 +451,8 @@ usage() {
 }
 
 cleanup() {
+    rm -f "${TEMP_FILES[@]}" 2>/dev/null
     error "Script interrupted. Cleaning up..."
-    # Add any cleanup tasks here if needed in the future
     exit 1
 }
 

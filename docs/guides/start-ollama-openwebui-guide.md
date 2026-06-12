@@ -74,10 +74,9 @@ The script checks if services are already running and skips starting them if the
 ## Related Scripts
 
 - **[`update-ollama-openwebui.sh`](update-ollama-openwebui-guide.md)** - Update both services with backup
-- **[`setup-ollama-openwebui.sh`](../setup-ollama-openwebui-guide.md)** - Initial installation (if you need it)
 
 ## Additional Resources
 
 - [Ollama Documentation](https://ollama.com/docs)
 - [Open Web UI GitHub](https://github.com/open-webui/open-webui)
-- [Full Guide](../ollama-openwebui-guide.md) - Comprehensive guide with all details
+- [Update Guide](update-ollama-openwebui-guide.md) - Comprehensive guide with update details

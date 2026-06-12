@@ -59,8 +59,9 @@ This repository contains shell scripts designed specifically for Fedora environm
 
 ### update-hosts.sh
 - **Purpose:** Updates StevenBlack hosts repository with customizable extensions for blocking unwanted content
-- **Usage:** `scripts/maintenance/update-hosts.sh`
+- **Usage:** `sudo scripts/maintenance/update-hosts.sh`
 - **Dependencies:** `git`, `python3`, StevenBlack/hosts repository
+- **Options:** `--auto`, `--help`, `--version`
 - **Note:** Interactive extension selection with automatic hosts file installation
 - **Screenshot:** ![](assets/img/hosts.png) ![](assets/img/hosts-cont.png)
 
@@ -163,7 +164,7 @@ Detailed documentation for each script:
 - [Security Sweep Script Guide](docs/guides/security-sweep-guide.md)
 - [Lynis Hardening Guide](docs/guides/lynis-harden-guide.md)
 - [Update Hosts Guide](docs/guides/update-hosts-guide.md)
-- [Ollama and Open Web UI Update Guide](docs/guides/ollama-openwebui-guide.md)
+- [Ollama and Open Web UI Update Guide](docs/guides/update-ollama-openwebui-guide.md)
 - [Ollama and Open Web UI Start Guide](docs/guides/start-ollama-openwebui-guide.md)
 - [Drive Check Guide](docs/guides/drive-check-guide.md)
 - [GUI & Desktop Integration Guide](docs/guides/gui-desktop-integration-guide.md)
@@ -201,7 +202,7 @@ chmod +x scripts/**/*.sh
 3. Install dependencies (see individual script documentation):
 ```bash
 # Check for common dependencies
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis bleachbit
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis
 ```
 
 ### Setting Up Aliases (Optional)

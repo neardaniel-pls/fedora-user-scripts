@@ -129,5 +129,5 @@ PDF_SETTINGS=/screen cleanmeta book.pdf
 
 ---
 
-**Last Updated**: January 2026
-**Script Version**: Security Hardened Edition
+**Last Updated**: June 2026
+**Script Version**: 1.0.0

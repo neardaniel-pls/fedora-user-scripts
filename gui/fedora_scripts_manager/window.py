@@ -44,7 +44,6 @@ class MainWindow(Adw.ApplicationWindow):
         self._populate_scripts("all")
 
     def _resolve_scripts_dir(self) -> str:
-        default = os.path.join(os.path.expanduser("~"), "Documents", "code", "fedora-user-scripts")
         env_val = os.environ.get("FEDORA_SCRIPTS_DIR", "")
         if env_val and os.path.isdir(env_val):
             return env_val
@@ -62,7 +61,14 @@ class MainWindow(Adw.ApplicationWindow):
                     return val
             except Exception:
                 pass
-        return default
+        home = os.path.expanduser("~")
+        candidates = [
+            os.path.join(home, ".local", "share", "fedora-scripts-manager"),
+        ]
+        for c in candidates:
+            if os.path.isdir(c):
+                return c
+        return os.path.join(home, "Documents", "code", "fedora-user-scripts")
 
     def _build_ui(self):
         content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -225,12 +231,15 @@ class MainWindow(Adw.ApplicationWindow):
         if entry.sudo_mode == SudoMode.ENFORCED:
             user_home = os.path.expanduser("~")
             user_name = os.environ.get("USER", "")
-            argv = [
+            pkexec_env = [
                 "pkexec", "env",
                 f"HOME={user_home}",
                 f"SUDO_USER={user_name}",
-                f"HOSTS_REPO_PATH={user_home}/Documents/code/hosts",
-            ] + argv
+            ]
+            hosts_repo = os.environ.get("HOSTS_REPO_PATH", os.path.join(user_home, "Documents", "code", "hosts"))
+            if os.path.isdir(hosts_repo):
+                pkexec_env.append(f"HOSTS_REPO_PATH={hosts_repo}")
+            argv = pkexec_env + argv
 
         card.set_running(True)
         self._active_card_id = script_id
@@ -266,6 +275,10 @@ class MainWindow(Adw.ApplicationWindow):
         for sid, card in self._cards.items():
             if sid != except_id:
                 card.set_sensitive(sensitive)
+
+    def do_close_request(self):
+        self._output_viewer.stop_process()
+        return False
 
     def _show_toast(self, message: str, error: bool = False):
         toast = Adw.Toast(title=message, timeout=3)

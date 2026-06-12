@@ -17,8 +17,9 @@
 
 ### Q: Do I need to be root to run these scripts?
 **A:** It depends on the script:
-- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh, clean-downloads.sh
-- **Root required**: security-sweep.sh, fedora-update.sh (for system updates), secure-delete.sh (for protected files/directories)
+- **No root needed**: clean-metadata.sh, run-searxng.sh, update-searxng.sh, clean-downloads.sh, secure-delete.sh
+- **Root required**: security-sweep.sh, fedora-update.sh (for system updates), update-hosts.sh, drive-check.sh, lynis-harden.sh
+- **Root optional**: clean-system.sh (user-space targets run without sudo), secure-delete.sh (root needed only for protected files)
 
 ### Q: How do I report security vulnerabilities?
 **A:** Please report security issues privately:
@@ -56,7 +57,6 @@ SEARXNG_PORT=8080 ./scripts/searxng/run-searxng.sh
 **A:** No, it only:
 - Updates existing packages
 - Cleans package cache
-- Removes old kernels (configurable)
 - Doesn't remove user-installed packages
 
 ## Troubleshooting
@@ -86,7 +86,7 @@ sudo dnf install exiftool ghostscript pngquant jpegoptim
 sudo dnf install chkrootkit clamav lynis
 
 # For all common dependencies
-sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav lynis bleachbit
+sudo dnf install exiftool ghostscript pngquant jpegoptim coreutils chkrootkit clamav clamav-update lynis
 ```
 
 ### Path Issues
@@ -133,11 +133,11 @@ source ~/.bashrc
 
 ## Still Have Questions?
 
-- 📖 Check [full documentation](docs/README.md)
+- 📖 Check [full documentation](README.md)
 - 🔍 Search [existing issues](https://github.com/neardaniel-pls/fedora-user-scripts/issues)
 - 🐛 [Open new issue](https://github.com/neardaniel-pls/fedora-user-scripts/issues/new)
 - 💬 [Start a discussion](https://github.com/neardaniel-pls/fedora-user-scripts/discussions)
 
 ---
-**Last Updated**: 2026-04-29  
-**Version**: 1.1.0
+**Last Updated**: 2026-06-09  
+**Version**: 1.3.1

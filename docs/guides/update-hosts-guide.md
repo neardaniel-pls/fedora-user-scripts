@@ -150,7 +150,7 @@ The script provides rich, colored output with:
 Example output:
 ```
 ─────────────────────────────────────────────────────────
-🔧 PREREQUITE CHECK
+🔧 PREREQUISITE CHECK
 ─────────────────────────────────────────────────────────
 
 ✅ Hosts repository found at: /home/user/Documents/code/hosts
@@ -214,5 +214,5 @@ The generated hosts file is available at:
 
 ---
 
-**Last Updated**: December 2025  
+**Last Updated**: June 2026  
 **Script Version**: Interactive Extension Selection Edition

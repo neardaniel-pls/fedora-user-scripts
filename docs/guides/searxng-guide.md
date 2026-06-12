@@ -120,4 +120,4 @@ git pull "https://github.com/searxng/searxng"
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: June 2026

@@ -67,89 +67,16 @@ set -e
 set -u
 set -o pipefail
 
-# --- User Configuration ---
-if [ -n "${SUDO_USER:-}" ]; then
-    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
-else
-    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
-fi
-if [ -f "$_USER_CONFIG" ]; then
-    source "$_USER_CONFIG"
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/ui.sh"
 
-# --- Color Detection ---
-if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-    COLORS_ENABLED=1
-else
-    COLORS_ENABLED=0
-fi
-
-# --- Icon Configuration ---
-USE_ICONS="${USE_ICONS:-1}"
-
-# --- Color Definitions ---
-if (( COLORS_ENABLED )); then
-    readonly BOLD="\033[1m"
-    readonly BLUE="\033[34m"
-    readonly GREEN="\033[32m"
-    readonly YELLOW="\033[33m"
-    readonly RED="\033[31m"
-    readonly CYAN="\033[36m"
-    readonly MAGENTA="\033[35m"
-    readonly RESET="\033[0m"
-else
-    readonly BOLD=""
-    readonly BLUE=""
-    readonly GREEN=""
-    readonly YELLOW=""
-    readonly RED=""
-    readonly CYAN=""
-    readonly MAGENTA=""
-    readonly RESET=""
-fi
-
-# --- Icon Definitions ---
 if (( USE_ICONS && COLORS_ENABLED )); then
-    readonly INFO_ICON="ℹ️"
-    readonly SUCCESS_ICON="✅"
-    readonly WARNING_ICON="⚠️"
-    readonly ERROR_ICON="❌"
-    readonly SECTION_ICON="🔧"
     readonly SECURITY_ICON="🔒"
     readonly DRYRUN_ICON="👁️"
 else
-    readonly INFO_ICON=""
-    readonly SUCCESS_ICON=""
-    readonly WARNING_ICON=""
-    readonly ERROR_ICON=""
-    readonly SECTION_ICON=""
     readonly SECURITY_ICON=""
     readonly DRYRUN_ICON=""
 fi
-
-# --- Output Functions ---
-print_header() {
-    local text="$1"
-    echo
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}${SECTION_ICON} ${text}${RESET}"
-    echo -e "${BOLD}─────────────────────────────────────────────────────────${RESET}"
-}
-
-print_section_header() {
-    local text="$1"
-    local icon="$2"
-    echo
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo -e "${BOLD}${MAGENTA}${icon} ${text}${RESET}"
-    echo -e "${BOLD}${MAGENTA}─────────────────────────────────────────────────────────${RESET}"
-    echo
-}
-
-print_separator() {
-    echo -e "${BOLD}${CYAN}─────────────────────────────────────────────────────────${RESET}"
-}
-
 # --- Script Initialization ---
 readonly SCRIPT_VERSION="1.0.0"
 readonly BACKUP_DIR="/var/backups/lynis-harden"

@@ -6,17 +6,22 @@
 #   - Icon configuration (USE_ICONS support)
 #   - Color and icon definitions
 #   - Output helper functions
+#   - Shared utility functions
 #
 # USAGE:
 #   After "set -euo pipefail", source this file:
 #     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #     source "${SCRIPT_DIR}/../lib/ui.sh"
 
-if [ -n "${SUDO_USER:-}" ]; then
-    _USER_CONFIG="$(getent passwd "$SUDO_USER" | cut -d: -f6)/.config/fedora-user-scripts/config.sh"
-else
-    _USER_CONFIG="${HOME}/.config/fedora-user-scripts/config.sh"
-fi
+_get_user_home() {
+    if [ -n "${SUDO_USER:-}" ]; then
+        getent passwd "$SUDO_USER" | cut -d: -f6
+    else
+        echo "$HOME"
+    fi
+}
+
+_USER_CONFIG="$(_get_user_home)/.config/fedora-user-scripts/config.sh"
 if [ -f "$_USER_CONFIG" ]; then
     _config_mode=$(stat -c '%a' "$_USER_CONFIG" 2>/dev/null || echo "000")
     case "$_config_mode" in

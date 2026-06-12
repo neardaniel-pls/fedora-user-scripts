@@ -74,13 +74,7 @@ fi
 # ===== Configuration =====
 # Base directory for this scripts repository
 # Override with FEDORA_SCRIPTS_DIR environment variable if cloned elsewhere
-# Use SUDO_USER if available (when running with sudo), otherwise use HOME
-if [ -n "${SUDO_USER:-}" ]; then
-    ORIGINAL_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-    _DEFAULT_SCRIPTS_DIR="${ORIGINAL_USER_HOME}/Documents/code/fedora-user-scripts"
-else
-    _DEFAULT_SCRIPTS_DIR="${HOME}/Documents/code/fedora-user-scripts"
-fi
+_DEFAULT_SCRIPTS_DIR="$(_get_user_home)/Documents/code/fedora-user-scripts"
 FEDORA_SCRIPTS_DIR="${FEDORA_SCRIPTS_DIR:-$_DEFAULT_SCRIPTS_DIR}"
 
 # Path to the optional SearxNG update script
@@ -230,47 +224,31 @@ print_separator
 # Conditionally update SearxNG if the update script exists and meets security criteria
 print_section_header "SEARXNG UPDATE" "${SEARCH_ICON}"
 
-
-# Check ownership against original user (not current effective user)
-FILE_OWNER=$(stat -c '%U' "$SEARXNG_UPDATE_SCRIPT" 2>/dev/null || echo "unknown")
 EXPECTED_OWNER="${SUDO_USER:-$(whoami)}"
-if [ "$FILE_OWNER" = "$EXPECTED_OWNER" ]; then
-    OWNERSHIP_CHECK_PASSED=true
-else
-    OWNERSHIP_CHECK_PASSED=false
-fi
 
-if [ -f "$SEARXNG_UPDATE_SCRIPT" ] && [ "$OWNERSHIP_CHECK_PASSED" = "true" ]; then
-    print_operation_start "Updating SearxNG"
-    
-    # Verify file is executable and has safe permissions (user-only: 700)
-    if [ -x "$SEARXNG_UPDATE_SCRIPT" ]; then
-        # Use octal mode check for clarity (700 = rwx------)
+if [ -f "$SEARXNG_UPDATE_SCRIPT" ]; then
+    FILE_OWNER=$(stat -c '%U' "$SEARXNG_UPDATE_SCRIPT" 2>/dev/null || echo "unknown")
+
+    if [ "$FILE_OWNER" != "$EXPECTED_OWNER" ]; then
+        warning "$SEARXNG_UPDATE_SCRIPT is not owned by current user. Skipping."
+    elif [ ! -x "$SEARXNG_UPDATE_SCRIPT" ]; then
+        warning "$SEARXNG_UPDATE_SCRIPT is not executable. Skipping."
+    else
         file_perms=$(stat -c '%a' "$SEARXNG_UPDATE_SCRIPT")
-        
-        # Accept 700, 750, or 755 (user executable, no other write access)
-        # This ensures the script can't be modified by other users
-        if [[ "$file_perms" =~ ^7[0-5][0-5]$ ]]; then
-            # Execute the SearxNG update script with minimal output to avoid conflicts
+        if [[ ! "$file_perms" =~ ^7[0-5][0-5]$ ]]; then
+            warning "$SEARXNG_UPDATE_SCRIPT has insecure permissions ($file_perms)."
+            warning "Run: chmod 700 \"$SEARXNG_UPDATE_SCRIPT\""
+        else
+            print_operation_start "Updating SearxNG"
             print_command_output
             if QUIET=1 bash "$SEARXNG_UPDATE_SCRIPT"; then
                 print_operation_end "SearxNG updated"
                 success "SearxNG updated successfully"
             else
-                # Non-fatal error - report but continue
                 warning "SearxNG update encountered issues"
             fi
-        else
-            # Security warning - file permissions are too permissive
-            warning "Warning: $SEARXNG_UPDATE_SCRIPT has insecure permissions ($file_perms). Run: chmod 700 \"$SEARXNG_UPDATE_SCRIPT\""
         fi
-    else
-        # File exists but is not executable
-        warning "Warning: $SEARXNG_UPDATE_SCRIPT is not executable. Skipping."
     fi
-elif [ -f "$SEARXNG_UPDATE_SCRIPT" ]; then
-    # File exists but is not owned by the current user (security risk)
-    warning "Warning: $SEARXNG_UPDATE_SCRIPT is not owned by current user. Skipping."
 else
     info "SearxNG update script not found. Skipping SearxNG update."
 fi

@@ -199,6 +199,29 @@ success "Web application script found: $WEBAPP_SCRIPT"
 print_operation_end "Environment validation completed"
 print_separator
 
+if [ ! -r "$SEARXNG_APP/searx/settings.yml" ]; then
+    print_section_header "PERMISSION REPAIR" "${WARNING_ICON}"
+    warning "settings.yml not readable — ownership drift detected"
+    if [ -n "${SUDO_USER:-}" ]; then
+        _expected_owner="$SUDO_USER"
+    else
+        _expected_owner="$(id -un)"
+    fi
+    _expected_group="$(id -gn "$_expected_owner")"
+    if command -v sudo &>/dev/null; then
+        sudo find "$SEARXNG_APP" -not -type l -execdir chown "$_expected_owner":"$_expected_group" {} +
+        sudo find "$SEARXNG_APP" -not -type l -type d -exec chmod 755 {} +
+        sudo find "$SEARXNG_APP" -not -type l -type f -exec chmod 644 {} +
+        sudo find "$SEARXNG_APP" -not -type l -type f -name "*.sh" -exec chmod 755 {} +
+        success "Permissions fixed"
+    else
+        error "Cannot read settings.yml and sudo not available. Fix manually:"
+        echo "  sudo chown -R $_expected_owner:$_expected_group $SEARXNG_APP"
+        exit 1
+    fi
+    print_separator
+fi
+
 # ===== Port Conflict Detection =====
 # Check if the specified port is already in use to prevent conflicts
 print_section_header "PORT VALIDATION" "${WEB_ICON}"

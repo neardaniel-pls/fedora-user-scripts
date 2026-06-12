@@ -62,6 +62,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -76,19 +77,9 @@ else
     readonly DRY_ICON=""
 fi
 
-print_kv() {
-    local key="$1"
-    local value="$2"
-    printf "  ${BOLD}%-22s${RESET} %s\n" "$key" "$value"
-}
-
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.2"
+version_check "$SCRIPT_VERSION"
 
 # --- Category Definitions ---
 declare -A CATEGORIES

@@ -64,6 +64,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -75,13 +76,8 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.3"
+version_check "$SCRIPT_VERSION"
 
 # ===== Configuration =====
 # Base directory for SearxNG installation
@@ -202,23 +198,10 @@ print_separator
 if [ ! -r "$SEARXNG_APP/searx/settings.yml" ]; then
     print_section_header "PERMISSION REPAIR" "${WARNING_ICON}"
     warning "settings.yml not readable — ownership drift detected"
-    if [ -n "${SUDO_USER:-}" ]; then
-        _expected_owner="$SUDO_USER"
-    else
-        _expected_owner="$(id -un)"
-    fi
-    _expected_group="$(id -gn "$_expected_owner")"
-    if command -v sudo &>/dev/null; then
-        sudo find "$SEARXNG_APP" -not -type l -execdir chown "$_expected_owner":"$_expected_group" {} +
-        sudo find "$SEARXNG_APP" -not -type l -type d -exec chmod 755 {} +
-        sudo find "$SEARXNG_APP" -not -type l -type f -exec chmod 644 {} +
-        sudo find "$SEARXNG_APP" -not -type l -type f -name "*.sh" -exec chmod 755 {} +
-        success "Permissions fixed"
-    else
-        error "Cannot read settings.yml and sudo not available. Fix manually:"
-        echo "  sudo chown -R $_expected_owner:$_expected_group $SEARXNG_APP"
+    if ! fix_ownership "$SEARXNG_APP"; then
         exit 1
     fi
+    success "Permissions fixed"
     print_separator
 fi
 

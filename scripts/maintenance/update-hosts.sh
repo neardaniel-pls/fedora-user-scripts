@@ -44,6 +44,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -55,72 +56,67 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.2"
+version_check "$SCRIPT_VERSION"
 
 # --- Helper Functions ---
 show_help() {
-    # Use printf to properly handle escape codes
-    printf '%b' "${BOLD}${GREEN}${START_ICON} StevenBlack Hosts Update Utility${RESET}\n"
-    printf '\n'
-    printf '%b' "${BOLD}USAGE:${RESET}\n"
-    printf '    sudo ./update-hosts.sh [OPTIONS]\n'
-    printf '\n'
-    printf '%b' "${BOLD}OPTIONS:${RESET}\n"
-    printf '    %b--help, -h%b       Show this help message and exit\n' "${BOLD}" "${RESET}"
-    printf '    %b--version, -V%b    Display script version\n' "${BOLD}" "${RESET}"
-    printf '    %b--auto%b           Automatically flush DNS cache after updating hosts file\n' "${BOLD}" "${RESET}"
-    printf '\n'
-    printf '%b' "${BOLD}DESCRIPTION:${RESET}\n"
-    printf '    This script updates the StevenBlack hosts repository and generates a new hosts file\n'
-    printf '    with specified extensions. It pulls the latest changes from the repository and then\n'
-    printf '    runs the updateHostsFile.py script with the specified extensions.\n'
-    printf '\n'
-    printf '%b' "${BOLD}AVAILABLE EXTENSIONS:${RESET}\n"
-    printf '    1. fakenews    - Block fake news websites\n'
-    printf '    2. gambling    - Block gambling websites\n'
-    printf '    3. porn        - Block adult content websites\n'
-    printf '    4. social      - Block social media websites\n'
-    printf '\n'
-    printf '%b' "${BOLD}EXAMPLES:${RESET}\n"
-    printf '    %b#%b Run with default extensions (gambling, porn)\n' "${GREEN}" "${RESET}"
-    printf '    sudo ./update-hosts.sh\n'
-    printf '\n'
-    printf '    %b#%b Run with automatic DNS cache flush\n' "${GREEN}" "${RESET}"
-    printf '    sudo ./update-hosts.sh --auto\n'
-    printf '\n'
-    printf '    %b#%b Use custom extensions via environment variable\n' "${GREEN}" "${RESET}"
-    printf '    HOSTS_EXTENSIONS=fakenews,social sudo ./update-hosts.sh --auto\n'
-    printf '\n'
-    printf '%b' "${BOLD}ENVIRONMENT VARIABLES:${RESET}\n"
-    printf '    %bHOSTS_EXTENSIONS%b    Comma-separated list of extensions to use\n' "${BOLD}" "${RESET}"
-    printf '    %bHOSTS_REPO_PATH%b     Custom path to the hosts repository\n' "${BOLD}" "${RESET}"
-    printf '    %bNO_COLOR%b            Disable colored output\n' "${BOLD}" "${RESET}"
-    printf '    %bUSE_ICONS%b           Disable icons (set to 0)\n' "${BOLD}" "${RESET}"
-    printf '\n'
-    printf '%b' "${BOLD}DEPENDENCIES:${RESET}\n"
-    printf '    - git: For repository operations\n'
-    printf '    - python3: For running the updateHostsFile.py script\n'
-    printf '    - StevenBlack/hosts repository in ~/Documents/code/hosts\n'
-    printf '\n'
-    printf '%b' "${BOLD}DNS CACHE FLUSH:${RESET}\n"
-    printf '    When using the %b--auto%b flag, the script will automatically flush the\n' "${BOLD}" "${RESET}"
-    printf '    DNS cache for immediate effect. Without this flag, you may need to manually\n'
-    printf '    flush the cache using one of these commands:\n'
-    printf '\n'
-    printf '    %bsudo systemctl restart systemd-resolved%b\n' "${GREEN}" "${RESET}"
-    printf '    %bsudo systemctl restart nscd%b\n' "${GREEN}" "${RESET}"
-    printf '    %bsudo systemctl restart dnsmasq%b\n' "${GREEN}" "${RESET}"
-    printf '\n'
-    printf '%b' "${BOLD}EXIT CODES:${RESET}\n"
-    printf '    0    Success\n'
-    printf '    1    Error\n'
-    printf '\n'
+    cat << EOF
+${BOLD}${GREEN}${START_ICON} StevenBlack Hosts Update Utility${RESET}
+
+${BOLD}USAGE:${RESET}
+    sudo ./update-hosts.sh [OPTIONS]
+
+${BOLD}OPTIONS:${RESET}
+    ${BOLD}--help, -h${RESET}       Show this help message and exit
+    ${BOLD}--version, -V${RESET}    Display script version
+    ${BOLD}--auto${RESET}           Automatically flush DNS cache after updating hosts file
+
+${BOLD}DESCRIPTION:${RESET}
+    This script updates the StevenBlack hosts repository and generates a new hosts file
+    with specified extensions. It pulls the latest changes from the repository and then
+    runs the updateHostsFile.py script with the specified extensions.
+
+${BOLD}AVAILABLE EXTENSIONS:${RESET}
+    1. fakenews    - Block fake news websites
+    2. gambling    - Block gambling websites
+    3. porn        - Block adult content websites
+    4. social      - Block social media websites
+
+${BOLD}EXAMPLES:${RESET}
+    ${GREEN}#${RESET} Run with default extensions (gambling, porn)
+    sudo ./update-hosts.sh
+
+    ${GREEN}#${RESET} Run with automatic DNS cache flush
+    sudo ./update-hosts.sh --auto
+
+    ${GREEN}#${RESET} Use custom extensions via environment variable
+    HOSTS_EXTENSIONS=fakenews,social sudo ./update-hosts.sh --auto
+
+${BOLD}ENVIRONMENT VARIABLES:${RESET}
+    ${BOLD}HOSTS_EXTENSIONS${RESET}    Comma-separated list of extensions to use
+    ${BOLD}HOSTS_REPO_PATH${RESET}     Custom path to the hosts repository
+    ${BOLD}NO_COLOR${RESET}            Disable colored output
+    ${BOLD}USE_ICONS${RESET}           Disable icons (set to 0)
+
+${BOLD}DEPENDENCIES:${RESET}
+    - git: For repository operations
+    - python3: For running the updateHostsFile.py script
+    - StevenBlack/hosts repository in ~/Documents/code/hosts
+
+${BOLD}DNS CACHE FLUSH:${RESET}
+    When using the ${BOLD}--auto${RESET} flag, the script will automatically flush the
+    DNS cache for immediate effect. Without this flag, you may need to manually
+    flush the cache using one of these commands:
+
+    ${GREEN}sudo systemctl restart systemd-resolved${RESET}
+    ${GREEN}sudo systemctl restart nscd${RESET}
+    ${GREEN}sudo systemctl restart dnsmasq${RESET}
+
+${BOLD}EXIT CODES:${RESET}
+    0    Success
+    1    Error
+EOF
 }
 
 flush_dns_cache() {
@@ -337,61 +333,36 @@ if [ -n "${SUDO_USER:-}" ]; then
     chown -R "$SUDO_USER":"$(id -gn "$SUDO_USER")" .
 fi
 
-# Stash any local changes before pulling
 if [ -n "${SUDO_USER:-}" ]; then
-    # Run git as the original user, not root
-    if sudo -u "$SUDO_USER" git status --porcelain | grep -q .; then
-        info "Local changes detected, stashing them before update..."
-        if sudo -u "$SUDO_USER" git stash push -m "Auto-stash before update $(date)"; then
-            success "Local changes stashed successfully"
-        else
-            warning "Failed to stash local changes, continuing anyway..."
-        fi
+    git_cmd() { sudo -u "$SUDO_USER" git "$@"; }
+else
+    git_cmd() { git "$@"; }
+fi
+
+# Stash any local changes before pulling
+if git_cmd status --porcelain | grep -q .; then
+    info "Local changes detected, stashing them before update..."
+    if git_cmd stash push -m "Auto-stash before update $(date)"; then
+        success "Local changes stashed successfully"
     else
-        info "No local changes to stash"
-    fi
-    
-    # Pull the latest changes from the repository
-    if sudo -u "$SUDO_USER" git pull; then
-        print_operation_end "Repository updated successfully"
-        success "Repository updated with latest changes"
-        
-        # Check if we stashed changes and offer to restore them
-        if sudo -u "$SUDO_USER" git stash list | grep -q "Auto-stash before update"; then
-            info "Previously stashed changes found. You can restore them later with:"
-            echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
-        fi
-    else
-        error "Failed to update the repository"
-        exit 1
+        warning "Failed to stash local changes, continuing anyway..."
     fi
 else
-    # Run as current user
-    if git status --porcelain | grep -q .; then
-        info "Local changes detected, stashing them before update..."
-        if git stash push -m "Auto-stash before update $(date)"; then
-            success "Local changes stashed successfully"
-        else
-            warning "Failed to stash local changes, continuing anyway..."
-        fi
-    else
-        info "No local changes to stash"
+    info "No local changes to stash"
+fi
+
+# Pull the latest changes from the repository
+if git_cmd pull; then
+    print_operation_end "Repository updated successfully"
+    success "Repository updated with latest changes"
+
+    if git_cmd stash list | grep -q "Auto-stash before update"; then
+        info "Previously stashed changes found. You can restore them later with:"
+        echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
     fi
-    
-    # Pull the latest changes from the repository
-    if git pull; then
-        print_operation_end "Repository updated successfully"
-        success "Repository updated with latest changes"
-        
-        # Check if we stashed changes and offer to restore them
-        if git stash list | grep -q "Auto-stash before update"; then
-            info "Previously stashed changes found. You can restore them later with:"
-            echo -e "${BOLD}${YELLOW}cd $HOSTS_REPO && git stash pop${RESET}"
-        fi
-    else
-        error "Failed to update the repository"
-        exit 1
-    fi
+else
+    error "Failed to update the repository"
+    exit 1
 fi
 print_separator
 

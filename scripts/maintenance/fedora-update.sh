@@ -52,6 +52,7 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
@@ -63,30 +64,20 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.0.0"
-
-# Quick version check before any heavy initialization
-if [[ "${1:-}" == "--version" || "${1:-}" == "-V" ]]; then
-    echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-    exit 0
-fi
+readonly SCRIPT_VERSION="1.3.2"
+version_check "$SCRIPT_VERSION"
 
 # ===== Configuration =====
-# Base directory for this scripts repository
-# Override with FEDORA_SCRIPTS_DIR environment variable if cloned elsewhere
 _DEFAULT_SCRIPTS_DIR="$(_get_user_home)/Documents/code/fedora-user-scripts"
 FEDORA_SCRIPTS_DIR="${FEDORA_SCRIPTS_DIR:-$_DEFAULT_SCRIPTS_DIR}"
 
-# Path to the optional SearxNG update script
 SEARXNG_UPDATE_SCRIPT="${FEDORA_SCRIPTS_DIR}/scripts/searxng/update-searxng.sh"
 
-# Display script introduction with formatting
 print_header "FEDORA SYSTEM MAINTENANCE"
 echo -e "${BOLD}${GREEN}${START_ICON} Starting comprehensive system maintenance...${RESET}"
 echo
 
 # ===== Verify sudo privileges upfront =====
-# Early verification to fail fast if sudo is unavailable
 print_section_header "PRIVILEGE VERIFICATION" "${SECTION_ICON}"
 if command -v sudo >/dev/null 2>&1; then
     print_operation_start "Verifying sudo privileges"

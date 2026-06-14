@@ -18,8 +18,9 @@ cd ~/Documents/code/searxng
 git clone "https://github.com/searxng/searxng"
 python3 -m venv searxng-venv
 source searxng-venv/bin/activate
-pip install -U pip setuptools wheel pyyaml lxml
+pip install -U pip setuptools wheel
 cd searxng
+pip install -r requirements.txt
 pip install --use-pep517 --no-build-isolation -e .
 ```
 

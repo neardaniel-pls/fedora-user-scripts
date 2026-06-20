@@ -1,0 +1,9 @@
+# ShellCheck configuration for fedora-user-scripts
+# Docs: https://github.com/koalaman/shellcheck/wiki/Directive
+
+# ui.sh is sourced by every script; config.sh is sourced at runtime.
+# Neither can be statically resolved, so don't emit follow errors.
+disable=SC1090,SC1091
+
+# Treat all scripts as bash (enables [[ ]], arrays, etc.)
+shell=bash

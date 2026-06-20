@@ -241,7 +241,7 @@ EOF
     elif [ -f "$target" ]; then
       # Check if file has already been processed by examining its name
       case "$target" in
-        *cleaned*|*cleaned_opt*|*optimized*)
+        *cleaned*|*optimized*)
           warning "Ignoring already processed file: $target"
           ;;
         *)
@@ -546,7 +546,7 @@ cleanmetadata_file() {
   fi
 
   printf "${BOLD}${GREEN}📊 Size: Before: %8s → After: %8s | Δ %s%s%s${RESET}\n" \
-         "$orig_h" "$final_h" "$sign" "$(numfmt --to=iec --suffix=B $diff_abs)" "$mode_text"
+         "$orig_h" "$final_h" "$sign" "$(numfmt --to=iec --suffix=B "$diff_abs")" "$mode_text"
   print_separator
 }
 

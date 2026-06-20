@@ -66,12 +66,10 @@ _CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 if (( USE_ICONS && COLORS_ENABLED )); then
-    readonly FOLDER_ICON="📁"
     readonly DELETE_ICON="🗑️"
     readonly MOVE_ICON="📦"
     readonly DRY_ICON="👁️"
 else
-    readonly FOLDER_ICON=""
     readonly DELETE_ICON=""
     readonly MOVE_ICON=""
     readonly DRY_ICON=""
@@ -349,14 +347,13 @@ if [[ "$DO_PURGE" == "true" ]]; then
     print_operation_end "Purge scan completed"
 
     echo
-    local human_size
-    human_size=$(human_size "$purge_size")
+    purge_size_h=$(human_size "$purge_size")
 
     if [[ "$DRY_RUN" == "true" ]]; then
-        info "Would delete ${purge_count} file(s) (${human_size})"
+        info "Would delete ${purge_count} file(s) (${purge_size_h})"
     else
         if [[ "$purge_count" -gt 0 ]]; then
-            success "Deleted ${purge_count} file(s) (${human_size})"
+            success "Deleted ${purge_count} file(s) (${purge_size_h})"
         else
             info "No files older than ${PURGE_DAYS} days found"
         fi

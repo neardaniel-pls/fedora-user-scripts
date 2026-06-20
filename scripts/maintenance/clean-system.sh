@@ -129,6 +129,7 @@ _clean_scan() {
             _CLEAN_FREED=$((_CLEAN_FREED + size))
             _CLEAN_COUNT=$((_CLEAN_COUNT + 1))
         else
+            # shellcheck disable=SC2086 # rm_flags intentionally unquoted: holds literal flags like "-rf"
             if rm $rm_flags "$file" 2>/dev/null; then
                 _CLEAN_FREED=$((_CLEAN_FREED + size))
                 _CLEAN_COUNT=$((_CLEAN_COUNT + 1))

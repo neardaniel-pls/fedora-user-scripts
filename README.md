@@ -3,7 +3,7 @@
 A collection of personal utility scripts **optimized for Fedora Linux systems**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Fedora Version](https://img.shields.io/badge/Fedora-42%2B-blue.svg)](https://getfedora.org/)
+[![Fedora Version](https://img.shields.io/badge/Fedora-43%2B-blue.svg)](https://getfedora.org/)
 
 ## Overview
 
@@ -179,9 +179,9 @@ Guide for contributing to the project
 
 These scripts are designed for **Fedora Linux** distributions. While some scripts may work on other RPM-based systems, they are specifically tested and optimized for:
 
-- ✅ Fedora 42
 - ✅ Fedora 43
-- ✅ Fedora 44
+- ✅ Fedora 44 (latest)
+- ⚠️ Fedora 42 (end-of-life — upgrade recommended)
 - ❓ Other versions (untested)
 
 ## Installation

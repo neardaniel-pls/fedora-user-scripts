@@ -226,26 +226,26 @@ cleanup() {
 # Set trap to cleanup on Ctrl+C (not on normal exit)
 trap cleanup INT TERM
 
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --help)
-            show_help
-            exit 0
-            ;;
-        --version|-V)
-            echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
-            exit 0
-            ;;
-        *)
-            error "Unknown option: $1"
-            echo
-            show_help
-            exit 1
-            ;;
-    esac
-    shift
-done
+# Parse command line arguments (script takes no positional arguments;
+# each flag exits, so a flat case replaces the unreachable loop/shift).
+case "${1:-}" in
+    --help)
+        show_help
+        exit 0
+        ;;
+    --version|-V)
+        echo "$(basename "${BASH_SOURCE[0]}") ${SCRIPT_VERSION}"
+        exit 0
+        ;;
+    "")
+        ;;  # No arguments — proceed to start services
+    *)
+        error "Unknown option: $1"
+        echo
+        show_help
+        exit 1
+        ;;
+esac
 
 # Display header
 print_header "OLLAMA AND OPEN WEB UI START"

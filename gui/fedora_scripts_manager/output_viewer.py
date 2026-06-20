@@ -2,6 +2,7 @@
 
 import os
 import shlex
+import shutil
 import signal
 import subprocess
 import threading
@@ -18,6 +19,20 @@ try:
     VTE_AVAILABLE = True
 except (ValueError, ImportError):
     pass
+
+# External terminals tried in order when VTE is unavailable.
+# Each entry is (executable, separator) — the command is invoked as:
+#   <exe> <separator> bash -c "<cmd>; exec bash"
+_FALLBACK_TERMINALS = [
+    ("gnome-terminal", "--"),
+    ("kgx", "--"),
+    ("ptyxis", "--"),
+    ("konsole", "-e"),
+    ("xterm", "-e"),
+    ("alacritty", "-e"),
+    ("kitty", "--"),
+    ("foot", "--"),
+]
 
 
 class OutputViewer(Gtk.Box):
@@ -194,8 +209,9 @@ class OutputViewer(Gtk.Box):
     def run_in_vte(self, argv: list[str], env: dict | None = None, cwd: str | None = None):
         """Run a command inside the Vte terminal (for interactive scripts)."""
         if not VTE_AVAILABLE or self._vte_terminal is None:
-            self._fallback_terminal(argv, env, cwd)
-            self.emit("process-exited", 0)
+            launched = self._fallback_terminal(argv, env, cwd)
+            # 127 = "command not found" convention; signals failure when no terminal launched.
+            self.emit("process-exited", 0 if launched else 127)
             return
 
         self._stack.set_visible_child_name("vte")
@@ -221,18 +237,38 @@ class OutputViewer(Gtk.Box):
         self.set_status(f"Finished (exit code: {status})")
         self.emit("process-exited", status)
 
-    def _fallback_terminal(self, argv: list[str], env: dict | None = None, cwd: str | None = None):
-        """Launch in gnome-terminal as fallback."""
+    def _fallback_terminal(self, argv: list[str], env: dict | None = None, cwd: str | None = None) -> bool:
+        """Launch in an available external terminal as fallback.
+
+        Returns True if a terminal was launched, False if none was available.
+        """
+        exe = None
+        separator = None
+        for candidate, sep in _FALLBACK_TERMINALS:
+            if shutil.which(candidate):
+                exe = candidate
+                separator = sep
+                break
+
         cmd = " ".join(shlex.quote(a) for a in argv)
         spawn_env = os.environ.copy()
         if env:
             spawn_env.update(env)
+
+        if exe is None:
+            names = ", ".join(t[0] for t in _FALLBACK_TERMINALS)
+            self.set_status(
+                f"No external terminal found. Install vte291 or a terminal emulator ({names})."
+            )
+            return False
+
         subprocess.Popen(
-            ["gnome-terminal", "--", "bash", "-c", f"{cmd}; exec bash"],
+            [exe, separator, "bash", "-c", f"{cmd}; exec bash"],
             env=spawn_env,
             cwd=cwd,
         )
-        self.set_status(f"Launched in external terminal: {os.path.basename(argv[0])}")
+        self.set_status(f"Launched in external terminal ({exe}): {os.path.basename(argv[0])}")
+        return True
 
     def stop_process(self):
         """Stop the running subprocess or VTE process."""

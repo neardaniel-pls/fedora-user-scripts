@@ -46,6 +46,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
+# shellcheck disable=SC2153 # USE_ICONS is provided by the sourced ui.sh library
 if (( USE_ICONS && COLORS_ENABLED )); then
     readonly DRIVE_ICON="💾"
     readonly HEALTH_ICON="🏥"
@@ -233,7 +234,7 @@ show_usb_info() {
     local devname
     devname=$(basename "$dev")
 
-    local usb_bus usb_device
+    local usb_bus
     usb_bus=$(readlink -f "/sys/block/${devname}" 2>/dev/null | grep -oP '/usb\d+' | head -1 | grep -oP '\d+')
     if [[ -z "$usb_bus" ]]; then
         usb_bus=$(lsblk -dn -o HCTL "$dev" 2>/dev/null | cut -d: -f1)

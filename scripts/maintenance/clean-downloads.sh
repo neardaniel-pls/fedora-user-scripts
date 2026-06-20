@@ -350,11 +350,7 @@ if [[ "$DO_PURGE" == "true" ]]; then
 
     echo
     local human_size
-    if command -v numfmt &>/dev/null; then
-        human_size=$(numfmt --to=iec --suffix=B "$purge_size")
-    else
-        human_size="${purge_size} B"
-    fi
+    human_size=$(human_size "$purge_size")
 
     if [[ "$DRY_RUN" == "true" ]]; then
         info "Would delete ${purge_count} file(s) (${human_size})"

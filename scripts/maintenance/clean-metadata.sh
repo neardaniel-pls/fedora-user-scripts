@@ -223,7 +223,7 @@ EOF
       # Count files for progress reporting
       local file_count=0
       while IFS= read -r -d '' file; do
-        ((file_count++))
+        file_count=$((file_count + 1))
       done < <(find "$target" "${find_pattern[@]}" -print0)
       
       print_operation_end "Found $file_count supported files"
@@ -419,7 +419,7 @@ cleanmetadata_file() {
            else
                cp "$tmp_cleaned" "$tmp_optimized"
            fi
-      elif ! gs -dNODISPLAY -dQUIET -dBATCH "$tmp_optimized" 2>/dev/null; then
+       elif ! gs -sDEVICE=nullpage -dNOPAUSE -dBATCH -dQUIET "$tmp_optimized" 2>/dev/null; then
             warning "Optimized PDF corrupted."
             if [[ "$optimize_only" == "1" ]]; then
                 cp "$optimize_input" "$tmp_optimized"

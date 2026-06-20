@@ -193,6 +193,21 @@ human_size() {
     fi
 }
 
+_parse_size_to_bytes() {
+    local input="${1//[[:space:]]/}"
+    local num="${input%%[!0-9.]*}"
+    local unit="${input##*[0-9.]}"
+    local int="${num%%.*}"
+    local -i mul=1
+    case "${unit:-B}" in
+        K) mul=1024 ;;
+        M) mul=1048576 ;;
+        G) mul=1073741824 ;;
+        T) mul=1099511627776 ;;
+    esac
+    echo $(( ${int:-0} * mul ))
+}
+
 print_kv() {
     local key="$1"
     local value="$2"

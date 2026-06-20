@@ -292,7 +292,7 @@ if (( VERBOSE_MODE )); then
   python3 searx/webapp.py
 else
   # Filter out non-critical warnings and errors (engine loading, bot detection)
-  python3 searx/webapp.py 2>&1 | grep -v "searx.engines.*loading engine.*failed" | grep -v "searx.botdetection.config.*missing config file" | grep -v "searx.botdetection.*X-Forwarded-For nor X-Real-IP header is set"
+  python3 searx/webapp.py 2>&1 | grep -vE 'searx\.engines.*loading engine.*failed|searx\.botdetection\.config.*missing config file|searx\.botdetection.*X-Forwarded-For nor X-Real-IP header is set'
 fi
 
 # Deactivate the virtual environment on normal exit

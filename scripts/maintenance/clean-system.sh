@@ -312,12 +312,12 @@ clean_journal() {
         info "Would vacuum journal to ${JOURNAL_DAYS} days (current usage: ${journal_size})"
     else
         local before=0
-        before=$(journalctl --disk-usage 2>/dev/null | grep -oP '\d+(?=[\d.]*[KMGT])' | head -1 || echo 0)
+        before=$(_parse_size_to_bytes "$(journalctl --disk-usage 2>/dev/null | grep -oP '[\d.]+[KMGT]' | head -1)")
 
         journalctl --vacuum-time="${JOURNAL_DAYS}d" --no-pager 2>/dev/null || true
 
         local after=0
-        after=$(journalctl --disk-usage 2>/dev/null | grep -oP '\d+(?=[\d.]*[KMGT])' | head -1 || echo 0)
+        after=$(_parse_size_to_bytes "$(journalctl --disk-usage 2>/dev/null | grep -oP '[\d.]+[KMGT]' | head -1)")
         local freed=$((before - after))
         if [[ "$freed" -lt 0 ]]; then freed=0; fi
         add_freed "$freed"
@@ -361,13 +361,13 @@ clean_containers() {
         info "Would reclaim approximately: ${reclaimable}"
     else
         local before=0
-        before=$(${runtime} system df --format '{{.Size}}' 2>/dev/null | head -1 | grep -oP '[\d.]+' | head -1 || echo 0)
+        before=$(_parse_size_to_bytes "$(${runtime} system df --format '{{.Size}}' 2>/dev/null | head -1 | grep -oP '[\d.]+[KMGT]' | head -1 || echo "0")")
 
         local output
         output=$(${runtime} system prune -f 2>/dev/null || true)
 
         local after=0
-        after=$(${runtime} system df --format '{{.Size}}' 2>/dev/null | head -1 | grep -oP '[\d.]+' | head -1 || echo 0)
+        after=$(_parse_size_to_bytes "$(${runtime} system df --format '{{.Size}}' 2>/dev/null | head -1 | grep -oP '[\d.]+[KMGT]' | head -1 || echo "0")")
         local freed=$((before - after))
         if [[ "$freed" -lt 0 ]]; then freed=0; fi
         add_freed "$freed"

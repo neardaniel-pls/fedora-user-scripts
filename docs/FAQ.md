@@ -4,9 +4,9 @@
 
 ### Q: Which Fedora versions are supported?
 **A:** Scripts are tested and confirmed working on:
-- ✅ Fedora 42
 - ✅ Fedora 43
-- ✅ Fedora 44
+- ✅ Fedora 44 (latest)
+- ⚠️ Fedora 42 (end-of-life — upgrade recommended)
 - ❓ Other versions (untested but may work)
 
 ### Q: Can I use these scripts on other Linux distributions?

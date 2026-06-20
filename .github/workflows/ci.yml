@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: ShellCheck
+        # find -exec is globstar-independent; guarantees all .sh under scripts/
+        # (including lib/) are checked on any bash version.
+        run: find scripts -name '*.sh' -exec shellcheck -x {} + ; shellcheck -x setup.sh
+
+      - name: Bash syntax check
+        run: |
+          set -e
+          find scripts -name '*.sh' -exec bash -n {} \;
+          bash -n setup.sh
+
+      - name: Python compile check
+        run: |
+          python3 -m py_compile \
+            gui/fedora_scripts_manager/*.py \
+            gui/run.py \
+            nautilus/*.py

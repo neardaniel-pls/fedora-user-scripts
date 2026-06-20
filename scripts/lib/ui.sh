@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # ui.sh — Shared UI library for fedora-user-scripts
 #
 # This file is sourced by all scripts. It provides:
@@ -68,6 +69,7 @@ else
     readonly RESET=""
 fi
 
+# shellcheck disable=SC2034 # These icons are part of the library's public surface, used by sourcing scripts.
 if (( USE_ICONS && COLORS_ENABLED )); then
     readonly INFO_ICON="ℹ️"
     readonly SUCCESS_ICON="✅"

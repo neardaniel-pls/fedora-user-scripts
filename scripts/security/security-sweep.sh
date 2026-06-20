@@ -81,8 +81,10 @@ readonly SCRIPT_VERSION="1.3.3"
 version_check "$SCRIPT_VERSION"
 
 # ===== Log file =====
+# LOG_FILE is a pure assignment (no filesystem access), safe at top level.
+# enable_logging() — which touches the file — is called from main() AFTER the
+# root check, so --help/--version work without root and without writing /var/log.
 LOG_FILE="/var/log/security-sweep-$(date +%Y%m%d-%H%M%S).log"
-enable_logging "$LOG_FILE"
 
 # ===== Status Variables =====
 integrity_status="Not Run"
@@ -205,7 +207,7 @@ run_integrity_check() {
     output=$(<"$tmp_output")
     rm -f "$tmp_output"
 
-    if [ $pipe_exit -eq 0 ]; then
+    if [ "$pipe_exit" -eq 0 ]; then
         if [ -z "$output" ]; then
             success "System file integrity check passed. No issues found."
             integrity_status="${GREEN}Passed${RESET}"
@@ -248,7 +250,7 @@ run_rootkit_scan() {
     output=$(<"$tmp_output")
     rm -f "$tmp_output"
 
-    if [ $pipe_exit -eq 0 ]; then
+    if [ "$pipe_exit" -eq 0 ]; then
         if echo "$output" | grep -q "INFECTED"; then
             warning "chkrootkit found potential issues. See log for details."
             rootkit_status="${YELLOW}Findings${RESET}"
@@ -287,7 +289,15 @@ run_malware_scan() {
     print_operation_start "Scanning for malware (clamscan)"
     info "This may take a long time depending on system size..."
     
-    local clam_opts=(-r --exclude-dir="^/sys" --exclude-dir="^/proc" --exclude-dir="^/dev")
+    # NOTE: do NOT exclude /mnt, /media, or /run/media — removable/external media
+    # (a common malware vector, auto-mounted by udisks under /run/media on GNOME)
+    # must be scanned. Only skip pseudo-filesystems and huge container/VM image stores.
+    local clam_opts=(-r \
+        --exclude-dir="^/sys" \
+        --exclude-dir="^/proc" \
+        --exclude-dir="^/dev" \
+        --exclude-dir="^/var/lib/containers" \
+        --exclude-dir="^/var/lib/libvirt")
     
     if [ "$exclude_home" -eq 1 ]; then
         info "Excluding home directories from malware scan for privacy."
@@ -304,7 +314,7 @@ run_malware_scan() {
     output=$(<"$tmp_output")
     rm -f "$tmp_output"
 
-    if [ $pipe_exit -eq 0 ]; then
+    if [ "$pipe_exit" -eq 0 ]; then
         if echo "$output" | grep -q "Infected files: 0"; then
             success "ClamAV scan completed. No malware found."
             malware_status="${GREEN}Passed${RESET}"
@@ -348,7 +358,7 @@ run_security_audit() {
     output=$(<"$tmp_output")
     rm -f "$tmp_output"
 
-    if [ $pipe_exit -eq 0 ]; then
+    if [ "$pipe_exit" -eq 0 ]; then
         success "Lynis security audit completed."
         audit_status="${GREEN}Completed${RESET}"
         log_message "SCAN_OUTPUT" "Lynis output:\n---\n$output\n---"
@@ -394,10 +404,10 @@ run_package_check() {
     output=$(<"$tmp_output")
     rm -f "$tmp_output"
 
-    if [ $exit_code -eq 0 ]; then
+    if [ "$exit_code" -eq 0 ]; then
         success "Package dependency check passed. No issues found."
         package_status="${GREEN}Passed${RESET}"
-    elif [ $exit_code -eq 100 ]; then
+    elif [ "$exit_code" -eq 100 ]; then
         warning "Package dependency check found issues. See log for details."
         log_message "FINDINGS" "DNF Check found issues:\n---\n$output\n---"
         package_status="${YELLOW}Findings${RESET}"
@@ -479,6 +489,7 @@ main() {
     # Create and secure the log file
     touch "$LOG_FILE"
     chmod 600 "$LOG_FILE"
+    enable_logging "$LOG_FILE"
     echo -e "Full log will be saved to: ${BOLD}${LOG_FILE}${RESET}\n"
     rotate_logs
 

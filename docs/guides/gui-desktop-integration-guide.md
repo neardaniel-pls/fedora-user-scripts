@@ -17,7 +17,9 @@ There are two desktop integration features:
 
 ### Prerequisites
 
-Fedora 42, 43, or 44 with GNOME desktop.
+Fedora 43 or 44 (Fedora 42 is end-of-life) with GNOME desktop.
+
+> **No Python (pip) dependencies.** The GUI uses only system packages installed via `dnf` (`python3-gobject`, `gtk4`, `libadwaita`). There is no `requirements.txt` to install.
 
 ### Install Dependencies
 
@@ -37,7 +39,7 @@ sudo dnf install vte291
 | `gtk4` | Yes | GUI toolkit |
 | `libadwaita` | Yes | GNOME-native look and feel |
 | `zenity` | Yes | Desktop notifications from Nautilus extension |
-| `vte291` | No | Embedded terminal for interactive scripts (fallback: gnome-terminal) |
+| `vte291` | No | Embedded terminal for interactive scripts (fallback: any available terminal emulator) |
 
 ### Run the Installer
 
@@ -100,7 +102,7 @@ Scripts behave differently in the GUI depending on their type:
 **Interactive scripts** (Fedora Update, Update Hosts):
 - Run in an embedded terminal (Vte) with a real PTY
 - You can type directly into the terminal for interactive prompts
-- If Vte is not installed, they launch in a separate `gnome-terminal` window
+- If Vte is not installed, they launch in a separate terminal window (gnome-terminal, kgx/Console, ptyxis, konsole, xterm, alacritty, kitty, or foot — whichever is found first)
 
 ### Script Options
 
@@ -175,7 +177,8 @@ The `setup.sh install` command automatically sets `FEDORA_SCRIPTS_DIR` in this f
 
 ### Interactive scripts don't work in GUI
 - Install Vte: `sudo dnf install vte291`
-- Without Vte, interactive scripts open in a separate terminal window instead
+- Without Vte, interactive scripts open in a separate terminal window instead (gnome-terminal, kgx, ptyxis, konsole, xterm, alacritty, kitty, or foot)
+- If no terminal is found, the GUI shows a status message — install Vte or any of the terminals listed above
 
 ### Changes after git pull
 - Re-run: `./setup.sh update`

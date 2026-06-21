@@ -76,7 +76,7 @@ else
 fi
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.3"
+readonly SCRIPT_VERSION="1.3.4"
 version_check "$SCRIPT_VERSION"
 
 # ===== Configuration =====

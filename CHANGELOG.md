@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2026-06-21
+
+### Fixed
+- **update-searxng.sh**: Resolve the recurring false "Discarding N local change(s)" warning and corrupted executable bits. The post-reset `fix_ownership` call ran a blanket `chmod 644` that stripped the exec bit from ~29 git-tracked executables whenever any file was wrong-owned (e.g. after a sudo/container run), and `git reset --hard` to an unchanged commit did not heal the resulting mode-only drift — so the warning recurred every run. Replaced with a chown-only `_ensure_owned()` helper (no chmod) and a `git diff-files`-gated `git checkout-index --force --all` that heals mode drift only when present.
+
+### Changed
+- **update-searxng.sh**: Hardened default-branch detection (`git remote set-head origin --auto`); simplified the result report while restoring a distinct "Rewound to upstream" message when local commits are discarded.
+- Synced `SCRIPT_VERSION` across all scripts to 1.3.4.
+
 ## [1.3.3] - 2026-06-12
 
 ### Added

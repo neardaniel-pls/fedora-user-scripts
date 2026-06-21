@@ -42,7 +42,7 @@ _CLI_ARG1="${1:-}"
 source "${SCRIPT_DIR}/../lib/ui.sh"
 
 # --- Script Initialization ---
-readonly SCRIPT_VERSION="1.3.3"
+readonly SCRIPT_VERSION="1.3.4"
 version_check "$SCRIPT_VERSION"
 
 # ===== Configuration =====
